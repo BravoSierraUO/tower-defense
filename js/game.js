@@ -27,6 +27,8 @@ export class Game {
     for (const tower of this.world.towers) {
       tower.update(dt);
     }
+    this.world.updateSpawning(dt);
+    this.world.updateEnemies(dt);
   }
 
   render() {

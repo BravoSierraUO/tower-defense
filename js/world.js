@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { Tower } from './tower.js';
+import { Enemy } from './enemy.js';
 
 export class World {
   constructor() {
@@ -7,6 +8,28 @@ export class World {
     this.height = CONFIG.WORLD_HEIGHT;
     this.towers = [];
     this.enemies = [];
+    this.path = CONFIG.PATH;
+    this.spawnTimer = 0;
+  }
+
+  spawnEnemy() {
+    this.enemies.push(new Enemy(this.path));
+  }
+
+  // Temporary: spawns on a timer until wave.js (v0.5) owns this.
+  updateSpawning(dt) {
+    this.spawnTimer -= dt;
+    if (this.spawnTimer <= 0) {
+      this.spawnEnemy();
+      this.spawnTimer = CONFIG.ENEMY_SPAWN_INTERVAL;
+    }
+  }
+
+  updateEnemies(dt) {
+    for (const enemy of this.enemies) {
+      enemy.update(dt);
+    }
+    this.enemies = this.enemies.filter(e => !e.reachedEnd && !e.isDead());
   }
 
   snapToGrid(x, y) {

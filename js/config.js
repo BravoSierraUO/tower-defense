@@ -14,5 +14,23 @@ export const CONFIG = {
   TOWER_DAMAGE: 10,
   TOWER_FIRE_RATE: 1,
   TOWER_RADIUS: 14,
-  TOWER_COLOR: '#62D0FF'
+  TOWER_COLOR: '#62D0FF',
+
+  ENEMY_SPEED: 100,
+  ENEMY_HEALTH: 50,
+  ENEMY_RADIUS: 10,
+  ENEMY_COLOR: '#FF7070',
+  ENEMY_SPAWN_INTERVAL: 1.5,
+  PATH_COLOR: 'rgba(255,255,255,0.12)',
+  PATH_WIDTH: 30,
+
+  // Temporary hardcoded path (waypoints). Replaced by level data later.
+  PATH: [
+    { x: -900, y: 0 },
+    { x: -300, y: 0 },
+    { x: -300, y: 400 },
+    { x: 300, y: 400 },
+    { x: 300, y: -300 },
+    { x: 900, y: -300 }
+  ]
 };
