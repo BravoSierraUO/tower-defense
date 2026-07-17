@@ -50,14 +50,19 @@ export class World {
   }
 
   placeTower(x, y) {
-    const snapped = this.snapToGrid(x, y);
-    if (!this.isInsideWorld(snapped.x, snapped.y)) return null;
+	if (this.towers.length >= CONFIG.TOWER_MAX_COUNT) return null;
 
-    const occupied = this.towers.some(t => t.x === snapped.x && t.y === snapped.y);
-    if (occupied) return null;
+	const snapped = this.snapToGrid(x, y);
+	if (!this.isInsideWorld(snapped.x, snapped.y)) return null;
 
-    const tower = new Tower(snapped.x, snapped.y);
-    this.towers.push(tower);
-    return tower;
+	const distToBase = Math.hypot(snapped.x - this.base.x, snapped.y - this.base.y);
+	if (distToBase < CONFIG.TOWER_MIN_BASE_DISTANCE) return null;
+
+	const occupied = this.towers.some(t => t.x === snapped.x && t.y === snapped.y);
+	if (occupied) return null;
+
+	const tower = new Tower(snapped.x, snapped.y);
+	this.towers.push(tower);
+	return tower;
   }
 }

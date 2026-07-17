@@ -35,6 +35,8 @@ export const CONFIG = {
   BASE_DAMAGE_COLOR: '#FF7070',
 
   SPAWN_MARGIN: 150,
+  TOWER_MAX_COUNT: 50,
+  TOWER_MIN_BASE_DISTANCE: 60, // keeps towers off/adjacent to the base
 
   MAX_WAVES: 20,
   WAVE_START_DELAY: 3,
