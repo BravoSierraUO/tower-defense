@@ -5,30 +5,137 @@
 <title>Tower Defense</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
+
 <canvas id="game"></canvas>
 
 <div class="ui-overlay">
-  <div class="ui-panel ui-top-left">
-    <div>Score: <span id="ui-score">0</span></div>
-    <div>Wave: <span id="ui-wave">0 / 0</span></div>
-    <div>Tier: <span id="ui-tier">-</span></div>
-  </div>
 
-  <div class="ui-panel ui-top-right">
-    <div>FPS: <span id="ui-fps">0</span></div>
-  </div>
+    <!-- =========================
+         TOP COMMAND BAR
+    ========================== -->
 
-  <div class="ui-panel ui-base-health">
-    <div class="ui-bar-track">
-      <div id="ui-base-fill" class="ui-bar-fill"></div>
-    </div>
-    <div id="ui-base-text" class="ui-base-text">0 / 0</div>
-  </div>
+    <header class="hud-top">
 
-  <div id="ui-banner" class="ui-banner" hidden></div>
+        <div class="hud-group hud-left">
+
+            <div class="hud-stat">
+                <div class="hud-label">SCORE</div>
+                <div id="ui-score" class="hud-value">0</div>
+            </div>
+
+            <div class="hud-divider"></div>
+
+            <div class="hud-stat">
+                <div class="hud-label">WAVE</div>
+                <div id="ui-wave" class="hud-value">0 / 0</div>
+            </div>
+
+            <div class="hud-divider"></div>
+
+            <div class="hud-stat">
+                <div class="hud-label">TECH</div>
+                <div id="ui-tier" class="hud-value">I</div>
+            </div>
+
+        </div>
+
+        <div class="hud-center">
+
+            <div class="hud-health-title">
+                BASE INTEGRITY
+            </div>
+
+            <div class="ui-bar-track">
+                <div id="ui-base-fill" class="ui-bar-fill"></div>
+            </div>
+
+            <div id="ui-base-text" class="hud-health-value">
+                100 / 100
+            </div>
+
+        </div>
+
+        <div class="hud-group hud-right">
+
+            <div class="hud-fps">
+                <span id="ui-fps">60</span> FPS
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- =========================
+         TOWER INFO
+    ========================== -->
+
+    <aside class="tower-card" hidden>
+
+        <div class="tower-name">
+            Cannon Tower
+        </div>
+
+        <div class="tower-tier">
+            Tier II
+        </div>
+
+        <div class="tower-stat">
+            Damage
+            <span id="tower-damage">24</span>
+        </div>
+
+        <div class="tower-stat">
+            Range
+            <span id="tower-range">6</span>
+        </div>
+
+        <div class="tower-stat">
+            Fire Rate
+            <span id="tower-speed">1.20</span>
+        </div>
+
+    </aside>
+
+    <!-- =========================
+         BUILD BAR
+    ========================== -->
+
+    <footer class="build-bar">
+
+        <button class="build-slot">
+            <span>1</span>
+            Cannon
+        </button>
+
+        <button class="build-slot">
+            <span>2</span>
+            Sniper
+        </button>
+
+        <button class="build-slot">
+            <span>3</span>
+            Laser
+        </button>
+
+        <button class="build-slot">
+            <span>4</span>
+            Missile
+        </button>
+
+        <button class="build-slot">
+            <span>5</span>
+            Slow
+        </button>
+
+    </footer>
+
+    <div id="ui-banner" class="ui-banner" hidden></div>
+
 </div>
 
 <script type="module" src="js/main.js"></script>
+
 </body>
 </html>

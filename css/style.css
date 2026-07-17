@@ -1,69 +1,316 @@
-* { margin: 0; padding: 0; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #0B1020; }
-#game { display: block; }
-/* --- UI overlay (v0.6) --- */
-.ui-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  font-family: system-ui, sans-serif;
-  color: #E8F4FF;
-  z-index: 99;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-.ui-panel {
-  position: absolute;
-  background: rgba(20,24,34,0.85);
-  border: 1px solid rgba(98,208,255,0.2);
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-size: 14px;
-  line-height: 1.6;
-  box-shadow: 0 0 12px rgba(98,208,255,0.08);
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#09111B;
+    font-family:Inter,system-ui,sans-serif;
 }
 
-.ui-top-left { top: 16px; left: 16px; }
-.ui-top-right { top: 16px; right: 16px; }
-
-.ui-base-health {
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 220px;
-  text-align: center;
+#game{
+    display:block;
 }
 
-.ui-bar-track {
-  width: 100%;
-  height: 10px;
-  border-radius: 5px;
-  background: rgba(255,255,255,0.08);
-  overflow: hidden;
-  margin-bottom: 4px;
+.ui-overlay{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    color:#F2F8FF;
 }
 
-.ui-bar-fill {
-  height: 100%;
-  width: 100%;
-  background: #62D0FF;
-  transition: width 0.15s ease, background 0.15s ease;
+/* ===========================
+   Shared Glass
+=========================== */
+
+.hud-top,
+.build-bar,
+.tower-card,
+.ui-banner{
+
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
+    background:
+    linear-gradient(
+        rgba(32,42,58,.82),
+        rgba(14,18,28,.90)
+    );
+
+    border:1px solid rgba(255,255,255,.06);
+
+    box-shadow:
+        inset 0 1px rgba(255,255,255,.05),
+        0 18px 40px rgba(0,0,0,.35);
+
+    border-radius:18px;
 }
 
-.ui-base-text { font-size: 12px; opacity: 0.85; }
+/* ===========================
+   TOP BAR
+=========================== */
 
-.ui-banner {
-  position: absolute;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 42px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  padding: 14px 32px;
-  border-radius: 12px;
-  background: rgba(20,24,34,0.9);
-  border: 1px solid rgba(98,208,255,0.3);
+.hud-top{
+
+    position:absolute;
+
+    left:24px;
+    right:24px;
+    top:24px;
+
+    height:92px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:0 28px;
 }
 
-.ui-banner.win { color: #62D0FF; text-shadow: 0 0 16px rgba(98,208,255,0.6); }
-.ui-banner.lose { color: #FF7070; text-shadow: 0 0 16px rgba(255,112,112,0.6); }
+.hud-group{
+
+    display:flex;
+    align-items:center;
+    gap:20px;
+}
+
+.hud-divider{
+
+    width:1px;
+    height:46px;
+    background:rgba(255,255,255,.08);
+}
+
+.hud-label{
+
+    font-size:11px;
+
+    opacity:.55;
+
+    letter-spacing:2px;
+}
+
+.hud-value{
+
+    margin-top:4px;
+
+    font-size:28px;
+
+    font-weight:700;
+
+    color:#7ED9FF;
+}
+
+.hud-center{
+
+    width:420px;
+}
+
+.hud-health-title{
+
+    text-align:center;
+
+    font-size:12px;
+
+    opacity:.65;
+
+    margin-bottom:8px;
+
+    letter-spacing:2px;
+}
+
+.hud-health-value{
+
+    margin-top:8px;
+
+    text-align:center;
+
+    font-size:13px;
+
+    opacity:.85;
+}
+
+.ui-bar-track{
+
+    height:14px;
+
+    overflow:hidden;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.06);
+}
+
+.ui-bar-fill{
+
+    height:100%;
+
+    width:100%;
+
+    background:
+    linear-gradient(90deg,#48B8FF,#82E2FF);
+
+    border-radius:999px;
+
+    transition:.25s;
+
+    box-shadow:0 0 18px rgba(130,226,255,.35);
+}
+
+.hud-fps{
+
+    font-size:12px;
+
+    opacity:.45;
+}
+
+/* ===========================
+   BUILD BAR
+=========================== */
+
+.build-bar{
+
+    position:absolute;
+
+    left:50%;
+
+    bottom:28px;
+
+    transform:translateX(-50%);
+
+    display:flex;
+
+    gap:12px;
+
+    padding:14px;
+
+    pointer-events:auto;
+}
+
+.build-slot{
+
+    width:96px;
+
+    height:74px;
+
+    background:rgba(255,255,255,.03);
+
+    border:1px solid rgba(255,255,255,.05);
+
+    border-radius:14px;
+
+    color:white;
+
+    cursor:pointer;
+
+    transition:.18s;
+
+    font-size:14px;
+}
+
+.build-slot:hover{
+
+    transform:translateY(-3px);
+
+    border-color:#7ED9FF;
+
+    background:rgba(126,217,255,.08);
+}
+
+.build-slot span{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-size:22px;
+
+    color:#7ED9FF;
+
+    font-weight:700;
+}
+
+/* ===========================
+   TOWER CARD
+=========================== */
+
+.tower-card{
+
+    position:absolute;
+
+    right:24px;
+
+    bottom:130px;
+
+    width:260px;
+
+    padding:22px;
+
+    pointer-events:none;
+}
+
+.tower-name{
+
+    font-size:24px;
+
+    font-weight:700;
+
+    margin-bottom:4px;
+}
+
+.tower-tier{
+
+    color:#7ED9FF;
+
+    margin-bottom:20px;
+}
+
+.tower-stat{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    padding:8px 0;
+
+    border-bottom:1px solid rgba(255,255,255,.05);
+}
+
+/* ===========================
+   Banner
+=========================== */
+
+.ui-banner{
+
+    position:absolute;
+
+    top:38%;
+
+    left:50%;
+
+    transform:translate(-50%,-50%);
+
+    padding:24px 44px;
+
+    font-size:40px;
+
+    font-weight:800;
+
+    letter-spacing:3px;
+}
+
+.ui-banner.win{
+
+    color:#6EF2A3;
+}
+
+.ui-banner.lose{
+
+    color:#FF7070;
+}
