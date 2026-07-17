@@ -1,34 +1,31 @@
 import { CONFIG } from './config.js';
 
 export class Enemy {
-  constructor(path) {
-    this.path = path;
-    this.waypointIndex = 0;
-    this.x = path[0].x;
-    this.y = path[0].y;
-    this.speed = CONFIG.ENEMY_SPEED;
-    this.health = CONFIG.ENEMY_HEALTH;
-    this.reachedEnd = false;
+  // Spawns at (x, y) and walks in a straight line toward (targetX, targetY) — the base.
+  constructor(x, y, targetX, targetY, healthMultiplier = 1, speedMultiplier = 1) {
+    this.x = x;
+    this.y = y;
+    this.targetX = targetX;
+    this.targetY = targetY;
+    this.speed = CONFIG.ENEMY_SPEED * speedMultiplier;
+    this.health = CONFIG.ENEMY_HEALTH * healthMultiplier;
+    this.maxHealth = this.health;
+    this.reachedTarget = false;
+    this.hasHitBase = false; // combat.js flips this once damage is applied
   }
 
   update(dt) {
-    if (this.reachedEnd) return;
+    if (this.reachedTarget) return;
 
-    const target = this.path[this.waypointIndex + 1];
-    if (!target) {
-      this.reachedEnd = true;
-      return;
-    }
-
-    const dx = target.x - this.x;
-    const dy = target.y - this.y;
+    const dx = this.targetX - this.x;
+    const dy = this.targetY - this.y;
     const dist = Math.hypot(dx, dy);
     const step = this.speed * dt;
 
     if (step >= dist) {
-      this.x = target.x;
-      this.y = target.y;
-      this.waypointIndex++;
+      this.x = this.targetX;
+      this.y = this.targetY;
+      this.reachedTarget = true;
     } else {
       this.x += (dx / dist) * step;
       this.y += (dy / dist) * step;

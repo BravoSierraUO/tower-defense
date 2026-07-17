@@ -12,23 +12,25 @@ export class Renderer {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  drawPath(world, camera) {
+  drawBase(world, camera) {
     const ctx = this.ctx;
-    const path = world.path;
-    if (!path || path.length < 2) return;
+    const base = world.base;
+    const p = camera.worldToScreen(base.x, base.y);
+    const r = base.radius * camera.zoom;
+    const healthPct = base.health / base.maxHealth;
 
-    ctx.strokeStyle = CONFIG.PATH_COLOR;
-    ctx.lineWidth = CONFIG.PATH_WIDTH * camera.zoom;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    ctx.fillStyle = CONFIG.BG_COLOR;
+    ctx.strokeStyle = healthPct > 0.3 ? CONFIG.BASE_COLOR : CONFIG.BASE_DAMAGE_COLOR;
+    ctx.lineWidth = 3 * camera.zoom;
     ctx.beginPath();
-    const first = camera.worldToScreen(path[0].x, path[0].y);
-    ctx.moveTo(first.x, first.y);
-    for (let i = 1; i < path.length; i++) {
-      const p = camera.worldToScreen(path[i].x, path[i].y);
-      ctx.lineTo(p.x, p.y);
-    }
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fill();
     ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r * 0.55 * healthPct, 0, Math.PI * 2);
+    ctx.fillStyle = CONFIG.BASE_COLOR;
+    ctx.fill();
   }
 
   drawTowers(world, camera) {
@@ -73,7 +75,7 @@ export class Renderer {
   draw(world, camera) {
     this.clear();
     drawGrid(this.ctx, camera);
-    this.drawPath(world, camera);
+    this.drawBase(world, camera);
     this.drawTowers(world, camera);
     this.drawProjectiles(world, camera);
     this.drawEnemies(world, camera);

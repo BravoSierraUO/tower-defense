@@ -11,7 +11,7 @@ export class Projectile {
   }
 
   update(dt) {
-    if (this.target.isDead() || this.target.reachedEnd) {
+    if (this.target.isDead() || this.target.reachedTarget) {
       this.dead = true;
       return;
     }
@@ -35,7 +35,7 @@ function findTarget(tower, enemies) {
   let closest = null;
   let closestDist = tower.range;
   for (const enemy of enemies) {
-    if (enemy.isDead() || enemy.reachedEnd) continue;
+    if (enemy.isDead() || enemy.reachedTarget) continue;
     const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
     if (dist <= closestDist) {
       closest = enemy;
@@ -43,6 +43,16 @@ function findTarget(tower, enemies) {
     }
   }
   return closest;
+}
+
+// Enemies that reached the base deal damage once, then become eligible for cleanup.
+function resolveBaseHits(world) {
+  for (const enemy of world.enemies) {
+    if (enemy.reachedTarget && !enemy.hasHitBase) {
+      world.base.takeDamage(CONFIG.ENEMY_BASE_DAMAGE);
+      enemy.hasHitBase = true;
+    }
+  }
 }
 
 export function updateCombat(world, dt) {
@@ -59,4 +69,6 @@ export function updateCombat(world, dt) {
     projectile.update(dt);
   }
   world.projectiles = world.projectiles.filter(p => !p.dead);
+
+  resolveBaseHits(world);
 }
