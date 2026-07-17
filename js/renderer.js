@@ -12,9 +12,23 @@ export class Renderer {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
+  drawTowers(world, camera) {
+    const ctx = this.ctx;
+    for (const tower of world.towers) {
+      const p = camera.worldToScreen(tower.x, tower.y);
+      const r = CONFIG.TOWER_RADIUS * camera.zoom;
+
+      ctx.fillStyle = CONFIG.TOWER_COLOR;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   draw(world, camera) {
     this.clear();
     drawGrid(this.ctx, camera);
-    // future layers: terrain, paths, buildings, projectiles, enemies, effects
+    this.drawTowers(world, camera);
+    // future layers: terrain, paths, projectiles, enemies, effects
   }
 }

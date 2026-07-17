@@ -13,8 +13,20 @@ export class Game {
     this.lastTime = 0;
   }
 
+  handleInput() {
+    for (const click of this.input.clicks) {
+      const worldPos = this.camera.screenToWorld(click.x, click.y);
+      this.world.placeTower(worldPos.x, worldPos.y);
+    }
+    this.input.clicks.length = 0;
+  }
+
   update(dt) {
     this.camera.update(this.input, dt);
+    this.handleInput();
+    for (const tower of this.world.towers) {
+      tower.update(dt);
+    }
   }
 
   render() {

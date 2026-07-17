@@ -5,8 +5,14 @@ export const CONFIG = {
   ZOOM_MIN: 0.3,
   ZOOM_MAX: 3,
   ZOOM_SPEED: 0.001,
-  PAN_SPEED: 500, // world units per second at zoom 1
+  PAN_SPEED: 500,
   BG_COLOR: '#0B1020',
   GRID_COLOR: 'rgba(98,208,255,0.08)',
-  GRID_COLOR_MAJOR: 'rgba(98,208,255,0.15)'
+  GRID_COLOR_MAJOR: 'rgba(98,208,255,0.15)',
+
+  TOWER_RANGE: 150,
+  TOWER_DAMAGE: 10,
+  TOWER_FIRE_RATE: 1,
+  TOWER_RADIUS: 14,
+  TOWER_COLOR: '#62D0FF'
 };
