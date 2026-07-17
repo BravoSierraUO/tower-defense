@@ -2,6 +2,7 @@ import { Camera } from './camera.js';
 import { Renderer } from './renderer.js';
 import { Input } from './input.js';
 import { World } from './world.js';
+import { updateCombat } from './combat.js';
 
 export class Game {
   constructor(canvas) {
@@ -28,6 +29,7 @@ export class Game {
       tower.update(dt);
     }
     this.world.updateSpawning(dt);
+    updateCombat(this.world, dt);
     this.world.updateEnemies(dt);
   }
 

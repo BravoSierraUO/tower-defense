@@ -31,19 +31,6 @@ export class Renderer {
     ctx.stroke();
   }
 
-  drawEnemies(world, camera) {
-    const ctx = this.ctx;
-    for (const enemy of world.enemies) {
-      const p = camera.worldToScreen(enemy.x, enemy.y);
-      const r = CONFIG.ENEMY_RADIUS * camera.zoom;
-
-      ctx.fillStyle = CONFIG.ENEMY_COLOR;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
   drawTowers(world, camera) {
     const ctx = this.ctx;
     for (const tower of world.towers) {
@@ -57,12 +44,39 @@ export class Renderer {
     }
   }
 
+  drawProjectiles(world, camera) {
+    const ctx = this.ctx;
+    for (const projectile of world.projectiles) {
+      const p = camera.worldToScreen(projectile.x, projectile.y);
+      const r = CONFIG.PROJECTILE_RADIUS * camera.zoom;
+
+      ctx.fillStyle = CONFIG.PROJECTILE_COLOR;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  drawEnemies(world, camera) {
+    const ctx = this.ctx;
+    for (const enemy of world.enemies) {
+      const p = camera.worldToScreen(enemy.x, enemy.y);
+      const r = CONFIG.ENEMY_RADIUS * camera.zoom;
+
+      ctx.fillStyle = CONFIG.ENEMY_COLOR;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   draw(world, camera) {
     this.clear();
     drawGrid(this.ctx, camera);
     this.drawPath(world, camera);
     this.drawTowers(world, camera);
+    this.drawProjectiles(world, camera);
     this.drawEnemies(world, camera);
-    // future layers: terrain, projectiles, effects
+    // future layers: terrain, effects
   }
 }

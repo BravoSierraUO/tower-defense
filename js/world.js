@@ -6,8 +6,9 @@ export class World {
   constructor() {
     this.width = CONFIG.WORLD_WIDTH;
     this.height = CONFIG.WORLD_HEIGHT;
-    this.towers = [];
+	this.towers = [];
     this.enemies = [];
+    this.projectiles = [];
     this.path = CONFIG.PATH;
     this.spawnTimer = 0;
   }
