@@ -509,17 +509,17 @@ const ROADMAP = [
     ],
     depends:'Phase 4c',
     note:'From dreams/2026-07-19-fiction-vs-implementation-gaps.md — surfaced by re-reading structures.md against the shipped code, not a fresh idea. Shipped fast, numbers-first: TOWER_POWER_CONSUMPTION/BROWNOUT_MIN_FIRE_RATE_MULT are a working first pass, not a tuned/playtested balance point (matches the standing note on every economy number in this project). Two pre-existing tests had to be fixed to match the new reality (one assumed full power with no Reactor built, one asserted the old cost discount) — see changelog.md v1.6.' },
-  { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'BACKLOG · PARALLEL (non-blocking)', color:'--phase-5',
-    desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocks the gameplay phases.',
+  { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
+    desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 76 tests across 7 files via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. 114 tests across 6 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
-      'Script to auto-sync this page\'s Roadmap section from changelog.md so it can\'t go stale',
-      '/docs folder: architecture notes + contribution guide'
+      'Script to auto-sync this page\'s Roadmap section from changelog.md — done, though "sync" turned out to mean "advisory drift check," not full regeneration: changelog.md is hand-written prose per version, not per-phase structured data, so scripts/check-roadmap-sync.mjs cross-checks Phase-number mentions between the two files and warns (never blocks) on drift, wired into the pre-commit hook.',
+      '/docs folder: architecture notes + contribution guide — done. docs/architecture.md (module map, orchestration, economy layers, testing philosophy, known non-goals) and docs/CONTRIBUTING.md (setup, commands, pre-commit checklist, codebase conventions).'
     ],
-    note:'Interview-portfolio motivated — "built a working game AND the tooling to prove how it was built." Interleave in slow moments between gameplay phases, don\'t block on it.' },
+    note:'Interview-portfolio motivated — "built a working game AND the tooling to prove how it was built." All six items shipped; Phase 5b (player menu shell) split off as its own unscoped backlog card rather than folded in here.' },
   { id:'p5b', num:'5b', title:'Player Menu Shell — Avatar Dropdown & Account/Settings/Inventory/Base Modal', status:'BACKLOG · NOT SCOPED', color:'--phase-5',
     desc:'Today the game has three separate full-screen views toggled by raw hotkeys (B — Command Core, P — Profile, O — About), each its own top-level `aside`. The typical pattern instead: a small avatar + level badge in a HUD corner, click opens a dropdown/menu, which opens a modal with tabbed sections — Account (today\'s Profile panel), Settings (doesn\'t exist yet), Inventory (doesn\'t exist yet — no item/loadout system in the game at all right now), Base (today\'s Command Core panel). About/Analytics would fold in as one more tab.',
     items:[
@@ -1292,6 +1292,12 @@ const STATS = {
       "date": "07-19",
       "cum": 6989,
       "subject": "Phase 5: in-game About/Analytics panel reading stats.json"
+    },
+    {
+      "hash": "aa064f4",
+      "date": "07-19",
+      "cum": 7042,
+      "subject": "Phase 5: Roadmap <-> changelog drift check + changelog catch-up"
     }
   ],
   "categories": [
@@ -1302,7 +1308,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 1696,
+      "value": 1749,
       "tone": "special"
     },
     {

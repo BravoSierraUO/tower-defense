@@ -132,6 +132,12 @@
       "date": "07-19",
       "cum": 6989,
       "subject": "Phase 5: in-game About/Analytics panel reading stats.json"
+    },
+    {
+      "hash": "aa064f4",
+      "date": "07-19",
+      "cum": 7042,
+      "subject": "Phase 5: Roadmap <-> changelog drift check + changelog catch-up"
     }
   ],
   "categories": [
@@ -142,7 +148,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 1696,
+      "value": 1749,
       "tone": "special"
     },
     {
