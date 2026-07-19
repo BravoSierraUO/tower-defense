@@ -156,6 +156,12 @@
       "date": "07-19",
       "cum": 8363,
       "subject": "whatever.html: tab nav, roadmap accordion, 10 new WhatHow flows; fix stuck reset-confirm modal"
+    },
+    {
+      "hash": "7119efb",
+      "date": "07-19",
+      "cum": 8386,
+      "subject": "whatever.html: derive Velocity's commit count from STATS instead of hand-typing it"
     }
   ],
   "categories": [
@@ -166,7 +172,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 2340,
+      "value": 2363,
       "tone": "special"
     },
     {
