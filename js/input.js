@@ -1,11 +1,16 @@
 export class Input {
   constructor(canvas) {
     this.keys = new Set();
+    this.keyPresses = []; // edge-triggered: one entry per keydown, drained each frame
     this.wheelDelta = 0;
     this.mouse = { x: 0, y: 0 };
     this.clicks = [];
 
-    window.addEventListener('keydown', e => this.keys.add(e.key.toLowerCase()));
+    window.addEventListener('keydown', e => {
+      const key = e.key.toLowerCase();
+      if (!this.keys.has(key)) this.keyPresses.push(key);
+      this.keys.add(key);
+    });
     window.addEventListener('keyup', e => this.keys.delete(e.key.toLowerCase()));
 
     canvas.addEventListener('wheel', e => {

@@ -59,6 +59,10 @@
 
         <div class="hud-group hud-right">
 
+            <div id="ui-mode-hint" class="hud-mode-hint">B — Command Core</div>
+
+            <a href="docs.html" target="_blank" class="hud-docs-link">DOCS</a>
+
             <div class="hud-fps">
                 <span id="ui-fps">60</span> FPS
             </div>
@@ -99,10 +103,35 @@
     </aside>
 
     <!-- =========================
-         BUILD BAR
+         COMMAND CORE PANEL
     ========================== -->
 
-    <footer class="build-bar">
+    <aside class="core-panel" id="core-panel" hidden>
+
+        <div class="core-panel-title">Command Core Output</div>
+
+        <div class="core-stat">
+            Power
+            <span id="core-power">0</span>
+        </div>
+
+        <div class="core-stat">
+            Compute
+            <span id="core-compute">0</span>
+        </div>
+
+        <div class="core-stat">
+            Storage Cap
+            <span id="core-storage">0</span>
+        </div>
+
+    </aside>
+
+    <!-- =========================
+         BUILD BARS
+    ========================== -->
+
+    <footer class="build-bar" id="tower-build-bar">
 
         <button class="build-slot">
             <span>1</span>
@@ -127,6 +156,25 @@
         <button class="build-slot">
             <span>5</span>
             Slow
+        </button>
+
+    </footer>
+
+    <footer class="build-bar" id="core-build-bar" hidden>
+
+        <button class="build-slot">
+            <span>1</span>
+            Reactor
+        </button>
+
+        <button class="build-slot">
+            <span>2</span>
+            AI Core
+        </button>
+
+        <button class="build-slot">
+            <span>3</span>
+            Storage
         </button>
 
     </footer>

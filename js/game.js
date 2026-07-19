@@ -1,9 +1,11 @@
+import { CONFIG } from './config.js';
 import { Camera } from './camera.js';
 import { Renderer } from './renderer.js';
 import { Input } from './input.js';
 import { World } from './world.js';
 import { updateCombat } from './combat.js';
 import { UI } from './ui.js';
+import { CommandCore } from './commandcore.js';
 
 export class Game {
   constructor(canvas) {
@@ -12,23 +14,48 @@ export class Game {
     this.renderer = new Renderer(canvas);
     this.input = new Input(canvas);
     this.world = new World();
+    this.commandCore = new CommandCore();
     this.ui = new UI();
     this.lastTime = 0;
     this.fps = 0;
     this.state = 'playing'; // 'playing' | 'won' | 'lost'
+    this.view = 'field'; // 'field' | 'core'
+    this.selectedRoomType = null;
   }
 
   handleInput() {
+    for (const key of this.input.keyPresses) {
+      if (key === 'b' || key === 'tab') {
+        this.view = this.view === 'field' ? 'core' : 'field';
+        this.selectedRoomType = null;
+      } else if (this.view === 'core' && ['1', '2', '3'].includes(key)) {
+        const type = Object.keys(CONFIG.ROOM_TYPES)[Number(key) - 1];
+        if (type) this.selectedRoomType = this.commandCore.isBuilt(type) ? null : type;
+      }
+    }
+    this.input.keyPresses.length = 0;
+
     for (const click of this.input.clicks) {
-      const worldPos = this.camera.screenToWorld(click.x, click.y);
-      this.world.placeTower(worldPos.x, worldPos.y);
+      if (this.view === 'field') {
+        const worldPos = this.camera.screenToWorld(click.x, click.y);
+        this.world.placeTower(worldPos.x, worldPos.y);
+      } else {
+        const cell = this.renderer.screenToCoreCell(click.x, click.y);
+        if (cell && this.selectedRoomType) {
+          if (this.commandCore.placeRoom(this.selectedRoomType, cell.gx, cell.gy)) {
+            this.selectedRoomType = null;
+          }
+        } else if (cell) {
+          this.commandCore.upgradeRoomAt(cell.gx, cell.gy);
+        }
+      }
     }
     this.input.clicks.length = 0;
   }
 
   update(dt) {
-    this.camera.update(this.input, dt);
     this.handleInput();
+    if (this.view === 'field') this.camera.update(this.input, dt);
 
     if (this.state === 'playing') {
       for (const tower of this.world.towers) {
@@ -47,8 +74,12 @@ export class Game {
   }
 
   render() {
-    this.renderer.draw(this.world, this.camera);
-    this.ui.update(this.world, this.fps, this.state);
+    if (this.view === 'field') {
+      this.renderer.draw(this.world, this.camera);
+    } else {
+      this.renderer.drawCore(this.commandCore, this.selectedRoomType);
+    }
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore);
   }
 
   loop(timestamp) {

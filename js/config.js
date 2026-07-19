@@ -51,5 +51,25 @@ export const CONFIG = {
     easy:   { healthMult: 1,    speedMult: 1,    unlockWave: 1, weight: 1 },
     medium: { healthMult: 1.8,  speedMult: 1.15, unlockWave: 4, weight: 0.6 },
     hard:   { healthMult: 3,    speedMult: 1.3,  unlockWave: 8, weight: 0.3 }
+  },
+
+  // Phase 2a: Command Core interior grid. Rooms produce abstract resources
+  // (power/compute/storageCap) with no gameplay effect yet — Phase 2b's
+  // economy is what will spend/consume them.
+  CORE_GRID_SIZE: 8,
+  CORE_CELL_SIZE: 64,
+  ROOM_TYPES: {
+    reactor: {
+      label: 'Reactor', color: '#F3C969', output: 'power',
+      tiers: [{ power: 10 }, { power: 22 }, { power: 40 }]
+    },
+    aiCore: {
+      label: 'AI Core', color: '#62D0FF', output: 'compute',
+      tiers: [{ compute: 5 }, { compute: 12 }, { compute: 24 }]
+    },
+    storage: {
+      label: 'Storage', color: '#9B59B6', output: 'storageCap',
+      tiers: [{ storageCap: 100 }, { storageCap: 250 }, { storageCap: 500 }]
+    }
   }
 };

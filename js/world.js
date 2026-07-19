@@ -11,6 +11,7 @@ export class World {
     this.towers = [];
     this.enemies = [];
     this.projectiles = [];
+    this.score = 0;
     this.base = new Base();
     this.spawner = new Spawner();
     this.spawnRadius = Math.hypot(this.width / 2, this.height / 2) + CONFIG.SPAWN_MARGIN;
@@ -31,6 +32,7 @@ export class World {
   updateEnemies(dt) {
     for (const enemy of this.enemies) {
       enemy.update(dt);
+      if (enemy.isDead()) this.score += Math.round(enemy.maxHealth);
     }
     this.enemies = this.enemies.filter(e => !e.reachedTarget && !e.isDead());
   }

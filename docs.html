@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>tower-defense — code map + roadmap</title>
+<style>
+  :root{
+    --bg:#0B1020;
+    --accent:#62D0FF;
+    --accent-soft:rgba(98,208,255,0.35);
+    --gold:#F3C969;
+    --warn:#FF7070;
+    --text:#EAF1F8;
+    --text-dim:#8B9AB2;
+    --glass:rgba(255,255,255,0.045);
+    --glass-strong:rgba(255,255,255,0.08);
+    --glass-border:rgba(255,255,255,0.09);
+    --phase-1:#4A90E2;
+    --phase-2a:#2ECC71;
+    --phase-2b:#F39C12;
+    --phase-3:#9B59B6;
+    --phase-4:#E74C3C;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'SF Mono','Consolas',monospace;
+    padding:22px;
+    position:relative;
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+
+  /* ambient blobs — OSX-ish soft light field */
+  .blob{
+    position:fixed; border-radius:50%; filter:blur(90px);
+    opacity:0.28; z-index:0; pointer-events:none;
+  }
+  .blob1{width:520px; height:520px; background:#2E6FA6; top:-180px; left:-140px; animation:driftA 26s ease-in-out infinite;}
+  .blob2{width:460px; height:460px; background:#7A4FA0; bottom:-160px; right:-120px; animation:driftB 32s ease-in-out infinite;}
+  .blob3{width:380px; height:380px; background:#B8863B; top:40%; right:20%; animation:driftC 40s ease-in-out infinite;}
+  @keyframes driftA{0%,100%{transform:translate(0,0);} 50%{transform:translate(60px,40px);}}
+  @keyframes driftB{0%,100%{transform:translate(0,0);} 50%{transform:translate(-50px,-30px);}}
+  @keyframes driftC{0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-30px,50px) scale(1.08);}}
+
+  .bg-grid{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      linear-gradient(rgba(98,208,255,0.05) 1px, transparent 1px) 0 0/42px 42px,
+      linear-gradient(90deg, rgba(98,208,255,0.05) 1px, transparent 1px) 0 0/42px 42px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 20%, black, transparent 90%);
+  }
+
+  .content{position:relative; z-index:1; max-width:1180px; margin:0 auto;}
+
+  h1{
+    font-size:15px; color:var(--accent); letter-spacing:1.5px;
+    text-transform:uppercase; margin:0 0 2px 0; font-weight:600;
+    text-shadow:0 0 20px rgba(98,208,255,0.35);
+  }
+  .repo{color:var(--text-dim); font-size:12px; margin:0 0 20px 0;}
+
+  /* glass card */
+  .card{
+    background:var(--glass);
+    backdrop-filter:blur(28px) saturate(160%);
+    -webkit-backdrop-filter:blur(28px) saturate(160%);
+    border:1px solid var(--glass-border);
+    border-radius:18px;
+    padding:18px 20px 20px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:''; position:absolute; inset:0; border-radius:18px;
+    background:linear-gradient(160deg, rgba(255,255,255,0.06), transparent 40%);
+    pointer-events:none;
+  }
+  .chrome{display:flex; gap:6px; margin-bottom:14px;}
+  .chrome span{width:10px; height:10px; border-radius:50%; display:inline-block; opacity:0.55;}
+  .chrome .r{background:#FF6159;} .chrome .y{background:#FFBD2E;} .chrome .g{background:#28C840;}
+
+  /* tabs */
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; position:relative; z-index:1;}
+  .tab-btn{
+    background:var(--glass);
+    backdrop-filter:blur(20px);
+    border:1px solid var(--glass-border);
+    color:var(--text-dim);
+    padding:10px 18px;
+    border-radius:999px;
+    cursor:pointer;
+    font-family:inherit;
+    font-size:11.5px;
+    letter-spacing:0.6px;
+    text-transform:uppercase;
+    transition:all .22s cubic-bezier(.2,.8,.2,1);
+  }
+  .tab-btn:hover{border-color:var(--accent-soft); color:var(--text); transform:translateY(-1px);}
+  .tab-btn.active{
+    background:rgba(98,208,255,0.14);
+    border-color:var(--accent);
+    color:var(--accent);
+    box-shadow:0 0 22px rgba(98,208,255,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+    transform:translateY(-1px);
+  }
+  .tab-btn.gold.active{
+    background:rgba(243,201,105,0.14); border-color:var(--gold); color:var(--gold);
+    box-shadow:0 0 22px rgba(243,201,105,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  .layout{display:grid; grid-template-columns: 1fr 340px; gap:16px; align-items:start;}
+  @media (max-width:900px){ .layout{grid-template-columns:1fr;} }
+
+  /* sub buttons */
+  .subrow{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .sub-btn{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.14);
+    color:var(--text-dim);
+    padding:6px 13px;
+    border-radius:20px;
+    font-family:inherit;
+    font-size:11px;
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+  .sub-btn:hover{color:var(--text); border-color:var(--text-dim); transform:translateY(-1px);}
+  .sub-btn.active{background:var(--accent); color:#04121A; border-color:var(--accent); font-weight:600;}
+  .sub-btn.warn.active{background:var(--warn); border-color:var(--warn);}
+  .sub-btn.gold.active{background:var(--gold); border-color:var(--gold); color:#241902;}
+
+  .flow-title{font-size:12px; color:var(--text-dim); margin-bottom:10px; line-height:1.55;}
+  .flow-title b{color:var(--text);}
+
+  .legend{display:flex; gap:18px; flex-wrap:wrap; font-size:10.5px; color:var(--text-dim); margin:2px 0 14px 0;}
+  .legend .item{display:flex; align-items:center; gap:6px;}
+  .legend .swatch{width:22px; height:0; border-top-width:2px; border-top-style:solid;}
+  .legend .swatch.real{border-color:var(--accent);}
+  .legend .swatch.imagined{border-color:#9DB4CE; border-top-style:dashed;}
+  .legend .swatch.missing{border-color:var(--warn); border-top-style:solid; filter:drop-shadow(0 0 4px var(--warn));}
+  .legend .swatch.phase{border-color:var(--text-dim); border-top-style:dotted;}
+
+  svg text{font-family:'SF Mono','Consolas',monospace;}
+  .node-group{transform-box:fill-box; transform-origin:center; transition:transform .18s ease; cursor:pointer;
+    animation:nodeIn .5s cubic-bezier(.2,.8,.2,1) both;}
+  .node-group:hover{transform:scale(1.035);}
+  @keyframes nodeIn{from{opacity:0; transform:translateY(8px) scale(.97);} to{opacity:1; transform:translateY(0) scale(1);}}
+
+  .node-box{fill:rgba(255,255,255,0.03); stroke:var(--accent); stroke-width:1.3; transition:fill .18s ease, stroke-width .18s ease;}
+  .node-group:hover .node-box{fill:rgba(98,208,255,0.14);}
+  .node-box.selected{fill:rgba(98,208,255,0.22); stroke-width:2;}
+  .node-box.gate{stroke-dasharray:4 3; stroke:#B8C4D6;}
+  .node-box.gate.selected{fill:rgba(184,196,214,0.18);}
+  .node-box.note{stroke:var(--warn); stroke-dasharray:3 3; fill:rgba(255,112,112,0.05);}
+  .node-box.note:hover, .node-group:hover .node-box.note{fill:rgba(255,112,112,0.13);}
+  .node-box.note.selected{fill:rgba(255,112,112,0.2); stroke-width:2;}
+
+  .node-box.real{stroke:var(--accent); fill:rgba(98,208,255,0.05);}
+  .node-box.imagined{stroke:#9DB4CE; stroke-dasharray:5 4; fill:rgba(157,180,206,0.04);}
+  .node-box.imagined.selected{fill:rgba(157,180,206,0.16); stroke-width:2;}
+  .node-box.missing{
+    stroke:var(--warn); stroke-width:1.6; fill:rgba(255,112,112,0.06);
+    filter:drop-shadow(0 0 5px rgba(255,112,112,0.45));
+    animation:pulseRed 2.4s ease-in-out infinite;
+  }
+  .node-box.missing.selected{fill:rgba(255,112,112,0.22); stroke-width:2.4;}
+  @keyframes pulseRed{
+    0%,100%{filter:drop-shadow(0 0 4px rgba(255,112,112,0.35));}
+    50%{filter:drop-shadow(0 0 11px rgba(255,112,112,0.75));}
+  }
+  .node-box.hub{stroke:var(--gold); fill:rgba(243,201,105,0.07); stroke-width:1.8;
+    filter:drop-shadow(0 0 8px rgba(243,201,105,0.35));}
+  .node-box.hub.selected{fill:rgba(243,201,105,0.22);}
+
+  .node-title{fill:var(--text); font-size:12px; font-weight:600;}
+  .node-ref{fill:var(--accent); font-size:9.5px;}
+  .node-ref.warn{fill:var(--warn);}
+  .node-ref.imagined{fill:#9DB4CE;}
+  .node-tag{font-size:8.5px; letter-spacing:0.5px; text-transform:uppercase;}
+  .node-branch{fill:var(--text-dim); font-size:9px;}
+
+  .edge{stroke:rgba(124,138,160,0.5); stroke-width:1.4; fill:none;}
+  .edge-fail{stroke:rgba(255,112,112,0.5); stroke-width:1.2; stroke-dasharray:3 3; fill:none;}
+  .edge-imagined{stroke:rgba(157,180,206,0.55); stroke-width:1.3; stroke-dasharray:5 4; fill:none;}
+  .edge-missing{stroke:rgba(255,112,112,0.55); stroke-width:1.4; stroke-dasharray:5 3; fill:none;}
+  .edge-label{fill:var(--text-dim); font-size:9px;}
+
+  /* phase badge */
+  .phase-badge{
+    display:inline-block; font-size:8px; letter-spacing:0.7px; text-transform:uppercase;
+    padding:3px 8px; border-radius:16px; margin-bottom:8px; font-weight:600;
+  }
+  .phase-badge.p1{background:rgba(74,144,226,0.16); color:#4A90E2; border:1px solid rgba(74,144,226,0.35);}
+  .phase-badge.p2a{background:rgba(46,204,113,0.16); color:#2ECC71; border:1px solid rgba(46,204,113,0.35);}
+  .phase-badge.p2b{background:rgba(243,156,18,0.16); color:#F39C12; border:1px solid rgba(243,156,18,0.35);}
+  .phase-badge.p3{background:rgba(155,89,182,0.16); color:#9B59B6; border:1px solid rgba(155,89,182,0.35);}
+  .phase-badge.p4{background:rgba(231,76,60,0.16); color:#E74C3C; border:1px solid rgba(231,76,60,0.35);}
+
+  .blocker-flag{color:var(--warn); font-size:8px; font-weight:700; text-transform:uppercase; margin-left:6px;}
+  .parallel-flag{color:var(--gold); font-size:8px; font-weight:700; text-transform:uppercase; margin-left:6px;}
+
+  /* roadmap */
+  .roadmap-grid{display:grid; grid-template-columns:1fr; gap:20px;}
+  .roadmap-phase{
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    padding:18px;
+    border-left:4px solid var(--text-dim);
+  }
+  .roadmap-phase.p1{border-left-color:var(--phase-1); background:rgba(74,144,226,0.06);}
+  .roadmap-phase.p2a{border-left-color:var(--phase-2a); background:rgba(46,204,113,0.06);}
+  .roadmap-phase.p2b{border-left-color:var(--phase-2b); background:rgba(243,156,18,0.06);}
+  .roadmap-phase.p3{border-left-color:var(--phase-3); background:rgba(155,89,182,0.06);}
+  .roadmap-phase.p4{border-left-color:var(--phase-4); background:rgba(231,76,60,0.06);}
+
+  .roadmap-header{display:flex; align-items:center; gap:14px; margin-bottom:12px;}
+  .roadmap-num{font-size:20px; font-weight:700; color:var(--accent); width:50px;}
+  .roadmap-phase.p1 .roadmap-num{color:var(--phase-1);}
+  .roadmap-phase.p2a .roadmap-num{color:var(--phase-2a);}
+  .roadmap-phase.p2b .roadmap-num{color:var(--phase-2b);}
+  .roadmap-phase.p3 .roadmap-num{color:var(--phase-3);}
+  .roadmap-phase.p4 .roadmap-num{color:var(--phase-4);}
+  .roadmap-title{font-size:13px; font-weight:600; color:var(--text);}
+  .roadmap-status{font-size:10px; color:var(--text-dim); margin-left:auto; padding:4px 8px; background:rgba(255,255,255,0.06); border-radius:12px;}
+
+  .roadmap-desc{font-size:11px; line-height:1.6; color:var(--text); margin:0 0 12px 0;}
+  .roadmap-checklist{display:flex; flex-direction:column; gap:8px; margin:12px 0;}
+  .roadmap-item{display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--text);}
+  .roadmap-item::before{content:'◆'; color:var(--text-dim); flex-shrink:0; margin-top:1px;}
+  .roadmap-item.blocker{color:#FFB3B3;}
+  .roadmap-item.blocker::before{content:'⚠'; color:var(--warn);}
+
+  .roadmap-depends{background:rgba(243,201,105,0.08); border-left:2px solid var(--gold);
+    padding:9px 11px; margin:12px 0; border-radius:6px; font-size:10px; color:var(--text-dim); line-height:1.5;}
+
+  /* detail panel */
+  .detail h3{color:var(--accent); font-size:13px; margin:0 0 6px 0;}
+  .detail h3.warn{color:var(--warn);}
+  .detail h3.imagined{color:#B7C7DC;}
+  .badge{
+    display:inline-block; font-size:9px; letter-spacing:0.6px; text-transform:uppercase;
+    padding:2px 8px; border-radius:20px; margin-bottom:8px;
+  }
+  .badge.real{background:rgba(98,208,255,0.14); color:var(--accent); border:1px solid var(--accent-soft);}
+  .badge.imagined{background:rgba(157,180,206,0.14); color:#B7C7DC; border:1px solid rgba(157,180,206,0.4);}
+  .badge.missing{background:rgba(255,112,112,0.14); color:var(--warn); border:1px solid rgba(255,112,112,0.4);}
+  .detail .ref{color:var(--text-dim); font-size:10px; margin-bottom:10px; display:block;}
+  .detail p{font-size:11px; line-height:1.6; color:var(--text); margin:0 0 10px 0;}
+  .detail pre{
+    background:rgba(4,8,16,0.7);
+    border:1px solid rgba(98,208,255,0.14);
+    border-radius:10px; padding:10px 12px; font-size:10px;
+    overflow-x:auto; color:#B8E4FF; line-height:1.5; margin:0;
+  }
+  .detail .placeholder{color:var(--text-dim); font-size:11px; line-height:1.6;}
+  .gap-banner{
+    background:rgba(255,112,112,0.07); border:1px solid rgba(255,112,112,0.28);
+    border-radius:10px; padding:10px 12px; font-size:10px; color:var(--warn);
+    margin-bottom:14px; line-height:1.5;
+  }
+  .fade-wrap{animation:fadeSwap .28s cubic-bezier(.2,.8,.2,1) both;}
+  @keyframes fadeSwap{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div>
+<div class="bg-grid"></div>
+
+<div class="content">
+  <h1>tower-defense — code map + roadmap</h1>
+  <p class="repo">github.com/BravoSierraUO/tower-defense · v0.7 Command Core MVP in progress · phases overlay entire map</p>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="layout">
+    <div class="card">
+      <div class="chrome"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <div class="subrow" id="subrow"></div>
+      <div class="flow-title" id="flow-title"></div>
+      <div id="legend-slot"></div>
+      <div id="gap-banner-slot"></div>
+      <svg id="flow-svg" width="100%" viewBox="0 0 640 520">
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="rgba(124,138,160,0.8)"></path>
+          </marker>
+          <marker id="arrow-imagined" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="rgba(157,180,206,0.8)"></path>
+          </marker>
+          <marker id="arrow-missing" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="rgba(255,112,112,0.8)"></path>
+          </marker>
+        </defs>
+        <g id="edges"></g>
+        <g id="nodes"></g>
+      </svg>
+    </div>
+
+    <div class="card detail" id="detail">
+      <div class="chrome"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <p class="placeholder">Click any node to see the exact code — or, on the Economy tab, the imagined design — behind that step.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= PHASES DATA ================= */
+const PHASES = {
+  roadmap: {
+    label: '🗺️ Roadmap',
+    subviews: {
+      timeline: {
+        label: 'Timeline & Blockers',
+        title: 'Five-phase solo dev plan. Some phases block others; some can run parallel. Phases are the reference markers for each chat session.',
+        isRoadmap: true,
+        phases: [
+          {
+            id: 'p1',
+            num: 1,
+            title: 'Core Loop v1.0',
+            status: 'DONE',
+            desc: 'Polish existing tower/enemy/base mechanics. Make the game winnable and loseable. Ship a playable loop.',
+            items: [
+              'Fix UI feedback (shooting, kills, damage, waves) — score was read by ui.js but never set on World; fixed (world.js: world.score, incremented per kill)',
+              'Add game-over state (base destroyed) — done (game.js state machine)',
+              'Add wave clear victory state — done (spawner.complete → state "won")',
+              'Balance enemy scaling + tower power curve — not yet play-tested; current curve (5+2/wave enemies, 20 waves, 50 tower cap) is a first guess'
+            ],
+            notes: 'Complete except live balance tuning, which needs actual playtesting, not just code inspection.'
+          },
+          {
+            id: 'p2a',
+            num: '2a',
+            title: 'Command Core MVP',
+            status: 'IN PROGRESS',
+            desc: 'Build the interior base grid. 3 starter rooms with tier upgrades. Rooms produce pooled resources for Phase 2b to spend — no direct combat buffs yet.',
+            items: [
+              '8x8 grid system + room placement — done (commandcore.js, room.js)',
+              'Reactor (power generation) — done, 3 tiers',
+              'AI Core (compute tokens) — done, 3 tiers',
+              'Storage (resource caps) — done, 3 tiers',
+              'Tier upgrade system (3 levels each) — done, click a placed room to upgrade',
+              'View toggle (B key) + Command Core screen/HUD — done (game.js view state, renderer.drawCore, core-panel/core-build-bar)'
+            ],
+            notes: 'Design decision made: separate full-screen view (not overlay), rooms output abstract resources (power/compute/storageCap) rather than direct satellite multipliers — Phase 2b\'s economy is what consumes these. World simulation keeps running in the background while viewing the Core screen.'
+          },
+          {
+            id: 'p2b',
+            num: '2b',
+            title: 'Skeleton Economy',
+            status: 'NEXT (2a foundation ready)',
+            desc: 'Gold pool, kill rewards, wave bonuses, basic tower cost. Spend Command Core output (power/compute/storageCap) as real modifiers.',
+            items: [
+              'Gold pool (world.gold)',
+              'Kill rewards (tier-scaled)',
+              'Wave clear bonus (lump sum)',
+              'Tower build cost gate',
+              'Tower sell / refund mechanic',
+              'Wire commandCore.totals() (power/compute/storageCap) into economy formulas'
+            ],
+            notes: 'Phase 2a now exposes commandCore.totals() — power/compute/storageCap — ready to be read here.',
+            parallel: true,
+            depends: 'Phase 2a'
+          },
+          {
+            id: 'p3',
+            num: 3,
+            title: 'Full Core + Room Variety',
+            status: 'NEXT',
+            desc: 'Add 7 more room types (Lab, Factory, Hangar, Shield, Dock, etc). Module slots. Research unlocks.',
+            items: [
+              'Lab (research tree hub)',
+              'Factory (build time reduction)',
+              'Hangar (interceptor drones)',
+              'Shield Generator (orbit buff)',
+              'Dock (trading)',
+              'Module slot system',
+              'Tech-tree progression gates'
+            ],
+            notes: 'Depends on Phase 2a & 2b foundation.'
+          },
+          {
+            id: 'p4',
+            num: 4,
+            title: 'Economy Depth',
+            status: 'LATER',
+            desc: 'Combo streaks, passive income, base levels, Research Lab modifier, fast-build upgrades.',
+            items: [
+              'Combo streak multiplier',
+              'Base passive income (per level)',
+              'Research Lab building type',
+              'Fast-Build upgrade modifier',
+              'Cost reduction per Lab level'
+            ],
+            notes: 'Depends on Phase 2b economy shell. Pure additions after that.'
+          }
+        ]
+      }
+    }
+  },
+
+  /* ================= EXISTING REAL TABS ================= */
+  towers: {
+    label: 'Towers',
+    subviews: {
+      gives: {
+        label: 'Gives Damage',
+        title: 'Runs every frame inside <b>updateCombat(world, dt)</b> — combat.js:58, called from game.js\'s Combat step.',
+        nodes: [
+          {id:'a', x:170,y:20, w:300,h:56, type:'step', title:'updateCombat(world, dt)', ref:'combat.js:58-66',
+            phase:'p1', desc:'Loops every tower in world.towers once per frame.',
+            code:`export function updateCombat(world, dt) {
+  for (const tower of world.towers) {
+    if (tower.cooldown > 0) continue;
+    const target = findTarget(tower, world.enemies);
+    if (target) {
+      world.projectiles.push(new Projectile(...));
+      tower.cooldown = 1 / tower.fireRate;
+    }
+  }`},
+          {id:'b', x:170,y:110, w:300,h:56, type:'gate', title:'tower.cooldown <= 0 ?', ref:'combat.js:60',
+            phase:'p1', desc:'Tower.update(dt) ticks cooldown down every frame (tower.js:14). If it hasn\'t reached 0, this tower is skipped entirely for the frame.',
+            code:`// tower.js
+update(dt) {
+  if (this.cooldown > 0) this.cooldown -= dt;
+}`, branch:'no → skip tower this frame'},
+          {id:'c', x:170,y:200, w:300,h:56, type:'step', title:'findTarget(tower, enemies)', ref:'combat.js:34-46',
+            phase:'p1', desc:'Scans world.enemies, picks the closest one inside tower.range (150 units, CONFIG.TOWER_RANGE). Dead or arrived enemies are skipped.',
+            code:`function findTarget(tower, enemies) {
+  let closest = null, closestDist = tower.range;
+  for (const enemy of enemies) {
+    if (enemy.isDead() || enemy.reachedTarget) continue;
+    const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
+    if (dist <= closestDist) { closest = enemy; closestDist = dist; }
+  }
+  return closest;
+}`},
+          {id:'d', x:170,y:290, w:300,h:56, type:'gate', title:'target found ?', ref:'combat.js:62',
+            phase:'p1', desc:'If nothing is in range, no projectile fires this frame.',
+            branch:'no → no shot fired', code:'if (target) { ... }'},
+          {id:'e', x:170,y:380, w:300,h:56, type:'step', title:'new Projectile(...) pushed, cooldown reset', ref:'combat.js:63-64',
+            phase:'p1', desc:'A Projectile is created carrying tower.damage (10, CONFIG.TOWER_DAMAGE) and pushed onto world.projectiles. tower.cooldown is set to 1 / fireRate (1s at default fire rate of 1).',
+            code:`world.projectiles.push(new Projectile(tower.x, tower.y, target, tower.damage));
+tower.cooldown = 1 / tower.fireRate;`},
+          {id:'f', x:170,y:470, w:300,h:56, type:'step', title:'Projectile.update(dt) → target.health -= damage', ref:'combat.js:13-31',
+            phase:'p1', desc:'Each frame the projectile steps toward its target at PROJECTILE_SPEED (500). On arrival it subtracts damage from the enemy\'s health and marks itself dead; dead projectiles are filtered out of world.projectiles at combat.js:71.',
+            code:`if (step >= dist) {
+  this.target.health -= this.damage;
+  this.dead = true;
+} else {
+  this.x += (dx / dist) * step;
+  this.y += (dy / dist) * step;
+}`}
+        ],
+        edges:[['a','b'],['b','c'],['c','d'],['d','e'],['e','f']]
+      },
+      takes: {
+        label: 'Takes Damage',
+        title: 'Not implemented in the current codebase.',
+        gap: 'No enemy-vs-tower combat exists yet. Tower (tower.js:3-11) has no health field and no takeDamage() method. Enemies only ever walk toward the base and only the Base can be damaged (see the Base tab). If you want turrets to be attackable, that\'s new code, not something to look up.',
+        nodes: [
+          {id:'note', x:70,y:180, w:500,h:110, type:'note', title:'⚠ No such flow exists', ref:'tower.js:3-11', phase:'future',
+            desc:'Tower class currently only stores position, range, damage, fireRate and cooldown — no health.',
+            code:`export class Tower {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.range = CONFIG.TOWER_RANGE;
+    this.damage = CONFIG.TOWER_DAMAGE;
+    this.fireRate = CONFIG.TOWER_FIRE_RATE;
+    this.cooldown = 0;
+    // no health / no takeDamage()
+  }
+}`}
+        ],
+        edges:[]
+      },
+      placement: {
+        label: 'Placement',
+        title: 'Click → screen-to-world → <b>world.placeTower(x, y)</b> — game.js:22-26, world.js:52-67.',
+        nodes: [
+          {id:'a', x:170,y:20, w:300,h:50, type:'step', title:'canvas click → input.clicks[]', ref:'input.js:22-24', phase:'p1',
+            desc:'A raw click listener on the canvas records screen-space click coordinates.',
+            code:`canvas.addEventListener('click', e => {
+  this.clicks.push({ x: e.offsetX, y: e.offsetY });
+});`},
+          {id:'b', x:170,y:100, w:300,h:50, type:'step', title:'game.js converts + calls placeTower', ref:'game.js:22-26', phase:'p1',
+            desc:'Each queued click is converted from screen to world space via the camera, then handed to the world.',
+            code:`const worldPos = this.camera.screenToWorld(click.x, click.y);
+this.world.placeTower(worldPos.x, worldPos.y);`},
+          {id:'c', x:170,y:180, w:300,h:50, type:'gate', title:'towers.length < TOWER_MAX_COUNT ?', ref:'world.js:53', phase:'p1',
+            branch:'no → return null', desc:'Hard cap of 50 towers (CONFIG.TOWER_MAX_COUNT).', code:`if (this.towers.length >= CONFIG.TOWER_MAX_COUNT) return null;`},
+          {id:'d', x:170,y:260, w:300,h:50, type:'step', title:'snapToGrid(x, y)', ref:'world.js:38-44, 55', phase:'p1',
+            desc:'Snaps the click to the nearest 40-unit grid cell center (CONFIG.GRID_SIZE).', code:`snapToGrid(x, y) {
+  const size = CONFIG.GRID_SIZE;
+  return { x: Math.floor(x/size)*size + size/2,
+           y: Math.floor(y/size)*size + size/2 };
+}`},
+          {id:'e', x:170,y:340, w:300,h:50, type:'gate', title:'inside world? not too close to base? empty cell?', ref:'world.js:56-62', phase:'p1',
+            branch:'any fail → return null', desc:'Three checks in sequence: isInsideWorld, distance to base >= TOWER_MIN_BASE_DISTANCE (60), and the grid cell isn\'t already occupied.',
+            code:`if (!this.isInsideWorld(snapped.x, snapped.y)) return null;
+if (distToBase < CONFIG.TOWER_MIN_BASE_DISTANCE) return null;
+if (occupied) return null;`},
+          {id:'f', x:170,y:420, w:300,h:50, type:'step', title:'new Tower(x, y) pushed to world.towers', ref:'world.js:64-66', phase:'p2b',
+            desc:'Phase 1: free placement. Phase 2b: cost gate inserts before this.', code:`const tower = new Tower(snapped.x, snapped.y);
+this.towers.push(tower);
+return tower;`}
+        ],
+        edges:[['a','b'],['b','c'],['c','d'],['d','e'],['e','f']]
+      }
+    }
+  },
+  base: {
+    label: 'Base',
+    subviews: {
+      takes: {
+        label: 'Takes Damage',
+        title: 'Runs inside <b>updateCombat</b> → <b>resolveBaseHits(world)</b> — combat.js:49-56.',
+        nodes: [
+          {id:'a', x:170,y:20, w:300,h:56, type:'step', title:'Enemy.update(dt) moves toward base', ref:'enemy.js:17-33', phase:'p1',
+            desc:'Every enemy walks a straight line from its spawn point toward (targetX, targetY), which is the base\'s position, passed in at construction (world.js:24).',
+            code:`const dx = this.targetX - this.x;
+const dy = this.targetY - this.y;
+if (step >= dist) { this.x = this.targetX; this.y = this.targetY; this.reachedTarget = true; }
+else { this.x += (dx/dist)*step; this.y += (dy/dist)*step; }`},
+          {id:'b', x:170,y:110, w:300,h:56, type:'gate', title:'reachedTarget === true ?', ref:'enemy.js:28', phase:'p1',
+            branch:'no → keep walking', desc:'Flips true once the enemy reaches the base\'s exact position.', code:'this.reachedTarget = true;'},
+          {id:'c', x:170,y:200, w:300,h:56, type:'step', title:'resolveBaseHits(world)', ref:'combat.js:49-56', phase:'p1',
+            desc:'Called at the end of every updateCombat pass. Loops all enemies looking for ones that just arrived.',
+            code:`function resolveBaseHits(world) {
+  for (const enemy of world.enemies) {
+    if (enemy.reachedTarget && !enemy.hasHitBase) {
+      world.base.takeDamage(CONFIG.ENEMY_BASE_DAMAGE);
+      enemy.hasHitBase = true;
+    }
+  }
+}`},
+          {id:'d', x:170,y:290, w:300,h:56, type:'gate', title:'hasHitBase === false ?', ref:'combat.js:51', phase:'p1',
+            branch:'yes/already hit → skip (prevents repeat damage)', desc:'hasHitBase guards against the same enemy damaging the base every single frame while it sits at the base position.'},
+          {id:'e', x:170,y:380, w:300,h:56, type:'step', title:'base.takeDamage(ENEMY_BASE_DAMAGE)', ref:'base.js:12-14', phase:'p1',
+            desc:'ENEMY_BASE_DAMAGE = 10 (config.js:28). Health is clamped at 0, never negative.', code:`takeDamage(amount) {
+  this.health = Math.max(0, this.health - amount);
+}`},
+          {id:'f', x:170,y:470, w:300,h:56, type:'step', title:'base.isDestroyed() checked', ref:'base.js:16-18', phase:'p1',
+            desc:'Returns true once health hits 0. Nothing currently reads this to end the game — no game-over flow is wired up yet.', code:`isDestroyed() {
+  return this.health <= 0;
+}`}
+        ],
+        edges:[['a','b'],['b','c'],['c','d'],['d','e'],['e','f']]
+      },
+      cost: {
+        label: 'Cost / Economy',
+        title: 'Phase 2b: Economy System',
+        gap: 'No cost or economy system exists in the repo yet. Phase 2b adds: gold pool, kill rewards, wave bonuses, tower cost gate, sell/refund.',
+        nodes:[
+          {id:'note', x:60,y:160, w:520,h:130, type:'note', title:'⚠ Phase 2b will add this', ref:'will appear in Phase 2b', phase:'p2b',
+            desc:'Economy is entirely missing today. After Phase 2a (room foundation), Phase 2b wires up gold, costs, and upgrades.',
+            code:`// Phase 2b will add:
+this.gold = CONFIG.STARTING_GOLD;
+// world.placeTower() will check cost
+// kill rewards + wave bonuses
+// sell/refund mechanics`}
+        ],
+        edges:[]
+      }
+    }
+  },
+  enemies: {
+    label: 'Enemies',
+    subviews: {
+      lifecycle: {
+        label: 'Spawn → Move → Die',
+        title: 'Spawn ring logic lives in <b>world.spawnEnemy()</b> — world.js:20-25.',
+        nodes: [
+          {id:'a', x:170,y:20, w:300,h:56, type:'step', title:'Spawner picks a difficulty tier', ref:'spawner.js:15-25', phase:'p1',
+            desc:'Weighted random among easy/medium/hard, filtered to tiers unlocked at the current wave (CONFIG.DIFFICULTY_TIERS).'},
+          {id:'b', x:170,y:110, w:300,h:56, type:'step', title:'world.spawnEnemy(healthMult, speedMult)', ref:'world.js:20-25', phase:'p1',
+            desc:'Picks a random angle, places the enemy on a ring just outside the world bounds (spawnRadius = world diagonal/2 + SPAWN_MARGIN), aimed at the base\'s x/y.',
+            code:`const angle = Math.random() * Math.PI * 2;
+const x = this.base.x + Math.cos(angle) * this.spawnRadius;
+const y = this.base.y + Math.sin(angle) * this.spawnRadius;
+this.enemies.push(new Enemy(x, y, this.base.x, this.base.y, healthMultiplier, speedMultiplier));`},
+          {id:'c', x:170,y:200, w:300,h:56, type:'step', title:'Enemy.update(dt) every frame', ref:'enemy.js:17-33', phase:'p1',
+            desc:'Straight-line walk toward the base at speed = ENEMY_SPEED (100) × tier speedMult. No pathfinding, no waypoints — the world is static and open.'},
+          {id:'d', x:170,y:290, w:300,h:56, type:'gate', title:'health <= 0 (isDead) OR reachedTarget ?', ref:'enemy.js:35-37, enemy.js:13', phase:'p1',
+            desc:'Either condition marks the enemy for removal.', branch:'both false → keep updating'},
+          {id:'e', x:170,y:380, w:300,h:56, type:'step', title:'World.updateEnemies filters the array', ref:'world.js:31-36', phase:'p1',
+            desc:'Dead or arrived enemies are removed from world.enemies at the end of the frame.',
+            code:`this.enemies = this.enemies.filter(e => !e.reachedTarget && !e.isDead());`}
+        ],
+        edges:[['a','b'],['b','c'],['c','d'],['d','e']]
+      }
+    }
+  },
+  spawner: {
+    label: 'Spawner',
+    subviews: {
+      states: {
+        label: 'Wave State Machine',
+        title: '<b>Spawner</b> — spawner.js:4-65. Three states: countdown → spawning → active.',
+        nodes: [
+          {id:'a', x:170,y:20, w:300,h:56, type:'step', title:'countdown', ref:'spawner.js:37-41', phase:'p1',
+            desc:'Timer ticks down from WAVE_START_DELAY (first wave) or WAVE_INTERVAL (later waves). At 0, startNextWave() runs.'},
+          {id:'b', x:170,y:110, w:300,h:56, type:'step', title:'startNextWave()', ref:'spawner.js:27-32', phase:'p1',
+            desc:'enemiesToSpawn = WAVE_BASE_ENEMIES + (wave-1) × WAVE_ENEMY_GROWTH (5 + 2 per wave).',
+            code:`this.waveNumber++;
+this.enemiesToSpawn = CONFIG.WAVE_BASE_ENEMIES + (this.waveNumber - 1) * CONFIG.WAVE_ENEMY_GROWTH;
+this.state = 'spawning';`},
+          {id:'c', x:170,y:200, w:300,h:56, type:'step', title:'spawning: pickTier() + world.spawnEnemy()', ref:'spawner.js:43-51', phase:'p1',
+            desc:'One enemy every ENEMY_SPAWN_INTERVAL (1.2s) until enemiesToSpawn hits 0, then state → active.'},
+          {id:'d', x:170,y:290, w:300,h:56, type:'gate', title:'active: world.enemies.length === 0 ?', ref:'spawner.js:55-63', phase:'p1',
+            branch:'no → wait', desc:'Waits until every spawned enemy is dead or has hit the base.'},
+          {id:'e', x:170,y:380, w:300,h:56, type:'gate', title:'waveNumber >= MAX_WAVES ?', ref:'spawner.js:57-62', phase:'p1',
+            desc:'MAX_WAVES = 20 (config.js). If reached, spawner.complete = true and the loop stops permanently. Otherwise loops back to countdown.',
+            branch:'no → back to countdown', code:`if (this.waveNumber >= CONFIG.MAX_WAVES) { this.complete = true; }
+else { this.state = 'countdown'; this.timer = CONFIG.WAVE_INTERVAL; }`}
+        ],
+        edges:[['a','b'],['b','c'],['c','d'],['d','e']]
+      }
+    }
+  },
+
+  economy: {
+    label: '💠 Economy (Imagined)',
+    gold: true,
+    subviews: {
+      web: {
+        label: 'Full Economy Web',
+        layout: 'web',
+        title: '<b>Speculative.</b> This is the Phase 2b & 4 expansion. Sources, sinks, and modifiers cross-connect instead of linear flow.',
+        nodes: [
+          {id:'hub',   x:330,y:290, w:220,h:70, type:'missing', tag:'hub · missing', title:'Gold Pool', ref:'world.gold',
+            phase:'p2b', desc:'The central currency every source feeds and every sink drains. Phase 2b adds this.',
+            code:`// Phase 2b addition
+this.gold = CONFIG.STARTING_GOLD ?? 0;`},
+
+          {id:'srcKill', x:20,y:40, w:220,h:64, type:'imagined', tag:'source', title:'Enemy Kill Reward', ref:'Phase 2b hook',
+            phase:'p2b', desc:'Pay gold the instant a projectile kills an enemy. Reward scales with enemy tier.'},
+          {id:'srcWave', x:290,y:20, w:220,h:64, type:'imagined', tag:'source', title:'Wave Clear Bonus', ref:'Phase 2b hook',
+            phase:'p2b', desc:'Lump sum when world.enemies.length hits 0 and spawner → countdown.'},
+          {id:'srcBase', x:560,y:40, w:220,h:64, type:'imagined', tag:'source', title:'Base Level — Passive Income', ref:'Phase 4',
+            phase:'p4', desc:'Slow trickle per second, scaled by upgradeable base level. Phase 4 addition.'},
+
+          {id:'modCombo', x:20,y:300, w:200,h:70, type:'imagined', tag:'modifier', title:'Combo Streak Bonus', ref:'Phase 4',
+            phase:'p4', desc:'Kills inside short window stack a multiplier on next kill reward.'},
+          {id:'modResearch', x:630,y:300, w:210,h:70, type:'imagined', tag:'modifier · phase 3', title:'Research Lab', ref:'Phase 3',
+            phase:'p3', desc:'A second building type (not Tower) that discounts costs elsewhere by a %.'},
+          {id:'modFast', x:630,y:430, w:210,h:64, type:'imagined', tag:'modifier · phase 4', title:'Fast-Build Upgrade', ref:'Phase 4',
+            phase:'p4', desc:'Reduces tower cooldown recovery — fire-rate buff bought with gold.'},
+
+          {id:'sinkBuild', x:80,y:460, w:220,h:70, type:'missing', tag:'sink · phase 2b', title:'Tower Build Cost (gate)', ref:'Phase 2b',
+            phase:'p2b', desc:'world.placeTower() checks cost before creating tower. Inserts right before tower push.'},
+          {id:'sinkUpgrade', x:330,y:460, w:210,h:64, type:'imagined', tag:'sink · phase 3', title:'Tower Upgrade Cost', ref:'Phase 3',
+            phase:'p3', desc:'Spend gold to bump a tower\'s damage/range/fireRate.'},
+          {id:'sinkSell', x:560,y:460, w:200,h:64, type:'imagined', tag:'sink → refund', title:'Tower Sell / Refund', ref:'Phase 2b',
+            phase:'p2b', desc:'Reclaim a % of what was spent.'},
+          {id:'sinkRepair', x:20,y:560, w:190,h:64, type:'imagined', tag:'sink · phase 4', title:'Base Repair Cost', ref:'Phase 4',
+            phase:'p4', desc:'Spend gold to restore base health mid-wave.'},
+
+          {id:'realPlace', x:80,y:640, w:260,h:60, type:'real', tag:'real · phase 1', title:'world.placeTower() [existing]', ref:'world.js:52-67',
+            phase:'p1', desc:'Real function today — grid/distance/occupancy checks. Phase 2b gate inserts before push.'},
+          {id:'realCooldown', x:400,y:610, w:260,h:60, type:'real', tag:'real · phase 1', title:'Tower.cooldown / fireRate [existing]', ref:'tower.js:9-14',
+            phase:'p1', desc:'Real fields today. Phase 4 multiplies fireRate to apply Fast-Build.'}
+        ],
+        edges:[
+          ['srcKill','hub','imagined'],
+          ['srcWave','hub','imagined'],
+          ['srcBase','hub','imagined'],
+          ['modCombo','srcKill','imagined','×streak'],
+          ['srcBase','modResearch','imagined','unlocks @ lvl 3'],
+          ['modResearch','sinkBuild','imagined','−% cost'],
+          ['modResearch','sinkUpgrade','imagined','−% cost'],
+          ['modResearch','modFast','imagined','further discount'],
+          ['hub','sinkBuild','missing','spend'],
+          ['hub','sinkUpgrade','imagined','spend'],
+          ['hub','sinkRepair','imagined','spend'],
+          ['sinkSell','hub','imagined','+refund %'],
+          ['sinkBuild','realPlace','missing','gate inserts here'],
+          ['modFast','realCooldown','imagined','−cooldown %']
+        ]
+      }
+    }
+  }
+};
+
+/* ---------- render plumbing ---------- */
+const tabsEl = document.getElementById('tabs');
+const subrowEl = document.getElementById('subrow');
+const titleEl = document.getElementById('flow-title');
+const nodesEl = document.getElementById('nodes');
+const edgesEl = document.getElementById('edges');
+const svgEl = document.getElementById('flow-svg');
+const detailEl = document.getElementById('detail');
+const bannerSlot = document.getElementById('gap-banner-slot');
+const legendSlot = document.getElementById('legend-slot');
+
+let currentTab = 'roadmap';
+let currentSub = 'timeline';
+
+function buildTabs(){
+  tabsEl.innerHTML = '';
+  Object.keys(PHASES).forEach(key => {
+    const btn = document.createElement('button');
+    const gold = !!PHASES[key].gold;
+    btn.className = 'tab-btn' + (gold ? ' gold' : '') + (key === currentTab ? ' active' : '');
+    btn.textContent = PHASES[key].label;
+    btn.onclick = () => { currentTab = key; currentSub = Object.keys(PHASES[key].subviews)[0]; render(); };
+    tabsEl.appendChild(btn);
+  });
+}
+
+function buildSubrow(){
+  subrowEl.innerHTML = '';
+  const subs = PHASES[currentTab].subviews;
+  const gold = !!PHASES[currentTab].gold;
+  Object.keys(subs).forEach(key => {
+    const btn = document.createElement('button');
+    const isWarnTab = !!subs[key].gap;
+    btn.className = 'sub-btn' + (isWarnTab ? ' warn' : gold ? ' gold' : '') + (key === currentSub ? ' active' : '');
+    btn.textContent = subs[key].label;
+    btn.onclick = () => { currentSub = key; render(); };
+    subrowEl.appendChild(btn);
+  });
+}
+
+function getPhaseColor(phase){
+  const colors = {p1:'#4A90E2', p2a:'#2ECC71', p2b:'#F39C12', p3:'#9B59B6', p4:'#E74C3C'};
+  return colors[phase] || '#8B9AB2';
+}
+
+function getPhaseClass(phase){
+  const classes = {p1:'p1', p2a:'p2a', p2b:'p2b', p3:'p3', p4:'p4'};
+  return classes[phase] || 'p1';
+}
+
+function renderRoadmap(){
+  const view = PHASES.roadmap.subviews.timeline;
+  titleEl.innerHTML = view.title;
+  legendSlot.innerHTML = '';
+  bannerSlot.innerHTML = '';
+  nodesEl.innerHTML = '';
+  edgesEl.innerHTML = '';
+  detailEl.querySelector('.chrome')?.remove?.();
+  detailEl.innerHTML = '<div class="chrome"><span class="r"></span><span class="y"></span><span class="g"></span></div><p class="placeholder">Click any phase card to expand details.</p>';
+
+  const grid = document.createElement('div');
+  grid.className = 'roadmap-grid';
+
+  view.phases.forEach((ph, idx) => {
+    const card = document.createElement('div');
+    card.className = 'roadmap-phase ' + getPhaseClass(ph.id);
+
+    const header = document.createElement('div');
+    header.className = 'roadmap-header';
+    header.innerHTML = `
+      <div class="roadmap-num">${ph.num}</div>
+      <div class="roadmap-title">${ph.title}</div>
+      <div class="roadmap-status">${ph.status}</div>
+    `;
+    card.appendChild(header);
+
+    const desc = document.createElement('div');
+    desc.className = 'roadmap-desc';
+    desc.textContent = ph.desc;
+    card.appendChild(desc);
+
+    const list = document.createElement('div');
+    list.className = 'roadmap-checklist';
+    ph.items.forEach(item => {
+      const li = document.createElement('div');
+      li.className = 'roadmap-item';
+      li.textContent = item;
+      list.appendChild(li);
+    });
+    card.appendChild(list);
+
+    if (ph.depends){
+      const dep = document.createElement('div');
+      dep.className = 'roadmap-depends';
+      dep.innerHTML = `<b>⊗ Waits for:</b> ${ph.depends}`;
+      card.appendChild(dep);
+    }
+
+    if (ph.notes){
+      const note = document.createElement('div');
+      note.className = 'roadmap-depends';
+      note.style.borderColor = ph.blocker ? 'var(--warn)' : 'var(--gold)';
+      note.innerHTML = (ph.blocker ? '⚠ <b>Blocker:</b> ' : '◈ <b>Note:</b> ') + ph.notes;
+      card.appendChild(note);
+    }
+
+    card.addEventListener('click', () => showPhaseDetail(ph));
+    grid.appendChild(card);
+  });
+
+  const layout = document.querySelector('.layout');
+  if(layout) layout.innerHTML = '';
+  layout.appendChild(grid);
+}
+
+function showPhaseDetail(ph){
+  detailEl.innerHTML = `
+    <div class="chrome"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+    <div class="fade-wrap">
+      <span class="phase-badge ${getPhaseClass(ph.id)}">Phase ${ph.num}</span>
+      <h3 style="color:${getPhaseColor(ph.id)}">${ph.title}</h3>
+      <p>${ph.desc}</p>
+      ${ph.depends ? `<div class="roadmap-depends"><b>Depends on:</b> ${ph.depends}</div>` : ''}
+      ${ph.blocker ? `<div class="gap-banner">⚠ This phase blocks downstream work. Prioritize accordingly.</div>` : ''}
+      ${ph.notes ? `<p style="color:var(--text-dim); font-size:10px; line-height:1.6;"><b>Notes:</b> ${ph.notes}</p>` : ''}
+    </div>
+  `;
+}
+
+function buildLegend(view){
+  legendSlot.innerHTML = '';
+  if (view.layout !== 'web') return;
+  const wrap = document.createElement('div');
+  wrap.className = 'legend';
+  wrap.innerHTML = `
+    <div class="item"><span class="swatch real"></span>real code, in the repo today</div>
+    <div class="item"><span class="swatch imagined"></span>imagined — not built yet</div>
+    <div class="item"><span class="swatch missing"></span>missing variable — core gap</div>
+    <div class="item"><span class="swatch phase"></span>phase tags on nodes</div>
+  `;
+  legendSlot.appendChild(wrap);
+}
+
+function rectPort(node, dirX, dirY){
+  const halfW = node.w/2, halfH = node.h/2;
+  const cx = node.x + node.w/2, cy = node.y + node.h/2;
+  if (dirX === 0 && dirY === 0) return {x:cx, y:cy};
+  const scaleX = dirX !== 0 ? halfW/Math.abs(dirX) : Infinity;
+  const scaleY = dirY !== 0 ? halfH/Math.abs(dirY) : Infinity;
+  const scale = Math.min(scaleX, scaleY) * 0.98;
+  return {x: cx + dirX*scale, y: cy + dirY*scale};
+}
+
+function buildFlow(){
+  const view = PHASES[currentTab].subviews[currentSub];
+  if(view.isRoadmap) return renderRoadmap();
+
+  titleEl.innerHTML = view.title;
+  buildLegend(view);
+
+  bannerSlot.innerHTML = '';
+  if (view.gap) {
+    const b = document.createElement('div');
+    b.className = 'gap-banner';
+    b.textContent = view.gap;
+    bannerSlot.appendChild(b);
+  }
+
+  nodesEl.innerHTML = '';
+  edgesEl.innerHTML = '';
+  detailEl.querySelector('.chrome')?.remove();
+  detailEl.innerHTML = '<div class="chrome"><span class="r"></span><span class="y"></span><span class="g"></span></div><p class="placeholder">Click any node to see the code or design behind that step.</p>';
+
+  const byId = {};
+  view.nodes.forEach(n => byId[n.id] = n);
+
+  let maxX = 640, maxY = 100;
+  view.nodes.forEach(n => {
+    if (n.x + n.w + 20 > maxX) maxX = n.x + n.w + 20;
+    if (n.y + n.h + 20 > maxY) maxY = n.y + n.h + 20;
+  });
+  svgEl.setAttribute('viewBox', `0 0 ${maxX} ${maxY}`);
+
+  if (view.layout === 'web') {
+    (view.edges || []).forEach(([from, to, kind, label]) => {
+      const a = byId[from], b = byId[to];
+      const acx = a.x+a.w/2, acy = a.y+a.h/2, bcx = b.x+b.w/2, bcy = b.y+b.h/2;
+      const dx = bcx-acx, dy = bcy-acy;
+      const p1 = rectPort(a, dx, dy);
+      const p2 = rectPort(b, -dx, -dy);
+      const midX = (p1.x+p2.x)/2, midY = (p1.y+p2.y)/2;
+      const nx = -(p2.y-p1.y), ny = (p2.x-p1.x);
+      const nlen = Math.hypot(nx,ny) || 1;
+      const bend = 18;
+      const cx = midX + (nx/nlen)*bend, cy = midY + (ny/nlen)*bend;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M${p1.x},${p1.y} Q${cx},${cy} ${p2.x},${p2.y}`);
+      const cls = kind === 'missing' ? 'edge-missing' : kind === 'imagined' ? 'edge-imagined' : 'edge';
+      path.setAttribute('class', cls);
+      path.setAttribute('marker-end', kind === 'missing' ? 'url(#arrow-missing)' : kind === 'imagined' ? 'url(#arrow-imagined)' : 'url(#arrow)');
+      edgesEl.appendChild(path);
+
+      if (label) {
+        const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+        t.setAttribute('x', cx); t.setAttribute('y', cy - 4);
+        t.setAttribute('text-anchor','middle');
+        t.setAttribute('class','edge-label');
+        t.textContent = label;
+        edgesEl.appendChild(t);
+      }
+    });
+  } else {
+    (view.edges || []).forEach(([from, to]) => {
+      const a = byId[from], b = byId[to];
+      const x = a.x + a.w/2, y1 = a.y + a.h, y2 = b.y;
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M${x},${y1} L${x},${y2}`);
+      path.setAttribute('class','edge');
+      path.setAttribute('marker-end','url(#arrow)');
+      edgesEl.appendChild(path);
+    });
+  }
+
+  view.nodes.forEach((n, i) => {
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('class','node-group');
+    g.style.animationDelay = (i*35) + 'ms';
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', n.x); rect.setAttribute('y', n.y);
+    rect.setAttribute('width', n.w); rect.setAttribute('height', n.h);
+    rect.setAttribute('rx', 14);
+    let boxClass = 'node-box';
+    if (n.type === 'gate') boxClass += ' gate';
+    else if (n.type === 'note') boxClass += ' note';
+    else if (n.type === 'imagined') boxClass += ' imagined';
+    else if (n.type === 'missing') boxClass += n.id === 'hub' ? ' missing hub' : ' missing';
+    else if (n.type === 'real') boxClass += ' real';
+    rect.setAttribute('class', boxClass);
+    rect.dataset.id = n.id;
+    g.appendChild(rect);
+
+    if (n.tag) {
+      const tag = document.createElementNS('http://www.w3.org/2000/svg','text');
+      tag.setAttribute('x', n.x + 16); tag.setAttribute('y', n.y + 18);
+      tag.setAttribute('class', 'node-tag ' + (n.type === 'missing' ? 'node-ref warn' : n.type === 'imagined' ? 'node-ref imagined' : 'node-ref'));
+      tag.textContent = n.tag;
+      g.appendChild(tag);
+    }
+
+    const title = document.createElementNS('http://www.w3.org/2000/svg','text');
+    title.setAttribute('x', n.x + 16); title.setAttribute('y', n.y + (n.tag ? 38 : 24));
+    title.setAttribute('class', 'node-title');
+    title.textContent = n.title;
+    g.appendChild(title);
+
+    const ref = document.createElementNS('http://www.w3.org/2000/svg','text');
+    ref.setAttribute('x', n.x + 16); ref.setAttribute('y', n.y + (n.tag ? 56 : 42));
+    ref.setAttribute('class', 'node-ref' + (n.type === 'note' || n.type === 'missing' ? ' warn' : n.type === 'imagined' ? ' imagined' : ''));
+    ref.textContent = n.ref;
+    g.appendChild(ref);
+
+    if (n.branch) {
+      const br = document.createElementNS('http://www.w3.org/2000/svg','text');
+      br.setAttribute('x', n.x + n.w - 10); br.setAttribute('y', n.y + n.h - 8);
+      br.setAttribute('text-anchor','end');
+      br.setAttribute('class','node-branch');
+      br.textContent = n.branch;
+      g.appendChild(br);
+    }
+
+    // Phase badge
+    if(n.phase) {
+      const phaseBadgeElem = document.createElementNS('http://www.w3.org/2000/svg','text');
+      phaseBadgeElem.setAttribute('x', n.x + 16); phaseBadgeElem.setAttribute('y', n.y + n.h - 6);
+      phaseBadgeElem.setAttribute('class', 'node-ref ' + getPhaseClass(n.phase));
+      phaseBadgeElem.setAttribute('font-size', '7px');
+      phaseBadgeElem.setAttribute('text-transform', 'uppercase');
+      const phaseLabel = n.phase === 'p1' ? 'Phase 1' : n.phase === 'p2a' ? 'Phase 2a' : n.phase === 'p2b' ? 'Phase 2b' : n.phase === 'p3' ? 'Phase 3' : n.phase === 'p4' ? 'Phase 4' : n.phase;
+      phaseBadgeElem.textContent = phaseLabel;
+      g.appendChild(phaseBadgeElem);
+    }
+
+    g.addEventListener('click', () => selectNode(n));
+    nodesEl.appendChild(g);
+  });
+}
+
+function selectNode(n){
+  document.querySelectorAll('.node-box').forEach(el => el.classList.remove('selected'));
+  const el = nodesEl.querySelector(`[data-id="${n.id}"]`);
+  if (el) el.classList.add('selected');
+
+  const badge = n.type === 'missing' ? '<span class="badge missing">missing variable</span>'
+              : n.type === 'imagined' ? '<span class="badge imagined">imagined — not built</span>'
+              : n.type === 'note' ? '<span class="badge missing">not implemented</span>'
+              : n.type === 'real' ? '<span class="badge real">real code today</span>' : '';
+  const phaseBadge = n.phase ? `<span class="phase-badge ${getPhaseClass(n.phase)}">Phase ${n.phase === 'p1' ? '1' : n.phase === 'p2a' ? '2a' : n.phase === 'p2b' ? '2b' : n.phase === 'p3' ? '3' : n.phase === 'p4' ? '4' : n.phase}</span>` : '';
+
+  detailEl.innerHTML = `
+    <div class="chrome"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+    <div class="fade-wrap">
+      ${phaseBadge}
+      ${badge}
+      <h3 class="${n.type==='note'||n.type==='missing' ? 'warn' : n.type==='imagined' ? 'imagined' : ''}">${n.title}</h3>
+      <span class="ref">${n.ref}</span>
+      <p>${n.desc || ''}</p>
+      ${n.code ? `<pre>${escapeHtml(n.code)}</pre>` : ''}
+    </div>
+  `;
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function render(){
+  buildTabs();
+  buildSubrow();
+  buildFlow();
+}
+render();
+</script>
+</body>
+</html>

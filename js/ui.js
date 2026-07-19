@@ -12,6 +12,14 @@ export class UI {
     this.baseFill = document.getElementById('ui-base-fill');
     this.baseText = document.getElementById('ui-base-text');
     this.banner = document.getElementById('ui-banner');
+
+    this.modeHint = document.getElementById('ui-mode-hint');
+    this.corePanel = document.getElementById('core-panel');
+    this.corePower = document.getElementById('core-power');
+    this.coreCompute = document.getElementById('core-compute');
+    this.coreStorage = document.getElementById('core-storage');
+    this.towerBuildBar = document.getElementById('tower-build-bar');
+    this.coreBuildBar = document.getElementById('core-build-bar');
   }
 
   currentTierName(waveNumber) {
@@ -21,9 +29,21 @@ export class UI {
     return entries.length ? entries[0][0] : '-';
   }
 
-  update(world, fps, state) {
+  update(world, fps, state, view, commandCore) {
     const spawner = world.spawner;
     const base = world.base;
+
+    const inCore = view === 'core';
+    this.modeHint.textContent = inCore ? 'B — Tower Field' : 'B — Command Core';
+    this.corePanel.hidden = !inCore;
+    this.coreBuildBar.hidden = !inCore;
+    this.towerBuildBar.hidden = inCore;
+    if (inCore) {
+      const totals = commandCore.totals();
+      this.corePower.textContent = totals.power;
+      this.coreCompute.textContent = totals.compute;
+      this.coreStorage.textContent = totals.storageCap;
+    }
 
     this.scoreEl.textContent = world.score;
     this.waveEl.textContent = `${spawner.waveNumber} / ${CONFIG.MAX_WAVES}`;

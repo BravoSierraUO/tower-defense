@@ -30,6 +30,7 @@ html,body{
 .hud-top,
 .build-bar,
 .tower-card,
+.core-panel,
 .ui-banner{
 
     backdrop-filter:blur(18px);
@@ -170,6 +171,43 @@ html,body{
     opacity:.45;
 }
 
+.hud-mode-hint{
+
+    font-size:12px;
+
+    opacity:.55;
+
+    letter-spacing:1px;
+}
+
+.hud-docs-link{
+
+    font-size:11px;
+
+    letter-spacing:1.5px;
+
+    color:#7ED9FF;
+
+    text-decoration:none;
+
+    opacity:.75;
+
+    pointer-events:auto;
+
+    border:1px solid rgba(126,217,255,.3);
+
+    border-radius:8px;
+
+    padding:4px 10px;
+}
+
+.hud-docs-link:hover{
+
+    opacity:1;
+
+    background:rgba(126,217,255,.08);
+}
+
 /* ===========================
    BUILD BAR
 =========================== */
@@ -272,6 +310,47 @@ html,body{
 }
 
 .tower-stat{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    padding:8px 0;
+
+    border-bottom:1px solid rgba(255,255,255,.05);
+}
+
+/* ===========================
+   CORE PANEL
+=========================== */
+
+.core-panel{
+
+    position:absolute;
+
+    right:24px;
+
+    bottom:130px;
+
+    width:260px;
+
+    padding:22px;
+
+    pointer-events:none;
+}
+
+.core-panel-title{
+
+    font-size:16px;
+
+    font-weight:700;
+
+    margin-bottom:16px;
+
+    color:#7ED9FF;
+}
+
+.core-stat{
 
     display:flex;
 
