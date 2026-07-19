@@ -304,16 +304,28 @@
   <div class="eyebrow">Velocity</div>
   <h2>What shipped, and how fast</h2>
   <p class="lede">Pulled straight from <code style="font-family:var(--mono)">git log</code>, not
-    estimated — <b id="ledeCommitCount">·</b> commits, one solo dev, a ~58-hour span across 4 days
-    (hours are hand-refreshed — see the Maintenance comment by STATS below), from an empty canvas
-    to a base-building economy with a real tech tree, a persistent progression system, and this page.</p>
+    estimated — <b id="ledeCommitCount">·</b> commits, one solo dev, ~<b id="ledeActiveHours">·</b>
+    active hours across <b id="ledeSessionCount">·</b> sessions over <b id="ledeActiveDays">·</b>
+    days, from an empty canvas to a base-building economy with a real tech tree, a persistent
+    progression system, and this page.</p>
 
   <div class="stats" style="margin-top:22px">
     <div class="stat"><b id="statTotalLines">·</b><span>lines across the repo</span></div>
     <div class="stat"><b id="statCommitCount">·</b><span>commits</span></div>
-    <div class="stat"><b>~58h</b><span>across 4 days</span></div>
+    <div class="stat"><b id="statActiveHours">·</b><span>active hours (<span id="statSessionCount">·</span> sessions)</span></div>
     <div class="stat"><b>61%</b><span>test lines per engine line</span></div>
   </div>
+
+  <p style="color:var(--ink-3);font-size:13px;max-width:640px;margin-top:6px">
+    How "active hours" is computed, honestly: commits within <span id="methodGapHours">·</span>
+    hours of each other count as the same work session; a bigger gap means time off, not counted.
+    Each session's length is its own first-to-last-commit span (floored at 15min so a single quick
+    commit isn't ~0h). This is a disclosed estimate from real timestamps
+    (<code style="font-family:var(--mono)">scripts/gen-stats.mjs</code>), not a precise
+    time-tracker reading — there isn't one for an agent-paired workflow with dense commit bursts.
+    A raw first-to-last-commit span (which is what this number used to be, hand-typed and left
+    stale) would count every overnight gap as "hours" too — this doesn't.
+  </p>
 
   <div class="vgrid">
     <div class="vcard">
@@ -1669,9 +1681,14 @@ renderAll();
 // yet when its pre-commit hook runs — known, accepted limitation, not a bug.
 // The commit COUNT below (lede + stat tile + commit-log heading) is computed from STATS.growth at
 // render time, not hand-typed — it can't go stale independently again. The "~58h across 4 days"
-// span still IS hand-typed prose: stats.json only stores a short display date ("07-19") per commit,
-// not a real timestamp, so the span can't be derived in-browser yet. Re-check it by hand
-// periodically (`git log --format=%at | ...`) until gen-stats.mjs captures real timestamps.
+// span used to be hand-typed prose too, and it showed: caught 2026-07-19 sitting stale at 58h
+// after real elapsed time had already passed it, while commits/lines kept auto-updating around it.
+// Fixed the same way commit count was: STATS.velocity (activeHours/sessionCount/activeDays) is now
+// computed server-side in gen-stats.mjs from real commit epoch timestamps (git log --format=%at),
+// not the short display date this growth array uses — see that file for the session-clustering
+// methodology (a session is commits within SESSION_GAP_HOURS of each other; a bigger gap is time
+// off, not counted), and the Velocity section's own on-page note for the same explanation in
+// plain language. Nothing left to hand re-check periodically.
 // STATS_GENERATED_START
 const STATS = {
   "growth": [
@@ -1908,17 +1925,23 @@ const STATS = {
       "date": "07-19",
       "cum": 9242,
       "subject": "Phase 9b: Radial Menu Rework — click-to-open, not always-on"
+    },
+    {
+      "hash": "3711392",
+      "date": "07-19",
+      "cum": 9439,
+      "subject": "Phase 7a: Satellite Identity — Damage Triangle"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 3098,
+      "value": 3192,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2764,
+      "value": 2792,
       "tone": "special"
     },
     {
@@ -1928,10 +1951,16 @@ const STATS = {
     },
     {
       "label": "Tests",
-      "value": 1549,
+      "value": 1624,
       "tone": "ok"
     }
-  ]
+  ],
+  "velocity": {
+    "activeHours": 17.9,
+    "sessionCount": 4,
+    "activeDays": 4,
+    "sessionGapHours": 5
+  }
 };
 // STATS_GENERATED_END
 
@@ -2006,10 +2035,18 @@ function renderCommitLog() {
 document.getElementById('statTotalLines').textContent =
   STATS.categories.reduce((s,c)=>s+c.value,0).toLocaleString();
 // Commit count is derived from STATS.growth (same auto-generated data the chart plots) instead of
-// hand-typed, so it can't drift the way the hour-span prose above did — see the 2026-07-19 fix.
+// hand-typed, so it can't drift the way the hour-span prose used to (that one sat stale at "~58h"
+// for days while commits/lines kept moving — fixed 2026-07-19 by deriving hours the same way,
+// see scripts/gen-stats.mjs's STATS.velocity and the methodology note in the prose above).
 document.getElementById('ledeCommitCount').textContent = STATS.growth.length;
 document.getElementById('statCommitCount').textContent = STATS.growth.length;
 document.getElementById('commitLogCount').textContent = STATS.growth.length;
+document.getElementById('ledeActiveHours').textContent = STATS.velocity.activeHours;
+document.getElementById('ledeSessionCount').textContent = STATS.velocity.sessionCount;
+document.getElementById('ledeActiveDays').textContent = STATS.velocity.activeDays;
+document.getElementById('statActiveHours').textContent = STATS.velocity.activeHours;
+document.getElementById('statSessionCount').textContent = STATS.velocity.sessionCount;
+document.getElementById('methodGapHours').textContent = STATS.velocity.sessionGapHours;
 renderGrowthChart();
 renderPieChart();
 renderCommitLog();

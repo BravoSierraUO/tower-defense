@@ -45,6 +45,36 @@ const growth = log.map(line => {
   return { hash: short, date, cum, subject };
 });
 
+// "Hours" used to be a hand-typed string in whatever.html's Velocity section — it drifted
+// stale for days while commits/lines kept auto-updating underneath it (caught 2026-07-19,
+// sitting at "~58h" long after real elapsed time had passed it). Same fix already applied
+// to commit count in v2.2 (auto-derive instead of hand-type): compute it here from real
+// commit timestamps instead.
+//
+// A raw first-commit-to-last-commit span isn't "hours worked" — it swallows every overnight
+// gap between sessions. So this clusters commits into sessions first: consecutive commits
+// within SESSION_GAP_HOURS of each other count as the same session (still working); a wider
+// gap means time off, not counted. Each session's duration is its own first-to-last-commit
+// span, floored at SESSION_FLOOR_HOURS so a session that's just one or two rapid-fire commits
+// doesn't count as ~0 hours. This isn't a precise time-tracker reading — no such thing exists
+// for an agent-paired workflow with dense commit bursts — it's a best-effort, disclosed
+// estimate (see the Velocity section's own methodology note, right where this number renders).
+const SESSION_GAP_HOURS = 5;
+const SESSION_FLOOR_HOURS = 0.25;
+const epochs = git('log', '--reverse', '--format=%at').trim().split('\n').filter(Boolean).map(Number);
+const sessions = [];
+let current = [epochs[0]];
+for (const t of epochs.slice(1)) {
+  if (t - current[current.length - 1] <= SESSION_GAP_HOURS * 3600) current.push(t);
+  else { sessions.push(current); current = [t]; }
+}
+sessions.push(current);
+const activeHours = Math.round(
+  sessions.reduce((sum, s) => sum + Math.max(s[s.length - 1] - s[0], SESSION_FLOOR_HOURS * 3600), 0) / 3600 * 10
+) / 10;
+const sessionCount = sessions.length;
+const activeDays = new Set(growth.map(g => g.date)).size;
+
 const CATEGORY_ORDER = [
   ['Engine (JS)', 'sig'],
   ['Docs & tooling', 'special'],
@@ -61,6 +91,7 @@ const stats = {
   generatedAt: new Date().toISOString().slice(0, 10),
   growth,
   categories,
+  velocity: { activeHours, sessionCount, activeDays, sessionGapHours: SESSION_GAP_HOURS },
 };
 
 writeFileSync(path.join(ROOT, 'stats.json'), JSON.stringify(stats, null, 2) + '\n');
@@ -75,9 +106,9 @@ if (startIdx === -1 || endIdx === -1) {
   console.error('gen-stats: STATS_GENERATED_START/END markers not found in whatever.html');
   process.exit(1);
 }
-const inlineStats = { growth: stats.growth, categories: stats.categories };
+const inlineStats = { growth: stats.growth, categories: stats.categories, velocity: stats.velocity };
 const replacement = `${START}\nconst STATS = ${JSON.stringify(inlineStats, null, 2)};\n${END}`;
 const updatedDoc = doc.slice(0, startIdx) + replacement + doc.slice(endIdx + END.length);
 writeFileSync(docPath, updatedDoc);
 
-console.log(`gen-stats: wrote stats.json + refreshed whatever.html (${growth.length} commits, ${categories.reduce((s, c) => s + c.value, 0)} lines)`);
+console.log(`gen-stats: wrote stats.json + refreshed whatever.html (${growth.length} commits, ${categories.reduce((s, c) => s + c.value, 0)} lines, ~${activeHours}h across ${sessionCount} sessions/${activeDays} days)`);
