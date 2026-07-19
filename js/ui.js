@@ -20,15 +20,15 @@ import { MissionBanner } from './ui/missionBanner.js';
 export class UI {
   // callbacks: { onUnlockTech(id), onDockTrade(), onPrestige(), onBuySkill(id),
   // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold(), onToggleAbout(),
-  // onReportBug() } —
+  // onReportBug(), onSelectFieldBuild(type), onSelectRoomType(type) } —
   // UI only translates DOM clicks into these; it never mutates gameplay state
   // directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onTriggerWave } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onTriggerWave, onSelectFieldBuild, onSelectRoomType } = {}) {
     this.modeHint = document.getElementById('ui-mode-hint');
 
     this.hud = new HudPanel({ onRestart, onRepairBase, onTriggerWave });
-    this.core = new CorePanel({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold });
-    this.field = new FieldPanel();
+    this.core = new CorePanel({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold, onSelectRoomType });
+    this.field = new FieldPanel({ onSelectFieldBuild });
     this.profile = new ProfilePanel({ onPrestige, onBuySkill, onClose: onToggleProfile });
     this.about = new AboutPanel({ onToggleAbout });
     this.mission = new MissionBanner();
@@ -42,7 +42,7 @@ export class UI {
     this.avatarMenu = new AvatarMenu({ onToggleProfile, onToggleAbout, onToggleSettings, onReportBug, onOpenResetConfirm });
   }
 
-  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, fieldBuildType, missions) {
+  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, fieldBuildType, missions, selectedRoomType) {
     const spawner = world.spawner;
     const base = world.base;
 
@@ -60,7 +60,7 @@ export class UI {
     this.settings.el.hidden = !inSettings;
 
     this.settings.update(inSettings, profile);
-    if (inCore) this.core.update(world, commandCore);
+    if (inCore) this.core.update(world, commandCore, selectedRoomType);
 
     const snap = profile.snapshot();
     if (inProfile) this.profile.update(snap, profile);

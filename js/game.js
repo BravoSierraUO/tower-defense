@@ -34,6 +34,8 @@ export class Game {
       onMarketBuyMetal: () => this.world.tradeGoldForMetal(),
       onMarketBuyGold: () => this.world.tradeMetalForGold(),
       onTriggerWave: () => this.world.spawner.triggerWave(),
+      onSelectFieldBuild: type => this.selectFieldBuild(type),
+      onSelectRoomType: type => this.selectRoomType(type),
       onToggleAbout: () => { this.view = this.view === 'about' ? 'field' : 'about'; this.selectedRoomType = null; },
       onToggleProfile: () => { this.view = this.view === 'profile' ? 'field' : 'profile'; this.selectedRoomType = null; },
       onToggleSettings: () => { this.view = this.view === 'settings' ? 'field' : 'settings'; this.selectedRoomType = null; },
@@ -91,6 +93,20 @@ export class Game {
     if (this.profile.prestige()) this.restart();   // banked the payout — start the next climb fresh
   }
 
+  // Shared by the '1'/'2' keyboard shortcut and the radial build-bar's click
+  // handler — one code path for field-view placement mode.
+  selectFieldBuild(type) {
+    this.fieldBuildType = type;
+  }
+
+  // Shared by the '1'-'9'/'0' keyboard shortcut and the radial build-bar's
+  // click handler — same toggle-off-if-already-selected-or-built convention
+  // the Core view has used since Phase 4b.
+  selectRoomType(type) {
+    if (!type || !this.commandCore.isRoomUnlocked(type)) return;
+    this.selectedRoomType = this.commandCore.isBuilt(type) ? null : type;
+  }
+
   // Phase 5c, smallest safe slice: no backend, no embedded token (a static client-side
   // game has nowhere safe to hold one) — just GitHub's own pre-filled "new issue" URL
   // scheme, auto-populated with enough run context to be useful, opened in a new tab.
@@ -138,16 +154,11 @@ export class Game {
         // with '0' as the 10th slot instead of computing to -1.
         const keyOrder = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
         const idx = keyOrder.indexOf(key);
-        if (idx !== -1) {
-          const type = Object.keys(CONFIG.ROOM_TYPES)[idx];
-          if (type && this.commandCore.isRoomUnlocked(type)) {
-            this.selectedRoomType = this.commandCore.isBuilt(type) ? null : type;
-          }
-        }
+        if (idx !== -1) this.selectRoomType(Object.keys(CONFIG.ROOM_TYPES)[idx]);
       } else if (this.view === 'field' && (key === '1' || key === '2')) {
         // Phase 4c: same number-key-selects-buildable-type convention the Core
-        // view already uses for its 8 room slots.
-        this.fieldBuildType = key === '1' ? 'tower' : 'scavenger';
+        // view already uses for its 10 room slots.
+        this.selectFieldBuild(key === '1' ? 'tower' : 'scavenger');
       }
     }
     this.input.keyPresses.length = 0;
@@ -274,7 +285,7 @@ export class Game {
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.fieldBuildType, this.missions);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.fieldBuildType, this.missions, this.selectedRoomType);
   }
 
   loop(timestamp) {

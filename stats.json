@@ -216,22 +216,28 @@
       "date": "07-19",
       "cum": 8777,
       "subject": "Code-quality pass: split ui.js into js/ui/ panel modules, reformat style.css"
+    },
+    {
+      "hash": "5ac305f",
+      "date": "07-19",
+      "cum": 8879,
+      "subject": "Add panel close affordance (X + footer Close) to profile/about/settings panels"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2814,
+      "value": 2820,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2653,
+      "value": 2682,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1761,
+      "value": 1828,
       "tone": "info"
     },
     {

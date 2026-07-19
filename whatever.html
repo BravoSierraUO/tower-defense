@@ -14,7 +14,7 @@
     --info:#9aa8e8; --idle:#8a93a3; --special:#c79ae8;
     --phase-1:#4A90E2; --phase-2a:#2ECC71; --phase-2b:#F39C12; --phase-3:#9B59B6;
     --phase-4:#E74C3C; --phase-4b:#C0392B; --phase-4c:#C97B3C; --phase-4d:#D9A441; --phase-5:#8B9AB2;
-    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393;
+    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393; --phase-9:#5BC8FF;
     --body:Inter,system-ui,"Segoe UI",sans-serif;
     --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
     color-scheme:dark;
@@ -640,7 +640,23 @@ const ROADMAP = [
       'Escort-ship special abilities — not yet itemized, same "needs real design" flag Phase 6\'s orbital abilities carry'
     ],
     depends:'Phase 8c (hero must exist first)',
-    note:'Least scoped of the four — geometry and stage-progression math still need real numbers, same standing caution every other phase in this doc gives before a difficulty curve gets invented from nothing. Sequenced last per the user\'s own ordering: loop rework, then missions, then hero, then patrols.' }
+    note:'Least scoped of the four — geometry and stage-progression math still need real numbers, same standing caution every other phase in this doc gives before a difficulty curve gets invented from nothing. Sequenced last per the user\'s own ordering: loop rework, then missions, then hero, then patrols.' },
+  { id:'p9', num:'9', title:'Radial Build Menu — Field & Command Core', status:'DONE', color:'--phase-9',
+    desc:'Replaces the flat bottom build bar in both views with a mouse-clickable radial fan around a center hub. Closes a real interaction gap along the way, not just a reskin: the build slots were keyboard-only before this — number keys worked, but clicking a slot with the mouse did nothing.',
+    items:[
+      'Shared arc-placement helper (`js/ui/radialLayout.js`) computes each slot\'s position once at construction — reused by both the 2-slot Field bar (tight ~80° arc) and the 10-slot Core bar (~170° arc), no per-bar duplication',
+      'Real click-to-select added for the first time — `game.js`\'s inline keyboard-only `fieldBuildType`/`selectedRoomType` mutation was refactored into shared `selectFieldBuild()`/`selectRoomType()` methods so keyboard and mouse click share one code path and the same unlocked/already-built guards',
+      'Core bar\'s 6 previously id-less slots (Reactor/AI Core/Storage/Lab/Mine/Market) got real ids so they\'re individually addressable, and the whole Core bar gained a `.selected` highlight ring it never had before (only `.locked` dimming existed previously)',
+      '`.build-bar` collapsed to a zero-size anchor point; `.build-slot` became a circular button positioned via a computed `translate(x,y)`; a `.radial-hub` center dot labels each bar ("Build" / "Rooms")'
+    ],
+    note:'Sparked by a reference screenshot of a radial/pie build menu the user shared during Phase 8b\'s build-bar bug hunt, floated then as a fallback in case that bug resisted debugging — it didn\'t, so the idea sat unbuilt until picked up here as its own real UI pass. Verified live via Playwright: hover, click-to-select, the "Placing: X — click an empty cell" mode hint, and the new selection ring on both bars were all screenshot-confirmed. See changelog.md v2.9.' },
+  { id:'p10', num:'10', title:'Mobile Companion — Session Handoff & the "Watching" Illusion', status:'BACKLOG · NOT SCOPED', color:'--phase-5',
+    desc:'A user idea (2026-07-19), deliberately later-design and not shaped yet. Explicitly NOT a mobile port of the real-time build/combat loop the web/desktop (and forthcoming PWA) already cover — the companion\'s real job is quieter: carry your session between machines, phone as the go-between, so switching from one PC to another doesn\'t mean losing progress. It presents itself as "watching your base," but underneath it\'s closer to a timer/sync utility that stores settings and timestamps than a live remote dashboard.',
+    items:[
+      'Not yet scoped: no save-sync transport, no phone-as-relay mechanism, and no cross-device profile format exist today — `profile.js` only persists to one browser\'s localStorage, with zero export/remote path',
+      'Deliberately ruled out by the user\'s own framing, so it doesn\'t need re-litigating later: this is not a second full client mirroring the PC build/combat loop — that\'s what the PWA is for'
+    ],
+    note:'Filed unscoped on purpose, same caution Phase 7/8d already carry — no transport design, no data format, no UI shape decided. Depends in spirit on the PWA the user mentioned in the same conversation (not yet its own roadmap card) — "carry my session to another PC" only becomes a real need once there\'s a real installable PWA to carry a session between.' }
 ];
 
 function renderRoadmap(){
@@ -709,6 +725,35 @@ const FLOWS = [
       { from: 'glow', to: 'help', dashed: true, tone: 'idle' }
     ]
   },
+  {
+    id: 'radialbuild', group: 'Getting started',
+    title: 'A radial menu picks what you build',
+    summary: 'The flat bottom build bar became a mouse-clickable radial fan around a center hub, and gained real click support for the first time — previously both bars were keyboard-only chrome, number keys only, nothing happened if you clicked one.',
+    lanes: ['Input', 'Shared selector', 'Bar state', 'Placement'],
+    nodes: [
+      { id: 'input', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Number key OR click a\nradial build-slot',
+        code_ref: 'js/input.js (keys) + js/ui/fieldPanel.js, corePanel.js (new click listeners)',
+        detail: "Two independent input paths now converge on the same call. The '1'/'2' and '1'-'9'/'0' keyboard shortcuts (game.js handleInput) are unchanged; new this phase is a native click listener on every .build-slot button — they were purely decorative to the mouse before, number-key-only." },
+      { id: 'shared', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'Game#selectFieldBuild()\nGame#selectRoomType()',
+        code_ref: 'js/game.js',
+        detail: "Keyboard handling was refactored to call these instead of mutating fieldBuildType/selectedRoomType inline, so mouse and keyboard share one code path. selectRoomType() still re-checks isRoomUnlocked/isBuilt — a locked or already-built radial slot can't be selected by a stray click any more than by a stray keypress." },
+      { id: 'state', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'fieldBuildType /\nselectedRoomType updates',
+        code_ref: 'js/game.js',
+        detail: "Same state either bar already read every frame — nothing about what gets stored changed, only how it gets set." },
+      { id: 'visual', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: '.selected ring on the\nchosen radial slot',
+        code_ref: 'js/ui/fieldPanel.js, corePanel.js',
+        detail: "The 2-slot field bar already had this ring. The 10-slot Core bar gained a selection ring for the first time this phase — previously it only had the .locked dim state, no way to see which room type (if any) was currently armed." },
+      { id: 'place', col: 3, row: 1.75, kind: 'process', tone: 'idle', label: 'Field/grid click\nplaces the selection',
+        code_ref: 'js/game.js (handleInput)',
+        detail: "Unchanged by this phase — the radial menu only changed how the mode gets picked, not what a subsequent click on the field or a Core grid cell does with it." }
+    ],
+    edges: [
+      { from: 'input', to: 'shared' },
+      { from: 'shared', to: 'state', tone: 'ok' },
+      { from: 'state', to: 'visual', tone: 'sig' },
+      { from: 'visual', to: 'place', dashed: true, tone: 'idle' }
+    ]
+  },
 
   // ============================= BUILDING YOUR BASE =============================
   {
@@ -717,9 +762,9 @@ const FLOWS = [
     summary: 'Placing a room in the interior 8×8 grid: the validity checks, the gold gate, the build timer, and the moment it starts contributing to the base.',
     lanes: ['Input', 'Guard', 'Gold', 'Timer', 'Output'],
     nodes: [
-      { id: 'pick', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Pick a room type\nnumber key, unlocked only',
-        code_ref: 'game.js (handleInput)',
-        detail: "Number keys 1–9 then 0 map to CONFIG.ROOM_TYPES in order (10 room types as of the Market room — Mine and Market were both added after this flow was first drawn, growing the list from 8). A key only arms selectedRoomType when commandCore.isRoomUnlocked(type) — a locked type (Factory/Hangar/Shield/Dock, gated by the tech tree) just doesn't respond to its key yet." },
+      { id: 'pick', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Pick a room type\nnumber key or radial-slot click',
+        code_ref: 'game.js (handleInput) + js/ui/corePanel.js',
+        detail: "Number keys 1–9 then 0 map to CONFIG.ROOM_TYPES in order (10 room types as of the Market room — Mine and Market were both added after this flow was first drawn, growing the list from 8). Clicking the same room's slot in the radial Core build-bar does the same thing (added alongside the radial-menu rework — see 'A radial menu picks what you build' above). Either path only arms selectedRoomType when commandCore.isRoomUnlocked(type) — a locked type (Factory/Hangar/Shield/Dock, gated by the tech tree) just doesn't respond." },
       { id: 'valid', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'placeRoom() validity\ntype, tech, slot, cell',
         code_ref: 'commandcore.js (placeRoom)',
         detail: "Five checks in one function: the type exists, its requiresTech gate is unlocked, no room of that type already exists (one-of-each is deliberate — see the Roadmap above for why), the cell is inside the 8×8 grid, and the cell is empty. Any failure returns null before a single grain of gold is touched." },
@@ -1824,22 +1869,28 @@ const STATS = {
       "date": "07-19",
       "cum": 8777,
       "subject": "Code-quality pass: split ui.js into js/ui/ panel modules, reformat style.css"
+    },
+    {
+      "hash": "5ac305f",
+      "date": "07-19",
+      "cum": 8879,
+      "subject": "Add panel close affordance (X + footer Close) to profile/about/settings panels"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2814,
+      "value": 2820,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2653,
+      "value": 2682,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1761,
+      "value": 1828,
       "tone": "info"
     },
     {

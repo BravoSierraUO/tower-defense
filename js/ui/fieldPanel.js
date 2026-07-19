@@ -1,14 +1,21 @@
 // Field view: the Tower/Scavenger build-mode picker slots (shown when nothing is
 // selected) and the inspector card for whichever tower/scavenger was last clicked
 // (Phase 4b/4c). Grouped together because both only apply in view === 'field'.
+import { layoutRadial } from './radialLayout.js';
+
 export class FieldPanel {
-  constructor() {
+  constructor({ onSelectFieldBuild } = {}) {
     this.towerBuildBar = document.getElementById('tower-build-bar');
 
     this.fieldSlotTower = document.getElementById('field-slot-tower');
     this.fieldSlotScavenger = document.getElementById('field-slot-scavenger');
     this.fieldSlotTowerCost = document.getElementById('field-slot-tower-cost');
     this.fieldSlotScavengerCost = document.getElementById('field-slot-scavenger-cost');
+
+    this.fieldSlotTower.addEventListener('click', () => onSelectFieldBuild?.('tower'));
+    this.fieldSlotScavenger.addEventListener('click', () => onSelectFieldBuild?.('scavenger'));
+
+    layoutRadial([this.fieldSlotTower, this.fieldSlotScavenger], { radius: 110, arcDegrees: 80 });
 
     this.towerCard = document.getElementById('tower-card');
     this.towerNameEl = document.getElementById('tower-name');
