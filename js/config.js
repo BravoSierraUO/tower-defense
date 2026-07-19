@@ -71,5 +71,18 @@ export const CONFIG = {
       label: 'Storage', color: '#9B59B6', output: 'storageCap',
       tiers: [{ storageCap: 100 }, { storageCap: 250 }, { storageCap: 500 }]
     }
-  }
+  },
+
+  // Phase 2b: Skeleton Economy. Command Core output now has a real effect —
+  // Reactor(power) discounts tower cost, AI Core(compute) boosts gold
+  // rewards, Storage(storageCap) raises the gold cap.
+  STARTING_GOLD: 100,
+  GOLD_CAP_BASE: 500,
+  TOWER_COST: 40,
+  TOWER_SELL_REFUND_PCT: 0.6,
+  GOLD_PER_ENEMY_HEALTH: 0.4,
+  WAVE_CLEAR_BONUS_BASE: 20,
+  WAVE_CLEAR_BONUS_GROWTH: 5,
+  CORE_POWER_COST_DISCOUNT_PER_POINT: 0.005, // Reactor: 0.5% cheaper towers per power
+  CORE_COMPUTE_REWARD_BONUS_PER_POINT: 0.01  // AI Core: 1% more gold per compute
 };

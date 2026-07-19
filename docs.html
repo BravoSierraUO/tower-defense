@@ -278,7 +278,7 @@
 
 <div class="content">
   <h1>tower-defense — code map + roadmap</h1>
-  <p class="repo">github.com/BravoSierraUO/tower-defense · v0.7 Command Core MVP in progress · phases overlay entire map</p>
+  <p class="repo">github.com/BravoSierraUO/tower-defense · v0.8 Skeleton Economy · phases overlay entire map</p>
 
   <div class="tabs" id="tabs"></div>
 
@@ -343,7 +343,7 @@ const PHASES = {
             id: 'p2a',
             num: '2a',
             title: 'Command Core MVP',
-            status: 'IN PROGRESS',
+            status: 'DONE',
             desc: 'Build the interior base grid. 3 starter rooms with tier upgrades. Rooms produce pooled resources for Phase 2b to spend — no direct combat buffs yet.',
             items: [
               '8x8 grid system + room placement — done (commandcore.js, room.js)',
@@ -359,17 +359,17 @@ const PHASES = {
             id: 'p2b',
             num: '2b',
             title: 'Skeleton Economy',
-            status: 'NEXT (2a foundation ready)',
-            desc: 'Gold pool, kill rewards, wave bonuses, basic tower cost. Spend Command Core output (power/compute/storageCap) as real modifiers.',
+            status: 'DONE',
+            desc: 'Gold pool, kill rewards, wave bonuses, basic tower cost. Command Core output (power/compute/storageCap) is now a real modifier, not just a number on a panel.',
             items: [
-              'Gold pool (world.gold)',
-              'Kill rewards (tier-scaled)',
-              'Wave clear bonus (lump sum)',
-              'Tower build cost gate',
-              'Tower sell / refund mechanic',
-              'Wire commandCore.totals() (power/compute/storageCap) into economy formulas'
+              'Gold pool (world.gold) — done, capped by goldCap()',
+              'Kill rewards (tier-scaled) — done, enemy.maxHealth × GOLD_PER_ENEMY_HEALTH × rewardMultiplier()',
+              'Wave clear bonus (lump sum) — done, spawner.js awards on wave clear',
+              'Tower build cost gate — done, world.placeTower() checks gold vs. towerCost()',
+              'Tower sell / refund mechanic — done, right-click a tower for 60% refund',
+              'Wire commandCore.totals() into economy formulas — done: Reactor(power)→cheaper towers, AI Core(compute)→bigger rewards, Storage(storageCap)→higher gold cap'
             ],
-            notes: 'Phase 2a now exposes commandCore.totals() — power/compute/storageCap — ready to be read here.',
+            notes: 'Command Core rooms now do something the moment you build them — the Economy tab\'s web diagram reflects the real wiring.',
             parallel: true,
             depends: 'Phase 2a'
           },
@@ -646,26 +646,41 @@ else { this.state = 'countdown'; this.timer = CONFIG.WAVE_INTERVAL; }`}
   },
 
   economy: {
-    label: '💠 Economy (Imagined)',
+    label: '💠 Economy',
     gold: true,
     subviews: {
       web: {
         label: 'Full Economy Web',
         layout: 'web',
-        title: '<b>Speculative.</b> This is the Phase 2b & 4 expansion. Sources, sinks, and modifiers cross-connect instead of linear flow.',
+        title: 'Phase 2b landed the gold pool, sources, and the Command Core → economy link. Phase 3 & 4 modifiers are still speculative.',
         nodes: [
-          {id:'hub',   x:330,y:290, w:220,h:70, type:'missing', tag:'hub · missing', title:'Gold Pool', ref:'world.gold',
-            phase:'p2b', desc:'The central currency every source feeds and every sink drains. Phase 2b adds this.',
-            code:`// Phase 2b addition
-this.gold = CONFIG.STARTING_GOLD ?? 0;`},
+          {id:'hub',   x:330,y:290, w:220,h:70, type:'real', tag:'hub · real', title:'Gold Pool', ref:'world.js:15,37-39',
+            phase:'p2b', desc:'Central currency every source feeds and every sink drains. Capped by goldCap() — Storage room output raises the cap.',
+            code:`this.gold = CONFIG.STARTING_GOLD;
+goldCap() { return CONFIG.GOLD_CAP_BASE + this.commandCore.totals().storageCap; }
+addGold(amount) { this.gold = Math.min(this.goldCap(), this.gold + amount); }`},
 
-          {id:'srcKill', x:20,y:40, w:220,h:64, type:'imagined', tag:'source', title:'Enemy Kill Reward', ref:'Phase 2b hook',
-            phase:'p2b', desc:'Pay gold the instant a projectile kills an enemy. Reward scales with enemy tier.'},
-          {id:'srcWave', x:290,y:20, w:220,h:64, type:'imagined', tag:'source', title:'Wave Clear Bonus', ref:'Phase 2b hook',
-            phase:'p2b', desc:'Lump sum when world.enemies.length hits 0 and spawner → countdown.'},
+          {id:'srcKill', x:20,y:40, w:220,h:64, type:'real', tag:'source · real', title:'Enemy Kill Reward', ref:'world.js:53-61',
+            phase:'p2b', desc:'Pays gold the instant an enemy dies, scaled by enemy.maxHealth (tier) and the Command Core reward multiplier.',
+            code:`if (enemy.isDead()) {
+  this.addGold(Math.round(
+    enemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * this.rewardMultiplier()
+  ));
+}`},
+          {id:'srcWave', x:290,y:20, w:220,h:64, type:'real', tag:'source · real', title:'Wave Clear Bonus', ref:'spawner.js:55-66',
+            phase:'p2b', desc:'Lump sum awarded the instant world.enemies.length hits 0, before the state moves to countdown/complete.',
+            code:`const bonus = CONFIG.WAVE_CLEAR_BONUS_BASE
+  + (this.waveNumber - 1) * CONFIG.WAVE_CLEAR_BONUS_GROWTH;
+world.addGold(Math.round(bonus * world.rewardMultiplier()));`},
           {id:'srcBase', x:560,y:40, w:220,h:64, type:'imagined', tag:'source', title:'Base Level — Passive Income', ref:'Phase 4',
             phase:'p4', desc:'Slow trickle per second, scaled by upgradeable base level. Phase 4 addition.'},
 
+          {id:'modCore', x:330,y:150, w:240,h:70, type:'real', tag:'modifier · real', title:'Command Core Output', ref:'world.js:22-35',
+            phase:'p2a', desc:'Reactor(power) discounts tower cost, AI Core(compute) boosts the reward multiplier, Storage(storageCap) raises the gold cap. Reads commandCore.totals() live.',
+            code:`towerCost() { return Math.round(CONFIG.TOWER_COST *
+  (1 - this.commandCore.totals().power * CONFIG.CORE_POWER_COST_DISCOUNT_PER_POINT)); }
+rewardMultiplier() { return 1 +
+  this.commandCore.totals().compute * CONFIG.CORE_COMPUTE_REWARD_BONUS_PER_POINT; }`},
           {id:'modCombo', x:20,y:300, w:200,h:70, type:'imagined', tag:'modifier', title:'Combo Streak Bonus', ref:'Phase 4',
             phase:'p4', desc:'Kills inside short window stack a multiplier on next kill reward.'},
           {id:'modResearch', x:630,y:300, w:210,h:70, type:'imagined', tag:'modifier · phase 3', title:'Research Lab', ref:'Phase 3',
@@ -673,34 +688,43 @@ this.gold = CONFIG.STARTING_GOLD ?? 0;`},
           {id:'modFast', x:630,y:430, w:210,h:64, type:'imagined', tag:'modifier · phase 4', title:'Fast-Build Upgrade', ref:'Phase 4',
             phase:'p4', desc:'Reduces tower cooldown recovery — fire-rate buff bought with gold.'},
 
-          {id:'sinkBuild', x:80,y:460, w:220,h:70, type:'missing', tag:'sink · phase 2b', title:'Tower Build Cost (gate)', ref:'Phase 2b',
-            phase:'p2b', desc:'world.placeTower() checks cost before creating tower. Inserts right before tower push.'},
+          {id:'sinkBuild', x:80,y:460, w:220,h:70, type:'real', tag:'sink · real', title:'Tower Build Cost (gate)', ref:'world.js:78-97',
+            phase:'p2b', desc:'world.placeTower() checks world.gold against the (Command Core-discounted) towerCost() before creating the tower.',
+            code:`const cost = this.towerCost();
+if (this.gold < cost) return null;
+this.gold -= cost;`},
           {id:'sinkUpgrade', x:330,y:460, w:210,h:64, type:'imagined', tag:'sink · phase 3', title:'Tower Upgrade Cost', ref:'Phase 3',
             phase:'p3', desc:'Spend gold to bump a tower\'s damage/range/fireRate.'},
-          {id:'sinkSell', x:560,y:460, w:200,h:64, type:'imagined', tag:'sink → refund', title:'Tower Sell / Refund', ref:'Phase 2b',
-            phase:'p2b', desc:'Reclaim a % of what was spent.'},
+          {id:'sinkSell', x:560,y:460, w:200,h:64, type:'real', tag:'sink · real', title:'Tower Sell / Refund', ref:'world.js:100-107, input.js',
+            phase:'p2b', desc:'Right-click a placed tower to remove it and refund 60% of what was paid.',
+            code:`const [tower] = this.towers.splice(idx, 1);
+this.addGold(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));`},
           {id:'sinkRepair', x:20,y:560, w:190,h:64, type:'imagined', tag:'sink · phase 4', title:'Base Repair Cost', ref:'Phase 4',
             phase:'p4', desc:'Spend gold to restore base health mid-wave.'},
 
-          {id:'realPlace', x:80,y:640, w:260,h:60, type:'real', tag:'real · phase 1', title:'world.placeTower() [existing]', ref:'world.js:52-67',
-            phase:'p1', desc:'Real function today — grid/distance/occupancy checks. Phase 2b gate inserts before push.'},
+          {id:'realPlace', x:80,y:640, w:260,h:60, type:'real', tag:'real · phase 1', title:'world.placeTower() [geometry checks]', ref:'world.js:78-97',
+            phase:'p1', desc:'Grid/distance/occupancy checks, same function as the cost gate above — this node is the placement half, sinkBuild is the gold half.'},
           {id:'realCooldown', x:400,y:610, w:260,h:60, type:'real', tag:'real · phase 1', title:'Tower.cooldown / fireRate [existing]', ref:'tower.js:9-14',
             phase:'p1', desc:'Real fields today. Phase 4 multiplies fireRate to apply Fast-Build.'}
         ],
         edges:[
-          ['srcKill','hub','imagined'],
-          ['srcWave','hub','imagined'],
+          ['srcKill','hub','real'],
+          ['srcWave','hub','real'],
           ['srcBase','hub','imagined'],
+          ['modCore','sinkBuild','real','−% cost'],
+          ['modCore','srcKill','real','+% reward'],
+          ['modCore','srcWave','real','+% reward'],
+          ['modCore','hub','real','raises cap'],
           ['modCombo','srcKill','imagined','×streak'],
           ['srcBase','modResearch','imagined','unlocks @ lvl 3'],
           ['modResearch','sinkBuild','imagined','−% cost'],
           ['modResearch','sinkUpgrade','imagined','−% cost'],
           ['modResearch','modFast','imagined','further discount'],
-          ['hub','sinkBuild','missing','spend'],
+          ['hub','sinkBuild','real','spend'],
           ['hub','sinkUpgrade','imagined','spend'],
           ['hub','sinkRepair','imagined','spend'],
-          ['sinkSell','hub','imagined','+refund %'],
-          ['sinkBuild','realPlace','missing','gate inserts here'],
+          ['sinkSell','hub','real','+refund %'],
+          ['sinkBuild','realPlace','real','gate inserts here'],
           ['modFast','realCooldown','imagined','−cooldown %']
         ]
       }

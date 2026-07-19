@@ -6,6 +6,7 @@ import { CONFIG } from './config.js';
 export class UI {
   constructor() {
     this.scoreEl = document.getElementById('ui-score');
+    this.goldEl = document.getElementById('ui-gold');
     this.waveEl = document.getElementById('ui-wave');
     this.tierEl = document.getElementById('ui-tier');
     this.fpsEl = document.getElementById('ui-fps');
@@ -18,6 +19,8 @@ export class UI {
     this.corePower = document.getElementById('core-power');
     this.coreCompute = document.getElementById('core-compute');
     this.coreStorage = document.getElementById('core-storage');
+    this.coreTowerCost = document.getElementById('core-tower-cost');
+    this.coreRewardBonus = document.getElementById('core-reward-bonus');
     this.towerBuildBar = document.getElementById('tower-build-bar');
     this.coreBuildBar = document.getElementById('core-build-bar');
   }
@@ -43,9 +46,12 @@ export class UI {
       this.corePower.textContent = totals.power;
       this.coreCompute.textContent = totals.compute;
       this.coreStorage.textContent = totals.storageCap;
+      this.coreTowerCost.textContent = world.towerCost();
+      this.coreRewardBonus.textContent = `+${Math.round((world.rewardMultiplier() - 1) * 100)}%`;
     }
 
     this.scoreEl.textContent = world.score;
+    this.goldEl.textContent = `${Math.floor(world.gold)} / ${world.goldCap()}`;
     this.waveEl.textContent = `${spawner.waveNumber} / ${CONFIG.MAX_WAVES}`;
     this.tierEl.textContent = this.currentTierName(spawner.waveNumber);
     this.fpsEl.textContent = Math.round(fps);

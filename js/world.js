@@ -5,16 +5,37 @@ import { Base } from './base.js';
 import { Spawner } from './spawner.js';
 
 export class World {
-  constructor() {
+  constructor(commandCore) {
     this.width = CONFIG.WORLD_WIDTH;
     this.height = CONFIG.WORLD_HEIGHT;
     this.towers = [];
     this.enemies = [];
     this.projectiles = [];
     this.score = 0;
+    this.gold = CONFIG.STARTING_GOLD;
+    this.commandCore = commandCore;
     this.base = new Base();
     this.spawner = new Spawner();
     this.spawnRadius = Math.hypot(this.width / 2, this.height / 2) + CONFIG.SPAWN_MARGIN;
+  }
+
+  // Command Core output feeds the economy: Reactor(power) cheapens towers,
+  // AI Core(compute) boosts gold rewards, Storage(storageCap) raises the cap.
+  goldCap() {
+    return CONFIG.GOLD_CAP_BASE + this.commandCore.totals().storageCap;
+  }
+
+  towerCost() {
+    const discount = this.commandCore.totals().power * CONFIG.CORE_POWER_COST_DISCOUNT_PER_POINT;
+    return Math.round(CONFIG.TOWER_COST * (1 - discount));
+  }
+
+  rewardMultiplier() {
+    return 1 + this.commandCore.totals().compute * CONFIG.CORE_COMPUTE_REWARD_BONUS_PER_POINT;
+  }
+
+  addGold(amount) {
+    this.gold = Math.min(this.goldCap(), this.gold + amount);
   }
 
   // Spawns an enemy at a random angle on a ring outside the world, aimed at the base.
@@ -32,7 +53,10 @@ export class World {
   updateEnemies(dt) {
     for (const enemy of this.enemies) {
       enemy.update(dt);
-      if (enemy.isDead()) this.score += Math.round(enemy.maxHealth);
+      if (enemy.isDead()) {
+        this.score += Math.round(enemy.maxHealth);
+        this.addGold(Math.round(enemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * this.rewardMultiplier()));
+      }
     }
     this.enemies = this.enemies.filter(e => !e.reachedTarget && !e.isDead());
   }
@@ -63,8 +87,22 @@ export class World {
 	const occupied = this.towers.some(t => t.x === snapped.x && t.y === snapped.y);
 	if (occupied) return null;
 
-	const tower = new Tower(snapped.x, snapped.y);
+	const cost = this.towerCost();
+	if (this.gold < cost) return null;
+	this.gold -= cost;
+
+	const tower = new Tower(snapped.x, snapped.y, cost);
 	this.towers.push(tower);
 	return tower;
+  }
+
+  // Right-click a placed tower to sell it back for a % refund of what was paid.
+  sellTowerAt(x, y) {
+    const snapped = this.snapToGrid(x, y);
+    const idx = this.towers.findIndex(t => t.x === snapped.x && t.y === snapped.y);
+    if (idx === -1) return false;
+    const [tower] = this.towers.splice(idx, 1);
+    this.addGold(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));
+    return true;
   }
 }

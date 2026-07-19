@@ -5,6 +5,7 @@ export class Input {
     this.wheelDelta = 0;
     this.mouse = { x: 0, y: 0 };
     this.clicks = [];
+    this.rightClicks = [];
 
     window.addEventListener('keydown', e => {
       const key = e.key.toLowerCase();
@@ -27,6 +28,15 @@ export class Input {
     canvas.addEventListener('click', e => {
       const rect = canvas.getBoundingClientRect();
       this.clicks.push({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    });
+
+    canvas.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      this.rightClicks.push({
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
       });

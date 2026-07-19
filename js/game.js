@@ -13,8 +13,8 @@ export class Game {
     this.camera = new Camera(canvas);
     this.renderer = new Renderer(canvas);
     this.input = new Input(canvas);
-    this.world = new World();
     this.commandCore = new CommandCore();
+    this.world = new World(this.commandCore);
     this.ui = new UI();
     this.lastTime = 0;
     this.fps = 0;
@@ -51,6 +51,14 @@ export class Game {
       }
     }
     this.input.clicks.length = 0;
+
+    for (const click of this.input.rightClicks) {
+      if (this.view === 'field') {
+        const worldPos = this.camera.screenToWorld(click.x, click.y);
+        this.world.sellTowerAt(worldPos.x, worldPos.y);
+      }
+    }
+    this.input.rightClicks.length = 0;
   }
 
   update(dt) {

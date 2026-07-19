@@ -54,6 +54,9 @@ export class Spawner {
 
     if (this.state === 'active') {
       if (world.enemies.length === 0) {
+        const bonus = CONFIG.WAVE_CLEAR_BONUS_BASE + (this.waveNumber - 1) * CONFIG.WAVE_CLEAR_BONUS_GROWTH;
+        world.addGold(Math.round(bonus * world.rewardMultiplier()));
+
         if (this.waveNumber >= CONFIG.MAX_WAVES) {
           this.complete = true;
         } else {

@@ -10,12 +10,14 @@ Format: `vX.X - one line - files touched`
 - v0.6 - UI (score, wave/tier indicator, base health bar, FPS, win/lose banner) - `ui.js` (new), `index.html`, `css/style.css`, `game.js`
 - v0.7 - **Phase 1 closeout + Phase 2a: Command Core MVP.** Fixed `world.score` (read by ui.js but never set/incremented — kills now add `enemy.maxHealth` to score). Added the interior base-building screen: 8x8 grid, 3 starter rooms (Reactor/AI Core/Storage) each with 3 upgrade tiers, toggled via `B` key. Rooms produce pooled `power`/`compute`/`storageCap` output (`commandCore.totals()`) — no direct combat effect yet, that's Phase 2b's job. World simulation (waves/combat) keeps running in the background while the Core screen is open. - `commandcore.js` (new), `room.js` (new), `config.js`, `game.js`, `input.js`, `renderer.js`, `ui.js`, `world.js`, `index.html`, `css/style.css`
 - v0.7.1 - Moved the code-map/roadmap doc into the repo as `docs.html`, linked from the in-game HUD (`DOCS` button, top right). Added Phase 5 "Dev Tooling & Portfolio Polish" to the roadmap — commit-timeline/stats-chart About screen, self-syncing docs, test harness — filed as backlog, non-blocking. - `docs.html` (moved in), `index.html`, `css/style.css`
+- v0.7.2 - Fix bug: `docs.html`'s tabs got stuck on Roadmap after the first visit — `renderRoadmap()` was wiping `.layout`'s entire innerHTML, permanently destroying the SVG/detail elements every other tab renders into. Swapped in a dedicated `#roadmap-slot` toggled by visibility instead of a destructive rebuild; also fixes phase-card detail clicks on the Roadmap tab, which had the same root cause. - `docs.html`
+- v0.8 - **Phase 2b: Skeleton Economy.** Gold pool (`world.gold`, capped by `goldCap()`), kill rewards scaled by enemy tier, wave-clear bonuses, a tower build cost gate, and right-click sell/refund (60%). Command Core output is now a real modifier instead of a display-only number: Reactor(power) discounts tower cost, AI Core(compute) boosts gold rewards, Storage(storageCap) raises the gold cap — all read live via `commandCore.totals()`. `docs.html`'s Economy tab updated to mark the now-real nodes/edges. - `config.js`, `world.js`, `tower.js`, `spawner.js`, `input.js`, `game.js`, `ui.js`, `index.html`, `docs.html`
 
 ## Next up
 
-- v0.8 - Phase 2b: Skeleton Economy — gold pool, kill rewards, wave bonuses, tower cost gate, sell/refund; wire `commandCore.totals()` into the formulas
+- Phase 3 - Full Core + Room Variety: Lab/Factory/Hangar/Shield/Dock, module slots, tech-tree gates
 - Phase 5 (parallel, whenever) - git-hook-baked `stats.json`, in-game About/Analytics screen (commit timeline + LOC chart), docs.html auto-sync script, test harness for combat/economy/spawner logic
-- Later - real difficulty curve tuning for `DIFFICULTY_TIERS` (needs actual playtesting); Phase 3 room variety; multiple simultaneous bases/players for the multiplayer goal
+- Later - real difficulty curve tuning for `DIFFICULTY_TIERS` (needs actual playtesting, now also needs to account for the new economy); multiple simultaneous bases/players for the multiplayer goal
 
 ## Notes for next step
 
@@ -23,4 +25,6 @@ Format: `vX.X - one line - files touched`
 - Base is currently single, at world center (0,0). Multiplayer/multi-base is out of scope until the single-base loop is fully working.
 - Command Core only allows one of each room type (`CommandCore.isBuilt`) — matches the roadmap's "3 starter rooms," not a build-many-of-each model. Revisit if Phase 3's room variety wants multiples.
 - Couldn't screenshot-verify the new Core screen in this environment — the sandboxed Chrome binary crashes on launch (`ld.so` relocation failure) before it can render anything, unrelated to this change. Verified by code trace + serving the files and checking for JS console/module errors instead.
+- `World` now takes `commandCore` in its constructor (`new World(commandCore)`) so it can read `commandCore.totals()` for cost/reward/cap formulas — if `World` is ever instantiated elsewhere (tests, etc.), it needs a `CommandCore` instance passed in.
+- Tower sell is right-click on a placed tower (60% refund of what was actually paid, tracked per-tower as `tower.cost`) — no confirmation dialog, matches the no-friction feel of placement.
 
