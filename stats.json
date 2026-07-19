@@ -198,17 +198,23 @@
       "date": "07-19",
       "cum": 9196,
       "subject": "v2.5 - Phase 8b: Tutorial Missions & Glow-Lead System"
+    },
+    {
+      "hash": "d74ace3",
+      "date": "07-19",
+      "cum": 9250,
+      "subject": "Harden game loop against silent freezes"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2687,
+      "value": 2695,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2571,
+      "value": 2617,
       "tone": "special"
     },
     {

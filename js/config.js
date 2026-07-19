@@ -213,7 +213,11 @@ export const CONFIG = {
   // Turret, migrated off gold this phase). Scavenger Turret is a passive
   // exterior placeable that mines metal through the AI Cycle Budget scheduler
   // (World.metalPerSecond()) rather than a flat rate — see aiCore/mine above.
-  STARTING_METAL: 0,
+  // STARTING_METAL covers exactly one Tower (TOWER_COST below): at 0 it took
+  // ~4.5 min of starter-Scavenger accrual before the very first action was
+  // affordable — invisible to the player as anything but a silently-broken
+  // click, and directly blocked Phase 8b's "Place a Tower" tutorial mission.
+  STARTING_METAL: 40,
   METAL_CAP_BASE: 300,
   BASE_CYCLES_PER_MIN: 3, // always-on AI bandwidth floor, even with zero AI Core built — keeps
                           // the starter Scavenger Turret "already producing" true from minute one

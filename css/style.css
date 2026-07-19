@@ -4,6 +4,17 @@
     box-sizing:border-box;
 }
 
+/* Recurring bug class in this file: an author rule setting display:flex/block on an
+   element always beats the browser's default [hidden]{display:none}, regardless of
+   specificity, because origin (author vs. user-agent) outranks specificity in the
+   cascade. Individually patched three times before this (.repair-btn, .tower-stat/
+   #tower-combat-stats, .confirm-modal-overlay) and still bit .build-bar and
+   .hud-avatar-menu — fixed once, globally, instead of per-selector. Must stay this
+   early in the file so later display: rules can't out-order it again. */
+[hidden]{
+    display:none !important;
+}
+
 /* ===========================
    THEME
    Dark is the built game's native look (and the default/fallback for

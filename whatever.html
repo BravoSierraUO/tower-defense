@@ -606,7 +606,7 @@ const ROADMAP = [
       'Sticky completion (once earned, stays earned for the session) and session-scoped on purpose: `MissionTracker` lives on `Game`, not `Profile` — not rebuilt on restart/prestige, but not persisted to localStorage either. Reusability beyond onboarding (Hero recruitment re-triggering this in 8c) is deferred until 8c actually needs it — the glow/banner plumbing is generic enough already, no rework anticipated'
     ],
     depends:'Phase 8a',
-    note:'Accessibility was the explicit driver, not a nice-to-have: the user flagged difficulty seeing small sleek upgrade buttons, so the lead-in affordance is a first-class animated highlight, not a tooltip or color change. Verified live in-browser by the user rather than an automated click-through — see changelog v2.5.' },
+    note:'Accessibility was the explicit driver, not a nice-to-have: the user flagged difficulty seeing small sleek upgrade buttons, so the lead-in affordance is a first-class animated highlight, not a tooltip or color change. Verified live in-browser by the user rather than an automated click-through — see changelog v2.5. Two real playtest bugs surfaced after ship, both fixed in v2.7: `.build-bar{display:flex}` in `style.css` always beat the browser\'s default `[hidden]{display:none}` (same bug class as v2.2\'s confirm-modal fix, this time global-rule-fixed instead of one-off), so a fresh run showed the Command Core build bar instead of the Tower/Scavenger one — the mission system pointed at a slot the player couldn\'t actually see. Fixing that then exposed a second, independent gap: `STARTING_METAL` was 0 against a 40-metal Tower cost, so the mission\'s first click silently no-opped for ~4.5 minutes with zero error feedback. Root-caused and fixed live, not from a screenshot alone — see changelog v2.7.' },
   { id:'p8c', num:'8c', title:'Hero — Recruitment & Persistent Leveling', status:'LATER', color:'--phase-8',
     desc:'A persistent, leveling hero unit recruited through the existing Hangar room (Phase 3 — currently passive interceptor drones) once the player\'s profile level crosses a threshold, timed to land around when waves start outpacing the player\'s current firepower.',
     items:[
@@ -1790,17 +1790,23 @@ const STATS = {
       "date": "07-19",
       "cum": 9196,
       "subject": "v2.5 - Phase 8b: Tutorial Missions & Glow-Lead System"
+    },
+    {
+      "hash": "d74ace3",
+      "date": "07-19",
+      "cum": 9250,
+      "subject": "Harden game loop against silent freezes"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2687,
+      "value": 2695,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2571,
+      "value": 2617,
       "tone": "special"
     },
     {
