@@ -520,16 +520,16 @@ const ROADMAP = [
       '/docs folder: architecture notes + contribution guide — done. docs/architecture.md (module map, orchestration, economy layers, testing philosophy, known non-goals) and docs/CONTRIBUTING.md (setup, commands, pre-commit checklist, codebase conventions).'
     ],
     note:'Interview-portfolio motivated — "built a working game AND the tooling to prove how it was built." All six items shipped; Phase 5b (player menu shell) split off as its own unscoped backlog card rather than folded in here.' },
-  { id:'p5b', num:'5b', title:'Player Menu Shell — Avatar Dropdown & Account/Settings/Inventory/Base Modal', status:'BACKLOG · NOT SCOPED', color:'--phase-5',
-    desc:'Today the game has three separate full-screen views toggled by raw hotkeys (B — Command Core, P — Profile, O — About), each its own top-level `aside`. The typical pattern instead: a small avatar + level badge in a HUD corner, click opens a dropdown/menu, which opens a modal with tabbed sections — Account (today\'s Profile panel), Settings (doesn\'t exist yet), Inventory (doesn\'t exist yet — no item/loadout system in the game at all right now), Base (today\'s Command Core panel). About/Analytics would fold in as one more tab.',
+  { id:'p5b', num:'5b', title:'Player Menu Shell — Avatar Dropdown & Account/Settings/Inventory/Base Modal', status:'BACKLOG · PARTIAL', color:'--phase-5',
+    desc:'Today the game has four separate full-screen views toggled by raw hotkeys (B — Command Core, P — Profile, O — About, S — Settings), each its own top-level `aside`. The typical pattern instead: a small avatar + level badge in a HUD corner, click opens a dropdown/menu, which opens a modal with tabbed sections — Account (today\'s Profile panel), Settings (shipped, see below), Inventory (doesn\'t exist yet — no item/loadout system in the game at all right now), Base (today\'s Command Core panel). About/Analytics would fold in as one more tab.',
     items:[
-      'Avatar/level badge as a single clickable HUD element (today profile-level-badge only exists inside the Profile panel itself, not as a HUD-corner trigger)',
-      'Dropdown → modal shell that hosts Account/Settings/Inventory/Base/About as tabbed sections instead of four independent hotkey-toggled asides',
-      'Settings tab: no settings currently exist anywhere in the game (no volume, no keybind remap, nothing) — needs actual content, not just a shell',
+      'Avatar as a single clickable HUD element — done (2026-07-19). Top-right corner button opens a dropdown (Profile/About/Settings/Reset Progress); still just a person-outline icon, not yet merged with the level badge (profile-level-badge still only lives inside the Profile panel itself)',
+      'Dropdown → modal shell that hosts Account/Settings/Inventory/Base/About as tabbed sections instead of five independent hotkey-toggled asides — NOT done, still the "big bite" below',
+      'Settings tab: real content shipped (2026-07-19) — Appearance (light/dark theme toggle, persisted to localStorage) and Save Data (storage key + live byte size, a raw-JSON viewer of the profile blob, Delete Save Data behind a confirm modal that also restarts the run). Lives as its own `aside` (S hotkey or the avatar menu), not yet a modal tab',
       'Inventory tab: no item/equipment system exists yet at all — this tab has nothing to show until some form of loadout/item system is designed (possibly overlaps Phase 7\'s per-satellite module slots, possibly its own thing)',
-      'Migrating existing Profile (P) and Command Core (B) panels into the new shell without breaking their current hotkey muscle-memory'
+      'Migrating existing Profile (P) and Command Core (B) panels into the new shell without breaking their current hotkey muscle-memory — not attempted; B/P/O/S all still work exactly as before, the avatar menu is a parallel entry point onto the same view-toggle callbacks, not a replacement'
     ],
-    note:'Floated during the Phase 5 About-screen build (2026-07-19), explicitly filed rather than built — "a big bite," per the user. Settings and Inventory in particular have zero existing content to migrate; this is closer to a from-scratch IA redesign of the whole panel system than an extension of it. Do not start until it\'s deliberately scoped — same caution Phase 7 already carries.' },
+    note:'Floated during the Phase 5 About-screen build (2026-07-19), explicitly filed rather than built — "a big bite," per the user. Same day, picked back up as a deliberately scoped slice: the avatar dropdown (new, additive) and real Settings-tab content (previously nonexistent) shipped; the tabbed-modal IA redesign and Inventory tab were deliberately left alone — that\'s still a from-scratch panel-system redesign, not an extension, and stays unscoped until picked up on purpose. Same caution Phase 7 already carries.' },
   { id:'p6', num:'6', title:'Comms & Station Identity', status:'LATER', color:'--phase-6',
     desc:'From `structures.md`/`lore.md`: a Communications room unlocking active, player-triggered orbital abilities (the game\'s current loop is 100% passive/economic once a wave starts — this is the first thing that gives the player something to *do* mid-wave), plus a station skin that visibly grows from Orbital Platform to Dyson Node as the player prestiges.',
     items:[
@@ -1298,6 +1298,12 @@ const STATS = {
       "date": "07-19",
       "cum": 7042,
       "subject": "Phase 5: Roadmap <-> changelog drift check + changelog catch-up"
+    },
+    {
+      "hash": "44fd928",
+      "date": "07-19",
+      "cum": 7258,
+      "subject": "Phase 5: /docs folder -- closes out the phase"
     }
   ],
   "categories": [
@@ -1308,7 +1314,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 1749,
+      "value": 1965,
       "tone": "special"
     },
     {

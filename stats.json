@@ -138,6 +138,12 @@
       "date": "07-19",
       "cum": 7042,
       "subject": "Phase 5: Roadmap <-> changelog drift check + changelog catch-up"
+    },
+    {
+      "hash": "44fd928",
+      "date": "07-19",
+      "cum": 7258,
+      "subject": "Phase 5: /docs folder -- closes out the phase"
     }
   ],
   "categories": [
@@ -148,7 +154,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 1749,
+      "value": 1965,
       "tone": "special"
     },
     {

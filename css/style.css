@@ -4,11 +4,48 @@
     box-sizing:border-box;
 }
 
+/* ===========================
+   THEME
+   Dark is the built game's native look (and the default/fallback for
+   Node/no-JS); Settings > Appearance flips :root[data-theme] and persists
+   the choice to localStorage (see js/ui.js applyTheme()). Only the shared
+   chrome (page bg, glass panels, primary/secondary text, hairlines) is
+   themed here — semantic accents (gold combo text, HP-critical red, tier
+   colors) stay fixed in both themes on purpose, same as a real app leaves
+   status colors alone across light/dark.
+=========================== */
+
+:root{
+    --page-bg:#09111B;
+    --glass-bg:linear-gradient(rgba(32,42,58,.82), rgba(14,18,28,.90));
+    --glass-border:rgba(255,255,255,.06);
+    --text-primary:#F2F8FF;
+    --text-dim:rgba(242,248,255,.55);
+    --hairline:rgba(255,255,255,.08);
+    --control-bg:rgba(255,255,255,.04);
+    --control-border:rgba(255,255,255,.08);
+    --control-hover-bg:rgba(255,255,255,.08);
+    --accent:#7ED9FF;
+}
+
+:root[data-theme="light"]{
+    --page-bg:#EDF2F8;
+    --glass-bg:linear-gradient(rgba(255,255,255,.86), rgba(234,240,248,.92));
+    --glass-border:rgba(20,30,45,.10);
+    --text-primary:#101823;
+    --text-dim:rgba(16,24,35,.6);
+    --hairline:rgba(20,30,45,.12);
+    --control-bg:rgba(20,30,45,.05);
+    --control-border:rgba(20,30,45,.12);
+    --control-hover-bg:rgba(20,30,45,.09);
+    --accent:#0B7CB0;
+}
+
 html,body{
     width:100%;
     height:100%;
     overflow:hidden;
-    background:#09111B;
+    background:var(--page-bg);
     font-family:Inter,system-ui,sans-serif;
 }
 
@@ -20,7 +57,7 @@ html,body{
     position:fixed;
     inset:0;
     pointer-events:none;
-    color:#F2F8FF;
+    color:var(--text-primary);
 }
 
 /* ===========================
@@ -33,18 +70,17 @@ html,body{
 .core-panel,
 .ui-banner,
 .profile-panel,
-.about-panel{
+.about-panel,
+.settings-panel,
+.hud-avatar-menu,
+.confirm-modal{
 
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
 
-    background:
-    linear-gradient(
-        rgba(32,42,58,.82),
-        rgba(14,18,28,.90)
-    );
+    background:var(--glass-bg);
 
-    border:1px solid rgba(255,255,255,.06);
+    border:1px solid var(--glass-border);
 
     box-shadow:
         inset 0 1px rgba(255,255,255,.05),
@@ -87,7 +123,7 @@ html,body{
 
     width:1px;
     height:46px;
-    background:rgba(255,255,255,.08);
+    background:var(--control-bg);
 }
 
 .hud-label{
@@ -107,7 +143,7 @@ html,body{
 
     font-weight:700;
 
-    color:#7ED9FF;
+    color:var(--accent);
 }
 
 .hud-combo{
@@ -175,7 +211,7 @@ html,body{
 
     color:#0B1020;
 
-    background:#7ED9FF;
+    background:var(--accent);
 
     border:none;
 
@@ -211,7 +247,7 @@ html,body{
 
     border-radius:999px;
 
-    background:rgba(255,255,255,.06);
+    background:var(--control-bg);
 }
 
 .ui-bar-fill{
@@ -252,7 +288,7 @@ html,body{
 
     letter-spacing:1.5px;
 
-    color:#7ED9FF;
+    color:var(--accent);
 
     text-decoration:none;
 
@@ -309,13 +345,13 @@ html,body{
 
     height:74px;
 
-    background:rgba(255,255,255,.03);
+    background:var(--control-bg);
 
-    border:1px solid rgba(255,255,255,.05);
+    border:1px solid var(--control-border);
 
     border-radius:14px;
 
-    color:white;
+    color:var(--text-primary);
 
     cursor:pointer;
 
@@ -328,7 +364,7 @@ html,body{
 
     transform:translateY(-3px);
 
-    border-color:#7ED9FF;
+    border-color:var(--accent);
 
     background:rgba(126,217,255,.08);
 }
@@ -341,7 +377,7 @@ html,body{
 
     font-size:22px;
 
-    color:#7ED9FF;
+    color:var(--accent);
 
     font-weight:700;
 }
@@ -376,7 +412,7 @@ html,body{
 
 .tower-tier{
 
-    color:#7ED9FF;
+    color:var(--accent);
 
     margin-bottom:20px;
 }
@@ -389,7 +425,7 @@ html,body{
 
     padding:8px 0;
 
-    border-bottom:1px solid rgba(255,255,255,.05);
+    border-bottom:1px solid var(--hairline);
 }
 
 /* .tower-stat sets display:flex, and both it and #tower-combat-stats now get
@@ -439,7 +475,7 @@ html,body{
 
     margin-bottom:16px;
 
-    color:#7ED9FF;
+    color:var(--accent);
 }
 
 .core-stat{
@@ -450,7 +486,7 @@ html,body{
 
     padding:8px 0;
 
-    border-bottom:1px solid rgba(255,255,255,.05);
+    border-bottom:1px solid var(--hairline);
 }
 
 /* ===========================
@@ -505,11 +541,11 @@ html,body{
 
     font-size:11px;
 
-    color:#F2F8FF;
+    color:var(--text-primary);
 
-    background:rgba(255,255,255,.04);
+    background:var(--control-bg);
 
-    border:1px solid rgba(255,255,255,.08);
+    border:1px solid var(--control-border);
 
     border-radius:8px;
 
@@ -522,7 +558,7 @@ html,body{
 
 .tech-node-btn:hover:not(:disabled){
 
-    border-color:#7ED9FF;
+    border-color:var(--accent);
 
     background:rgba(126,217,255,.08);
 }
@@ -592,7 +628,7 @@ html,body{
 /* Phase 4c: which field-view placement mode (Tower/Scavenger) is active. */
 .build-slot.selected{
 
-    border-color:#7ED9FF;
+    border-color:var(--accent);
 
     background:rgba(126,217,255,.12);
 }
@@ -670,7 +706,7 @@ html,body{
 
     color:#0B1020;
 
-    background:linear-gradient(135deg,#7ED9FF,#48B8FF);
+    background:linear-gradient(135deg,var(--accent),#48B8FF);
 }
 
 .profile-level-badge span{
@@ -722,7 +758,7 @@ html,body{
 
     opacity:1;
 
-    color:#7ED9FF;
+    color:var(--accent);
 }
 
 .prestige-btn{
@@ -759,9 +795,9 @@ html,body{
 
 .prestige-btn:disabled{
 
-    background:rgba(255,255,255,.06);
+    background:var(--control-bg);
 
-    color:#F2F8FF;
+    color:var(--text-primary);
 
     opacity:.5;
 
@@ -778,7 +814,7 @@ html,body{
 
     padding-bottom:16px;
 
-    border-bottom:1px solid rgba(255,255,255,.06);
+    border-bottom:1px solid var(--hairline);
 }
 
 .profile-panel-title{
@@ -789,7 +825,7 @@ html,body{
 
     margin-bottom:12px;
 
-    color:#7ED9FF;
+    color:var(--accent);
 }
 
 .skill-list{
@@ -811,11 +847,11 @@ html,body{
 
     font-size:12px;
 
-    color:#F2F8FF;
+    color:var(--text-primary);
 
-    background:rgba(255,255,255,.04);
+    background:var(--control-bg);
 
-    border:1px solid rgba(255,255,255,.08);
+    border:1px solid var(--control-border);
 
     border-radius:8px;
 
@@ -828,7 +864,7 @@ html,body{
 
 .skill-btn:hover:not(:disabled){
 
-    border-color:#7ED9FF;
+    border-color:var(--accent);
 
     background:rgba(126,217,255,.08);
 }
@@ -868,9 +904,9 @@ html,body{
 
     border-radius:10px;
 
-    background:rgba(255,255,255,.03);
+    background:var(--control-bg);
 
-    border:1px solid rgba(255,255,255,.06);
+    border:1px solid var(--control-border);
 
     opacity:.4;
 }
@@ -930,7 +966,7 @@ html,body{
 
     box-shadow:0 12px 30px rgba(0,0,0,.4);
 
-    color:#F2F8FF;
+    color:var(--text-primary);
 }
 
 .achievement-toast.tier-epic{ border-color:rgba(155,89,182,.6); }
@@ -980,7 +1016,7 @@ html,body{
 
     font-weight:700;
 
-    color:#7ED9FF;
+    color:var(--accent);
 }
 
 .about-generated{
@@ -1002,7 +1038,7 @@ html,body{
 
     margin-bottom:16px;
 
-    border-bottom:1px solid rgba(255,255,255,.06);
+    border-bottom:1px solid var(--hairline);
 }
 
 .about-total-label{
@@ -1018,7 +1054,7 @@ html,body{
 
     font-weight:700;
 
-    color:#7ED9FF;
+    color:var(--accent);
 }
 
 .about-category-list{
@@ -1058,7 +1094,7 @@ html,body{
 
     border-radius:3px;
 
-    background:rgba(255,255,255,.06);
+    background:var(--control-bg);
 
     overflow:hidden;
 }
@@ -1078,7 +1114,7 @@ html,body{
 
     margin-bottom:12px;
 
-    color:#7ED9FF;
+    color:var(--accent);
 }
 
 .about-commit-list{
@@ -1104,7 +1140,7 @@ html,body{
 
     padding:6px 0;
 
-    border-bottom:1px solid rgba(255,255,255,.04);
+    border-bottom:1px solid var(--hairline);
 }
 
 .about-commit-row .h{
@@ -1151,7 +1187,7 @@ html,body{
 
     font-size:11px;
 
-    color:#7ED9FF;
+    color:var(--accent);
 
     opacity:.75;
 
@@ -1185,7 +1221,7 @@ html,body{
 
     color:#0B1020;
 
-    background:#7ED9FF;
+    background:var(--accent);
 
     border:none;
 
@@ -1199,4 +1235,468 @@ html,body{
 .restart-btn:hover{
 
     filter:brightness(1.1);
+}
+
+/* ===========================
+   AVATAR MENU (player profile / settings entry point)
+=========================== */
+
+.hud-avatar-wrap{
+
+    position:relative;
+
+    pointer-events:auto;
+}
+
+.hud-avatar-btn{
+
+    width:40px;
+
+    height:40px;
+
+    border-radius:50%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:var(--control-bg);
+
+    border:1px solid var(--control-border);
+
+    color:var(--text-primary);
+
+    cursor:pointer;
+
+    transition:.15s;
+}
+
+.hud-avatar-btn:hover,
+.hud-avatar-btn[aria-expanded="true"]{
+
+    border-color:var(--accent);
+
+    background:rgba(126,217,255,.1);
+}
+
+.hud-avatar-menu{
+
+    position:absolute;
+
+    top:calc(100% + 10px);
+
+    right:0;
+
+    width:190px;
+
+    padding:8px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:2px;
+
+    pointer-events:auto;
+
+    z-index:20;
+}
+
+.hud-avatar-menu-item{
+
+    text-align:left;
+
+    font-size:13px;
+
+    font-family:inherit;
+
+    color:var(--text-primary);
+
+    background:transparent;
+
+    border:none;
+
+    border-radius:8px;
+
+    padding:9px 10px;
+
+    cursor:pointer;
+
+    transition:.12s;
+}
+
+.hud-avatar-menu-item:hover{
+
+    background:var(--control-hover-bg);
+}
+
+.hud-avatar-menu-item-danger{
+
+    color:#FF7070;
+}
+
+.hud-avatar-menu-item-danger:hover{
+
+    background:rgba(255,112,112,.12);
+}
+
+.hud-avatar-menu-divider{
+
+    height:1px;
+
+    margin:6px 2px;
+
+    background:var(--hairline);
+}
+
+/* ===========================
+   SETTINGS PANEL
+=========================== */
+
+.settings-panel{
+
+    position:absolute;
+
+    left:50%;
+
+    top:132px;
+
+    bottom:28px;
+
+    transform:translateX(-50%);
+
+    width:460px;
+
+    max-width:calc(100% - 48px);
+
+    padding:24px;
+
+    overflow-y:auto;
+
+    pointer-events:auto;
+}
+
+.settings-header{
+
+    margin-bottom:18px;
+}
+
+.settings-title{
+
+    font-size:16px;
+
+    font-weight:700;
+
+    color:var(--accent);
+}
+
+.settings-panel-title{
+
+    font-size:12px;
+
+    font-weight:700;
+
+    letter-spacing:1px;
+
+    opacity:.6;
+
+    margin-bottom:12px;
+}
+
+.settings-row{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:12px 0;
+
+    border-bottom:1px solid var(--hairline);
+
+    font-size:13px;
+}
+
+.settings-mono{
+
+    font-family:monospace;
+
+    font-size:12px;
+
+    opacity:.65;
+}
+
+.settings-btn-row{
+
+    display:flex;
+
+    gap:10px;
+
+    margin-top:16px;
+}
+
+.settings-btn{
+
+    flex:1;
+
+    pointer-events:auto;
+
+    padding:10px 14px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    font-family:inherit;
+
+    color:var(--text-primary);
+
+    background:var(--control-bg);
+
+    border:1px solid var(--control-border);
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    transition:.15s;
+}
+
+.settings-btn:hover{
+
+    border-color:var(--accent);
+
+    background:rgba(126,217,255,.08);
+}
+
+.settings-btn-danger{
+
+    color:#FF7070;
+
+    border-color:rgba(255,112,112,.35);
+}
+
+.settings-btn-danger:hover{
+
+    border-color:#FF7070;
+
+    background:rgba(255,112,112,.1);
+}
+
+.settings-btn-sm{
+
+    pointer-events:auto;
+
+    padding:5px 10px;
+
+    margin-left:6px;
+
+    font-size:11px;
+
+    font-family:inherit;
+
+    color:var(--text-primary);
+
+    background:var(--control-bg);
+
+    border:1px solid var(--control-border);
+
+    border-radius:6px;
+
+    cursor:pointer;
+}
+
+.settings-btn-sm:hover{
+
+    border-color:var(--accent);
+}
+
+/* ---- theme toggle switch ---- */
+
+.theme-toggle{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    pointer-events:auto;
+
+    background:transparent;
+
+    border:none;
+
+    font-family:inherit;
+
+    font-size:12px;
+
+    color:var(--text-primary);
+
+    cursor:pointer;
+}
+
+.theme-toggle-track{
+
+    position:relative;
+
+    width:40px;
+
+    height:22px;
+
+    border-radius:999px;
+
+    background:var(--control-bg);
+
+    border:1px solid var(--control-border);
+
+    transition:.2s;
+}
+
+.theme-toggle-thumb{
+
+    position:absolute;
+
+    top:2px;
+
+    left:2px;
+
+    width:16px;
+
+    height:16px;
+
+    border-radius:50%;
+
+    background:var(--accent);
+
+    transition:.2s;
+}
+
+.theme-toggle[aria-checked="true"] .theme-toggle-thumb{
+
+    transform:translateX(18px);
+}
+
+.theme-toggle[aria-checked="true"] .theme-toggle-track{
+
+    border-color:var(--accent);
+}
+
+/* ---- raw JSON viewer ---- */
+
+.json-viewer{
+
+    margin-top:16px;
+
+    border:1px solid var(--control-border);
+
+    border-radius:10px;
+
+    overflow:hidden;
+}
+
+.json-viewer-header{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    padding:8px 12px;
+
+    font-size:11px;
+
+    font-family:monospace;
+
+    opacity:.7;
+
+    background:var(--control-bg);
+
+    border-bottom:1px solid var(--hairline);
+}
+
+.json-viewer-content{
+
+    margin:0;
+
+    padding:12px;
+
+    max-height:280px;
+
+    overflow:auto;
+
+    font-family:monospace;
+
+    font-size:11px;
+
+    line-height:1.5;
+
+    white-space:pre-wrap;
+
+    word-break:break-all;
+}
+
+/* ===========================
+   CONFIRM MODAL
+=========================== */
+
+.confirm-modal-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:50;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:rgba(4,8,14,.55);
+
+    pointer-events:auto;
+}
+
+.confirm-modal{
+
+    width:360px;
+
+    max-width:calc(100% - 48px);
+
+    padding:24px;
+
+    pointer-events:auto;
+}
+
+.confirm-modal-title{
+
+    font-size:16px;
+
+    font-weight:700;
+
+    margin-bottom:10px;
+}
+
+.confirm-modal-body{
+
+    font-size:13px;
+
+    opacity:.75;
+
+    line-height:1.5;
+
+    margin-bottom:20px;
+}
+
+.confirm-modal-actions{
+
+    display:flex;
+
+    gap:10px;
 }

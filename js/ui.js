@@ -15,7 +15,7 @@ export class UI {
   // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold(), onToggleAbout() } —
   // UI only translates DOM clicks into these; it never mutates gameplay state
   // directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleProfile, onToggleSettings, onResetProgress } = {}) {
     this.scoreEl = document.getElementById('ui-score');
     this.goldEl = document.getElementById('ui-gold');
     this.metalEl = document.getElementById('ui-metal');
@@ -144,6 +144,84 @@ export class UI {
     loadStats()
       .then(stats => this.renderAbout(stats))
       .catch(err => { this.aboutGeneratedEl.textContent = `Couldn't load stats.json (${err.message})`; });
+
+    // ---- avatar menu (top-right): Profile/About/Settings/Reset entry point ----
+    this.avatarBtn = document.getElementById('avatar-btn');
+    this.avatarMenu = document.getElementById('avatar-menu');
+    this.avatarBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.setAvatarMenuOpen(this.avatarMenu.hidden);
+    });
+    document.addEventListener('click', () => this.setAvatarMenuOpen(false));
+
+    document.getElementById('menu-profile').addEventListener('click', () => { this.setAvatarMenuOpen(false); onToggleProfile?.(); });
+    document.getElementById('menu-about').addEventListener('click', () => { this.setAvatarMenuOpen(false); onToggleAbout?.(); });
+    document.getElementById('menu-settings').addEventListener('click', () => { this.setAvatarMenuOpen(false); onToggleSettings?.(); });
+    document.getElementById('menu-reset').addEventListener('click', () => { this.setAvatarMenuOpen(false); this.openConfirmModal(onResetProgress); });
+
+    // ---- Settings panel: theme toggle, raw-save-data JSON viewer, hard reset ----
+    this.settingsPanel = document.getElementById('settings-panel');
+    this.settingsStorageSize = document.getElementById('settings-storage-size');
+    this.latestProfile = null; // updated every frame in update(); read on demand by the JSON viewer
+    document.getElementById('settings-storage-key').textContent = CONFIG.PROFILE.STORAGE_KEY;
+    document.getElementById('json-viewer-key').textContent = CONFIG.PROFILE.STORAGE_KEY;
+
+    this.themeToggle = document.getElementById('theme-toggle');
+    this.themeToggleLabel = document.getElementById('theme-toggle-label');
+    this.applyTheme(localStorage.getItem('td.theme') || 'dark');
+    this.themeToggle.addEventListener('click', () => {
+      this.applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+    });
+
+    this.jsonViewer = document.getElementById('json-viewer');
+    this.jsonViewerContent = document.getElementById('json-viewer-content');
+    document.getElementById('view-json-btn').addEventListener('click', () => {
+      if (!this.latestProfile) return;
+      this.jsonViewerContent.textContent = this.latestProfile.rawJSON();
+      this.jsonViewer.hidden = false;
+    });
+    document.getElementById('json-close-btn').addEventListener('click', () => { this.jsonViewer.hidden = true; });
+    document.getElementById('json-copy-btn').addEventListener('click', () => {
+      navigator.clipboard?.writeText(this.jsonViewerContent.textContent).catch(() => {});
+    });
+
+    document.getElementById('menu-reset-progress').addEventListener('click', () => this.openConfirmModal(onResetProgress));
+
+    // ---- confirm modal: shared by both reset-progress entry points above ----
+    this.confirmModal = document.getElementById('confirm-modal');
+    this.confirmAction = null;
+    document.getElementById('confirm-cancel-btn').addEventListener('click', () => this.closeConfirmModal());
+    document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+      this.confirmAction?.();
+      this.closeConfirmModal();
+      this.jsonViewer.hidden = true;
+    });
+    this.confirmModal.addEventListener('click', (e) => { if (e.target === this.confirmModal) this.closeConfirmModal(); });
+  }
+
+  setAvatarMenuOpen(open) {
+    this.avatarMenu.hidden = !open;
+    this.avatarBtn.setAttribute('aria-expanded', String(open));
+  }
+
+  openConfirmModal(action) {
+    this.confirmAction = action;
+    this.confirmModal.hidden = false;
+  }
+
+  closeConfirmModal() {
+    this.confirmModal.hidden = true;
+    this.confirmAction = null;
+  }
+
+  // Theme is independent of gameplay state (no Game/Profile involvement) —
+  // just a data-theme attribute + a localStorage flag read back on load.
+  applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem('td.theme', theme); } catch (e) {}
+    const light = theme === 'light';
+    this.themeToggle.setAttribute('aria-checked', String(light));
+    this.themeToggleLabel.textContent = light ? 'Light' : 'Dark';
   }
 
   // Stats are a static snapshot for the session (regenerated by the pre-commit hook, not
@@ -184,12 +262,22 @@ export class UI {
     const inCore = view === 'core';
     const inProfile = view === 'profile';
     const inAbout = view === 'about';
-    this.modeHint.textContent = (inCore ? 'B — Tower Field' : 'B — Command Core') + ' · P — Profile · O — About';
+    const inSettings = view === 'settings';
+    this.modeHint.textContent = (inCore ? 'B — Tower Field' : 'B — Command Core') + ' · P — Profile · O — About · S — Settings';
     this.corePanel.hidden = !inCore;
     this.coreBuildBar.hidden = !inCore;
-    this.towerBuildBar.hidden = inCore || inProfile || inAbout;
+    this.towerBuildBar.hidden = inCore || inProfile || inAbout || inSettings;
     this.profilePanel.hidden = !inProfile;
     this.aboutPanel.hidden = !inAbout;
+    this.settingsPanel.hidden = !inSettings;
+
+    this.latestProfile = profile;
+    if (inSettings) {
+      const bytes = new Blob([profile.rawJSON()]).size;
+      this.settingsStorageSize.textContent = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+    } else {
+      this.jsonViewer.hidden = true;
+    }
     if (inCore) {
       const totals = commandCore.totals();
       this.corePower.textContent = totals.power;

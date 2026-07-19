@@ -206,6 +206,32 @@ describe('Profile: persistence', () => {
     a.emit('kill', { count: 1 });
     assert.equal(b.data.life.kills, 0, 'a second unstored Profile must start blank, not inherit the first');
   });
+
+  test('rawJSON() reflects the live in-memory state, not just what was last saved', () => {
+    const p = new Profile(memStore());
+    p.emit('kill', { count: 2 });
+    const parsed = JSON.parse(p.rawJSON());
+    assert.equal(parsed.life.kills, 2);
+  });
+
+  test('hardReset() wipes cp/prestige/skills/badges back to blank and persists the wipe', () => {
+    const store = memStore();
+    const a = new Profile(store);
+    a.data.badges.push('first-blood');
+    a.emit('kill', { count: 50 });
+    a.data.prestigePoints = 7;
+    a.buySkill('gold');
+
+    a.hardReset();
+    assert.equal(a.data.cp, 0);
+    assert.equal(a.data.life.kills, 0);
+    assert.deepEqual(a.data.badges, []);
+    assert.equal(a.data.prestigePoints, 0);
+    assert.deepEqual(a.data.skills, {});
+
+    const b = new Profile(store);
+    assert.equal(b.data.life.kills, 0, 'the reset must be persisted, not just in-memory');
+  });
 });
 
 describe('Profile: wired into World/combat gameplay multipliers', () => {

@@ -75,6 +75,20 @@ export class Profile {
     try { this.storage.setItem(CONFIG.PROFILE.STORAGE_KEY, JSON.stringify(this.data)); } catch (e) {}
   }
 
+  // Settings-panel "Delete Save Data": wipes the in-memory profile back to
+  // blank() and immediately persists that blank state — functionally a
+  // delete, but expressed as a save so it works through the same storage
+  // interface (getItem/setItem) without needing a removeItem() the
+  // Node-fallback memory store doesn't implement.
+  hardReset() {
+    this.data = blank();
+    this.unlockQueue = [];
+    this.save();
+  }
+
+  // Settings-panel "View Raw JSON" — the exact bytes save() would write.
+  rawJSON() { return JSON.stringify(this.data, null, 2); }
+
   skillLevel(id) { return this.data.skills[id] || 0; }
 
   // Sum of per-level bonus for every skill tied to `stat` — currently one node
