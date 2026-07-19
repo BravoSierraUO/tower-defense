@@ -16,6 +16,32 @@ export const CONFIG = {
   TOWER_RADIUS: 14,
   TOWER_COLOR: '#62D0FF',
 
+  // Phase 7a: Damage Triangle. Kinetic -> beats -> Plasma -> beats -> Energy ->
+  // beats -> Kinetic; same-type (or either side untyped) is neutral. Reinterprets
+  // 3 of satellites.md's 9 named classes as the 3 typed attackers instead of
+  // inventing new class names — Railgun/Laser/Missile. The other 6 (Drone
+  // Carrier/Support/EMP/Shield/Mining/Repair) are utility roles and stay
+  // outside the triangle; that's Phase 7b's job, along with per-class stats/
+  // XP/evolution (every type here still shares TOWER_DAMAGE/RANGE/FIRE_RATE
+  // and towerCost() — only the matchup multiplier differs this phase).
+  // Each type's own `beats` is the single source of truth — combat.js derives
+  // both the attacker's advantage and the victim's disadvantage from it,
+  // rather than a separate lookup table that could drift out of sync.
+  // First-pass values, not tuned: moderate rather than a harder 1.5x/0.5x
+  // classic-RPS spread, since this stacks multiplicatively on top of tier
+  // scaling, combo streak, and prestige damage bonuses that already compound.
+  DAMAGE_TYPES: {
+    kinetic: { label: 'Railgun', color: '#8FA6B8', beats: 'plasma' },
+    // Violet rather than the more obvious orange/red: plasma's color needs to
+    // read clearly against ENEMY_COLOR (#FF7070) when drawn as an armor-type
+    // ring around an enemy (drawEnemies) — an orange-red plasma ring on a
+    // red enemy body was nearly invisible in a live screenshot check.
+    plasma:  { label: 'Missile', color: '#B24BFF', beats: 'energy' },
+    energy:  { label: 'Laser',   color: '#62D0FF', beats: 'kinetic' }
+  },
+  DAMAGE_TYPE_ADVANTAGE_MULT: 1.4,
+  DAMAGE_TYPE_DISADVANTAGE_MULT: 0.7,
+
   PROJECTILE_SPEED: 500,
   PROJECTILE_RADIUS: 4,
   PROJECTILE_COLOR: '#FFFFFF',

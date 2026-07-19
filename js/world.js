@@ -140,11 +140,13 @@ export class World {
 
   // Spawns an enemy at a random angle on a ring outside the world, aimed at the base.
   // Returns the enemy so Spawner can tally its maxHealth into the wave's value total.
-  spawnEnemy(healthMultiplier = 1, speedMultiplier = 1) {
+  // Phase 7a: armorType defaults to null (neutral) here too — Spawner.pickArmorType()
+  // is what actually assigns a real type for live-game spawns.
+  spawnEnemy(healthMultiplier = 1, speedMultiplier = 1, armorType = null) {
     const angle = Math.random() * Math.PI * 2;
     const x = this.base.x + Math.cos(angle) * this.spawnRadius;
     const y = this.base.y + Math.sin(angle) * this.spawnRadius;
-    const enemy = new Enemy(x, y, this.base.x, this.base.y, healthMultiplier, speedMultiplier);
+    const enemy = new Enemy(x, y, this.base.x, this.base.y, healthMultiplier, speedMultiplier, armorType);
     this.enemies.push(enemy);
     return enemy;
   }
@@ -204,7 +206,7 @@ export class World {
     return this.towers.some(t => t.x === x && t.y === y) || this.scavengers.some(s => s.x === x && s.y === y);
   }
 
-  placeTower(x, y) {
+  placeTower(x, y, damageType = 'kinetic') {
 	if (this.towers.length >= CONFIG.TOWER_MAX_COUNT) return null;
 
 	const snapped = this.snapToGrid(x, y);
@@ -219,7 +221,7 @@ export class World {
 	if (this.metal < cost) return null;
 	this.metal -= cost;
 
-	const tower = new Tower(snapped.x, snapped.y, cost);
+	const tower = new Tower(snapped.x, snapped.y, cost, damageType);
 	this.towers.push(tower);
 	this.towersPlaced++;
 	return tower;

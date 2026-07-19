@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../js/config.js';
-import { updateCombat, Projectile } from '../js/combat.js';
+import { updateCombat, Projectile, damageTypeMultiplier } from '../js/combat.js';
 import { Enemy } from '../js/enemy.js';
 import { freshGame, finishBuild } from './helpers.mjs';
 
@@ -125,6 +125,52 @@ describe('combat: base damage & Shield', () => {
     const expected = CONFIG.ENEMY_BASE_DAMAGE * (1 - commandCore.totals().shieldPct);
     assert.ok(Math.abs(dmgTaken - expected) < 1e-9);
     assert.ok(dmgTaken < CONFIG.ENEMY_BASE_DAMAGE, 'Shield actually reduced the raw damage');
+  });
+});
+
+describe('combat: Phase 7a Damage Triangle', () => {
+  test('damageTypeMultiplier applies ADVANTAGE_MULT when the attacker beats the defender', () => {
+    assert.equal(damageTypeMultiplier('kinetic', 'plasma'), CONFIG.DAMAGE_TYPE_ADVANTAGE_MULT);
+    assert.equal(damageTypeMultiplier('plasma', 'energy'), CONFIG.DAMAGE_TYPE_ADVANTAGE_MULT);
+    assert.equal(damageTypeMultiplier('energy', 'kinetic'), CONFIG.DAMAGE_TYPE_ADVANTAGE_MULT);
+  });
+
+  test('damageTypeMultiplier applies DISADVANTAGE_MULT the other way around the same 3 matchups', () => {
+    assert.equal(damageTypeMultiplier('plasma', 'kinetic'), CONFIG.DAMAGE_TYPE_DISADVANTAGE_MULT);
+    assert.equal(damageTypeMultiplier('energy', 'plasma'), CONFIG.DAMAGE_TYPE_DISADVANTAGE_MULT);
+    assert.equal(damageTypeMultiplier('kinetic', 'energy'), CONFIG.DAMAGE_TYPE_DISADVANTAGE_MULT);
+  });
+
+  test('same-type and untyped (null) matchups are neutral (1x)', () => {
+    assert.equal(damageTypeMultiplier('kinetic', 'kinetic'), 1);
+    assert.equal(damageTypeMultiplier(null, 'kinetic'), 1);
+    assert.equal(damageTypeMultiplier('kinetic', null), 1);
+    assert.equal(damageTypeMultiplier(null, null), 1);
+  });
+
+  test('Projectile applies the matchup multiplier to the attacker/target types passed in', () => {
+    const enemy = new Enemy(100, 0, 0, 0, 1, 1, 'plasma');
+    const projectile = new Projectile(0, 0, enemy, 25, 'kinetic'); // kinetic beats plasma
+    const healthBefore = enemy.health;
+
+    projectile.update(1);
+
+    assert.equal(healthBefore - enemy.health, 25 * CONFIG.DAMAGE_TYPE_ADVANTAGE_MULT);
+  });
+
+  test('a placed Tower defaults to kinetic and fires a Projectile carrying its damageType', () => {
+    const { world } = freshGame(100000);
+    const reactor = world.buildRoom('reactor', 0, 0);
+    finishBuild(reactor);
+    const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    assert.equal(tower.damageType, 'kinetic', 'default damageType keeps every pre-Phase-7a call site unaffected');
+
+    const laserTower = world.placeTower(AWAY_FROM_BASE + 200, AWAY_FROM_BASE, 'energy');
+    assert.equal(laserTower.damageType, 'energy');
+
+    world.enemies.push(new Enemy(AWAY_FROM_BASE + 10, AWAY_FROM_BASE, 0, 0));
+    updateCombat(world, 0.016);
+    assert.equal(world.projectiles[0].damageType, 'kinetic');
   });
 });
 

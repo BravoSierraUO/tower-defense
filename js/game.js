@@ -128,14 +128,21 @@ export class Game {
     const home = { id: 'home', icon: '⌂', label: this.view === 'field' ? 'Home' : 'Field' };
 
     if (this.view === 'field') {
+      // Phase 7a: the old single "Tower" leaf is now 3 typed attackers
+      // (Railgun/Laser/Missile — CONFIG.DAMAGE_TYPES' labels), same cost/
+      // stats as each other this phase, differing only in damageType.
+      const towerCost = `${this.world.towerCost()}m`;
+      const attackerLeaves = Object.entries(CONFIG.DAMAGE_TYPES).map(([type, def], i) => ({
+        id: type, digit: `${i + 1}`, label: def.label, color: def.color, cost: towerCost
+      }));
       const build = {
         id: 'build', icon: '+', label: 'Build',
         flyout: [
-          { id: 'tower', digit: '1', label: 'Tower', cost: `${this.world.towerCost()}m` },
-          { id: 'scavenger', digit: '2', label: 'Scavenger', cost: `${this.world.scavengerCost()}m` }
+          ...attackerLeaves,
+          { id: 'scavenger', digit: '4', label: 'Scavenger', cost: `${this.world.scavengerCost()}m` }
         ]
       };
-      return { level1: [missions, inventory, home, build], flyoutRadius: 190, flyoutArc: 70 };
+      return { level1: [missions, inventory, home, build], flyoutRadius: 190, flyoutArc: 90 };
     }
 
     // Core view: same keyOrder convention as the '1'-'9'/'0' shortcut above,
@@ -168,7 +175,7 @@ export class Game {
       }
     } else if (id === 'missions') {
       this.ui.mission.flash();
-    } else if (id === 'tower' || id === 'scavenger') {
+    } else if (id === 'scavenger' || CONFIG.DAMAGE_TYPES[id]) {
       this.selectFieldBuild(id);
     } else if (CONFIG.ROOM_TYPES[id]) {
       this.selectRoomType(id);
@@ -231,10 +238,16 @@ export class Game {
         const keyOrder = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
         const idx = keyOrder.indexOf(key);
         if (idx !== -1) this.selectRoomType(Object.keys(CONFIG.ROOM_TYPES)[idx]);
-      } else if (this.view === 'field' && (key === '1' || key === '2')) {
+      } else if (this.view === 'field') {
         // Phase 4c: same number-key-selects-buildable-type convention the Core
-        // view already uses for its 10 room slots.
-        this.selectFieldBuild(key === '1' ? 'tower' : 'scavenger');
+        // view already uses for its 10 room slots. Phase 7a: 1-3 are now the 3
+        // typed attackers (kinetic/energy/plasma, in CONFIG.DAMAGE_TYPES'
+        // declared order — Railgun/Missile/Laser), 4 is Scavenger; must stay in
+        // the same order as buildRadialConfig()'s Field flyout above.
+        const fieldKeyOrder = ['1', '2', '3', '4'];
+        const fieldTypes = [...Object.keys(CONFIG.DAMAGE_TYPES), 'scavenger'];
+        const idx = fieldKeyOrder.indexOf(key);
+        if (idx !== -1) this.selectFieldBuild(fieldTypes[idx]);
       }
     }
     this.input.keyPresses.length = 0;
@@ -265,8 +278,8 @@ export class Game {
         } else if (this.fieldBuildType === 'scavenger') {
           this.selectedScavenger = this.world.placeScavenger(worldPos.x, worldPos.y);
           this.selectedTower = null;
-        } else if (this.fieldBuildType === 'tower') {
-          this.selectedTower = this.world.placeTower(worldPos.x, worldPos.y);
+        } else if (CONFIG.DAMAGE_TYPES[this.fieldBuildType]) {
+          this.selectedTower = this.world.placeTower(worldPos.x, worldPos.y, this.fieldBuildType);
           this.selectedScavenger = null;
         } else {
           // Nothing armed and nothing to interact with — pop the radial menu

@@ -137,8 +137,11 @@ commit.
 
 ## Known non-goals (as of this writing)
 
-- One generic `Tower` type — no classes, no per-tower XP (see `whatever.html`'s Phase 7
-  card, deliberately unscoped pending a playtest pass).
+- Still one generic `Tower` class — no per-tower XP/evolution/module loadout (see
+  `whatever.html`'s Phase 7b card, deliberately unscoped pending a playtest pass). Phase 7a
+  added a `damageType` tag (kinetic/plasma/energy) and a rock-paper-scissors matchup
+  multiplier against enemy `armorType`, but stats (damage/range/fire rate/cost) are still
+  identical across all three — that differentiation is Phase 7b's job.
 - Towers have no health and can't be damaged — enemies walk straight through them to the
   base (deliberately cut from Phase 4b, filed as an unscoped backlog item).
 - Single base, single player, world-center-fixed — no multiplayer/multi-base yet.

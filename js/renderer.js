@@ -159,7 +159,9 @@ export class Renderer {
       const p = camera.worldToScreen(tower.x, tower.y);
       const r = CONFIG.TOWER_RADIUS * camera.zoom;
 
-      ctx.fillStyle = CONFIG.TOWER_COLOR;
+      // Phase 7a: color by damageType (Railgun/Missile/Laser) instead of one
+      // flat TOWER_COLOR, so the 3 types read apart on the field.
+      ctx.fillStyle = CONFIG.DAMAGE_TYPES[tower.damageType]?.color ?? CONFIG.TOWER_COLOR;
       ctx.beginPath();
       ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
       ctx.fill();
@@ -204,6 +206,18 @@ export class Renderer {
       ctx.beginPath();
       ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
       ctx.fill();
+
+      // Phase 7a: armorType ring — kept a separate outline rather than
+      // recoloring the whole enemy, so it still reads as "enemy" (red) at a
+      // glance instead of blending with a same-colored attacker type.
+      const typeColor = CONFIG.DAMAGE_TYPES[enemy.armorType]?.color;
+      if (typeColor) {
+        ctx.strokeStyle = typeColor;
+        ctx.lineWidth = 2.5 * camera.zoom;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     }
   }
 
@@ -219,7 +233,10 @@ export class Renderer {
     const r = CONFIG.TOWER_RADIUS * camera.zoom * (isScavenger ? 0.8 : 1);
     ctx.save();
     ctx.globalAlpha = 0.45;
-    ctx.fillStyle = isScavenger ? CONFIG.SCAVENGER_COLOR : CONFIG.TOWER_COLOR;
+    // Phase 7a: fieldBuildType is now a damageType key ('kinetic'/'plasma'/
+    // 'energy') for the 3 typed attackers, or 'scavenger' — ghost color
+    // matches whichever's armed.
+    ctx.fillStyle = isScavenger ? CONFIG.SCAVENGER_COLOR : (CONFIG.DAMAGE_TYPES[fieldBuildType]?.color ?? CONFIG.TOWER_COLOR);
     ctx.beginPath();
     ctx.arc(mouse.x, mouse.y, r, 0, Math.PI * 2);
     ctx.fill();

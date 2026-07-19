@@ -243,3 +243,32 @@ describe('balance: difficulty tiers stay internally consistent', () => {
       'each tier should be at least as fast as the last');
   });
 });
+
+describe('balance: Phase 7a Damage Triangle stays a well-formed 3-cycle', () => {
+  test('every type beats exactly one other type, and no type beats itself', () => {
+    const types = Object.keys(CONFIG.DAMAGE_TYPES);
+    assert.equal(types.length, 3, 'the triangle is only well-formed at exactly 3 types');
+    for (const type of types) {
+      const beats = CONFIG.DAMAGE_TYPES[type].beats;
+      assert.ok(types.includes(beats), `${type} beats '${beats}', which isn't a real damage type`);
+      assert.notEqual(beats, type, `${type} can't beat itself`);
+    }
+  });
+
+  test('the beats graph forms exactly one 3-cycle (each type is beaten by exactly one other)', () => {
+    // A malformed table could have two types both beating the same third type,
+    // leaving the last type unbeaten by anyone — still "3 beats entries" but
+    // not a real rock-paper-scissors triangle. Count incoming edges per type.
+    const types = Object.keys(CONFIG.DAMAGE_TYPES);
+    const beatenCounts = Object.fromEntries(types.map(t => [t, 0]));
+    for (const type of types) beatenCounts[CONFIG.DAMAGE_TYPES[type].beats]++;
+    for (const type of types) {
+      assert.equal(beatenCounts[type], 1, `${type} should be beaten by exactly one other type, got ${beatenCounts[type]}`);
+    }
+  });
+
+  test('ADVANTAGE_MULT > 1, DISADVANTAGE_MULT is between 0 and 1 (never free/negative damage)', () => {
+    assert.ok(CONFIG.DAMAGE_TYPE_ADVANTAGE_MULT > 1);
+    assert.ok(CONFIG.DAMAGE_TYPE_DISADVANTAGE_MULT > 0 && CONFIG.DAMAGE_TYPE_DISADVANTAGE_MULT < 1);
+  });
+});

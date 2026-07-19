@@ -8,7 +8,9 @@ export const MISSIONS = [
   // Phase 9b: '#field-slot-tower' (the old always-on build-bar slot) no longer
   // exists — the glow target moved to the canvas itself, since the new flow's
   // first action is "click empty space" rather than a specific persistent button.
-  { id: 'place-tower', text: 'Place a Tower', hint: 'Click anywhere on the field to open the build menu, then pick Tower.', target: '#game', check: s => s.towersPlaced >= 1 },
+  // Phase 7a: the flyout no longer has a single "Tower" leaf — it's 3 typed
+  // attackers (Railgun/Laser/Missile) plus Scavenger — hint updated to match.
+  { id: 'place-tower', text: 'Place a Tower', hint: 'Click anywhere on the field to open the build menu, then pick Railgun, Laser, or Missile.', target: '#game', check: s => s.towersPlaced >= 1 },
   { id: 'trigger-wave', text: 'Trigger a Wave', hint: 'Hit Trigger Wave once your defenses are ready.', target: '#trigger-wave-btn', check: s => s.waveNumber >= 1 },
   { id: 'open-core', text: 'Check the Command Core', hint: 'Press B to see what your starter Reactor is producing.', target: '#ui-mode-hint', check: s => s.view === 'core' },
   { id: 'build-room', text: 'Build a Command Core Room', hint: 'Inside the Core, pick an unlocked room slot, then click a grid cell to build it.', target: '#core-panel', check: s => s.roomsBuilt >= 2 }

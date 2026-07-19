@@ -595,15 +595,26 @@ const ROADMAP = [
     ],
     depends:'Phase 3 (room framework), Phase 4 (prestige-level gate)',
     note:'From dreams/2026-07-19-fiction-vs-implementation-gaps.md. The station-tier piece is the cheapest item on the whole roadmap — pure render, zero new state — worth doing any time as filler; the abilities piece is real scope (targeting/cooldown UI) and should be scheduled deliberately, not squeezed in as filler alongside the reskin.' },
-  { id:'p7', num:'7', title:'Satellite Identity — Classes, XP, Evolution & Modules', status:'BACKLOG · NOT SCOPED', color:'--phase-7',
-    desc:'From `satellites.md`: rename Tower → Satellite, split the single generic tower type into 9 classes (Laser/Missile/Railgun/Drone Carrier/Support/EMP/Shield/Mining/Repair), and give each placed satellite its own XP/evolution and module loadout (Weapon/Power/Cooling/AI Chip/Targeting/Armor) — independent of the Command Core\'s room-level module system from Phase 3.',
+  { id:'p7a', num:'7a', title:'Satellite Identity — Damage Triangle', status:'DONE', color:'--phase-7',
+    desc:'A rock-paper-scissors damage/armor triangle (Kinetic → beats → Plasma → beats → Energy → beats → Kinetic, same-type is neutral) carved out of the bigger Phase 7b vision below because it didn\'t need the rest of that vision to test — 3 typed attackers, one new enemy attribute, and a one-line combat.js hook, small enough to build and feel out before committing to the full 9-class/XP/evolution lift.',
+    items:[
+      'Only 3 of `satellites.md`\'s 9 named classes are direct damage-dealers — reinterpreted those three as the triangle\'s three types instead of inventing new class names: Railgun = Kinetic, Laser = Energy, Missile = Plasma. The other 6 (Drone Carrier/Support/EMP/Shield/Mining/Repair) are utility/economy roles, outside the triangle entirely — stay Phase 7b\'s problem',
+      'New `armorType` on Enemy, weighted-random per spawn via `Spawner#pickArmorType()` and explicitly independent of `DIFFICULTY_TIERS` — health/speed scaling and type are separate axes, so the triangle is a build-crafting choice rather than a disguised tier-counter',
+      'Single hook point: `combat.js`\'s new `damageTypeMultiplier(attackerType, defenderType)` reads each type\'s own `beats` field as the one source of truth (no separate lookup table that could drift), applied at the Projectile damage-apply line — the entire mechanic is one multiplier at one call site',
+      'Both `Tower` and `Enemy` default their new type fields (`damageType: \'kinetic\'`, `armorType: null`) so every pre-existing call site — all ~130 prior tests included — kept working unmodified; `World.placeTower()`/`spawnEnemy()` are the only two places that ever pass a real value',
+      'The Field radial menu\'s Build flyout grew from 2 leaves (Tower/Scavenger) to 4 (Railgun/Missile/Laser/Scavenger, keys 1-4); towers and the armorType ring drawn on enemies are color-coded per type (`renderer.js`) so the matchup reads visually, not just numerically',
+      'First-pass multiplier values: 1.4x favorable / 0.7x unfavorable / 1.0x same-type-neutral — deliberately moderate rather than a harder 1.5x/0.5x classic-RPS spread, since this stacks multiplicatively on top of tier scaling, combo streak, and prestige damage bonuses that already compound; same "first pass, not tuned" caveat this codebase already carries on `BROWNOUT_MIN_FIRE_RATE_MULT`/`TOWER_POWER_CONSUMPTION` (Phase 4d)'
+    ],
+    note:'Scoped and built 2026-07-19, same session the click-to-open radial menu (Phase 9b) shipped — the user\'s own framing during that work ("energy - kinetic - plasma... we will design turrets in another phase") is what surfaced this. Deliberately did NOT wait on Phase 7b\'s full-vision precondition (a real playtest pass on the single-satellite-type balance curve) the way 7b still does below — 3 typed attackers + enemy armor turned out small and self-contained enough to derisk on its own, separate from the XP/evolution/module lift that actually touches every combat/balance test simultaneously. A live-browser color check caught one real issue before ship: plasma\'s first-pick color (an orange-red) was nearly invisible as an armor-type ring against `ENEMY_COLOR`\'s own red fill — swapped to violet (`#B24BFF`), confirmed against a live screenshot with all 3 types on screen at once. 8 new tests (`combat.test.mjs`\'s matchup-multiplier/Projectile-carries-damageType cases, `balance.test.mjs`\'s 3-cycle well-formedness + multiplier-bounds guards); full `node --test` pass stayed green (133/133). Verified live via Playwright: placed all 3 typed attackers plus Scavenger from both the radial flyout and keyboard shortcuts, confirmed a kinetic shot actually deals 1.4x to a plasma-armored enemy in the real combat loop (50 → 36 health, exactly 10 base damage × 1.4), zero console errors.' },
+  { id:'p7b', num:'7b', title:'Satellite Identity — Classes, XP, Evolution & Modules', status:'BACKLOG · NOT SCOPED', color:'--phase-7',
+    desc:'From `satellites.md`: rename Tower → Satellite, split the single generic tower type into 9 classes (Laser/Missile/Railgun/Drone Carrier/Support/EMP/Shield/Mining/Repair — 3 of which gain a damage type from Phase 7a above), and give each placed satellite its own XP/evolution and module loadout (Weapon/Power/Cooling/AI Chip/Targeting/Armor) — independent of the Command Core\'s room-level module system from Phase 3.',
     items:[
       'Today: exactly one tower type, flat stats, no XP, no modules, no health (config.js TOWER_RANGE/DAMAGE/FIRE_RATE are singular values, tower.js has one undifferentiated Tower class) — this is a full redesign, not an extension',
       '9 satellite classes with distinct combat roles',
       'Per-satellite XP + evolution curve',
       'Per-satellite module slots (Weapon/Power/Cooling/AI Chip/Targeting/Armor) — a second, parallel module system to the Core\'s room modules from Phase 3'
     ],
-    note:'Deliberately filed unscoped, not as a designed phase card like the others. This is the biggest lift and biggest payoff in either doc — turns one tower type + gold upgrade into an actual build-crafting layer — but it touches combat.js/tower.js/renderer.js/ui.js/tests/balance.test.mjs all at once, on top of a difficulty/balance curve nobody has playtested yet (see the "Later" section below — still blocking). Hard pre-condition: do not start this until the existing single-satellite-type loop has had at least one real playtest pass. Full reasoning in dreams/2026-07-19-fiction-vs-implementation-gaps.md.' },
+    note:'Deliberately filed unscoped, not as a designed phase card like Phase 7a above. This is the biggest lift and biggest payoff in either doc — turns one tower type + gold upgrade into an actual build-crafting layer — but it touches combat.js/tower.js/renderer.js/ui.js/tests/balance.test.mjs all at once, on top of a difficulty/balance curve nobody has playtested yet (see the "Later" section below — still blocking). Hard pre-condition: do not start this until the existing single-satellite-type loop has had at least one real playtest pass. Full reasoning in dreams/2026-07-19-fiction-vs-implementation-gaps.md.' },
   { id:'p8a', num:'8a', title:'Idle Wave Loop & Salvage Rewards', status:'DONE', color:'--phase-8',
     desc:'Replaces spawner.js\'s fully automatic countdown→spawning→active loop with a player-paced idle phase: gather resources, place a turret or two, then manually trigger each wave instead of it auto-starting on a timer. Wave-clear rewards become itemized salvage (metal, upgrade modules, production parts, gold) instead of one gold lump, and a wipe still pays out a tiered chest scaled to how far you got.',
     items:[
@@ -1891,22 +1902,28 @@ const STATS = {
       "date": "07-19",
       "cum": 9029,
       "subject": "Phase 9: Radial Build Menu — Field & Command Core"
+    },
+    {
+      "hash": "ace0736",
+      "date": "07-19",
+      "cum": 9242,
+      "subject": "Phase 9b: Radial Menu Rework — click-to-open, not always-on"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2877,
+      "value": 3098,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2741,
+      "value": 2764,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1862,
+      "value": 1831,
       "tone": "info"
     },
     {

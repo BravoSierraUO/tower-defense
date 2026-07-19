@@ -2,6 +2,8 @@
 // clicked (Phase 4b/4c). The Tower/Scavenger build picker itself moved to the
 // click-to-open radial context menu (js/ui/radialMenu.js, Phase 9b) — this
 // panel no longer owns any build-mode UI.
+import { CONFIG } from '../config.js';
+
 export class FieldPanel {
   constructor() {
     this.towerCard = document.getElementById('tower-card');
@@ -25,7 +27,9 @@ export class FieldPanel {
     this.towerCombatStatsEl.hidden = !showTowerCard;
     this.towerMetalStatEl.hidden = !showScavengerCard;
     if (showTowerCard) {
-      this.towerNameEl.textContent = 'Tower';
+      // Phase 7a: name the card by its damage type's class label
+      // (Railgun/Missile/Laser) instead of a generic "Tower".
+      this.towerNameEl.textContent = CONFIG.DAMAGE_TYPES[selectedTower.damageType]?.label ?? 'Tower';
       this.towerTierEl.textContent = `Tier ${['I', 'II', 'III'][selectedTower.tier - 1]}`;
       this.towerDamageEl.textContent = Math.round(selectedTower.damage * profile.damageMult());
       this.towerRangeEl.textContent = Math.round(selectedTower.range);

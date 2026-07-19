@@ -1,11 +1,24 @@
 import { CONFIG } from './config.js';
 
+// Phase 7a: Damage Triangle. Each type's own `beats` field in
+// CONFIG.DAMAGE_TYPES is the single source of truth — attacker wins if it
+// beats the defender's type, loses if the defender's type beats it, neutral
+// otherwise (same type, or either side untyped/null — e.g. hand-built test
+// fixtures that never pass a type).
+export function damageTypeMultiplier(attackerType, defenderType) {
+  if (!attackerType || !defenderType || attackerType === defenderType) return 1;
+  if (CONFIG.DAMAGE_TYPES[attackerType]?.beats === defenderType) return CONFIG.DAMAGE_TYPE_ADVANTAGE_MULT;
+  if (CONFIG.DAMAGE_TYPES[defenderType]?.beats === attackerType) return CONFIG.DAMAGE_TYPE_DISADVANTAGE_MULT;
+  return 1;
+}
+
 export class Projectile {
-  constructor(x, y, target, damage) {
+  constructor(x, y, target, damage, damageType = null) {
     this.x = x;
     this.y = y;
     this.target = target;
     this.damage = damage;
+    this.damageType = damageType; // the firing tower's damageType, see CONFIG.DAMAGE_TYPES
     this.speed = CONFIG.PROJECTILE_SPEED;
     this.dead = false;
   }
@@ -22,7 +35,7 @@ export class Projectile {
     const step = this.speed * dt;
 
     if (step >= dist) {
-      this.target.health -= this.damage;
+      this.target.health -= this.damage * damageTypeMultiplier(this.damageType, this.target.armorType);
       this.dead = true;
     } else {
       this.x += (dx / dist) * step;
@@ -85,7 +98,7 @@ export function updateCombat(world, dt) {
     const target = findTarget(tower, world.enemies);
     if (target) {
       // Phase 4: Damage Mastery skill multiplies every shot; Tower itself stays untouched.
-      world.projectiles.push(new Projectile(tower.x, tower.y, target, tower.damage * world.profile.damageMult()));
+      world.projectiles.push(new Projectile(tower.x, tower.y, target, tower.damage * world.profile.damageMult(), tower.damageType));
       // Phase 4d: a power brownout stretches the cooldown (slower firing) instead of stopping it.
       tower.cooldown = 1 / (tower.fireRate * world.powerFactor());
     }

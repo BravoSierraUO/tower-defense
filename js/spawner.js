@@ -32,6 +32,15 @@ export class Spawner {
     return unlocked[unlocked.length - 1];
   }
 
+  // Phase 7a: equal-weight random pick, deliberately independent of pickTier()
+  // above — armor type and difficulty tier are separate axes on purpose, so
+  // the Damage Triangle stays a build-crafting choice rather than a disguised
+  // tier-counter (a "hard" enemy isn't always the same type).
+  pickArmorType() {
+    const types = Object.keys(CONFIG.DAMAGE_TYPES);
+    return types[Math.floor(Math.random() * types.length)];
+  }
+
   canTriggerWave() {
     return !this.complete && this.state === 'idle';
   }
@@ -124,7 +133,7 @@ export class Spawner {
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0 && this.enemiesToSpawn > 0) {
         const tier = this.pickTier();
-        const enemy = world.spawnEnemy(tier.healthMult, tier.speedMult);
+        const enemy = world.spawnEnemy(tier.healthMult, tier.speedMult, this.pickArmorType());
         this.waveValueTotal += enemy.maxHealth;
         this.enemiesToSpawn--;
         this.spawnTimer = CONFIG.ENEMY_SPAWN_INTERVAL;
