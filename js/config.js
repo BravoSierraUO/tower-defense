@@ -168,9 +168,10 @@ export const CONFIG = {
   GOLD_PER_ENEMY_HEALTH: 0.4,
   WAVE_CLEAR_BONUS_BASE: 20,
   WAVE_CLEAR_BONUS_GROWTH: 5,
-  CORE_POWER_COST_DISCOUNT_PER_POINT: 0.005, // Reactor: 0.5% cheaper Tower/Scavenger cost per power
-  // Phase 2b's CORE_COMPUTE_REWARD_BONUS_PER_POINT (AI Core boosted gold reward) is gone as of
-  // Phase 4c — AI Core's whole identity became the Cycle Budget scheduler below, one job not two.
+  // Phase 2b's CORE_POWER_COST_DISCOUNT_PER_POINT (Reactor cheapened Tower/Scavenger cost) is gone
+  // as of Phase 4d — Reactor's power is a live supply pool now, not a one-time cost discount (see
+  // below). Phase 2b's CORE_COMPUTE_REWARD_BONUS_PER_POINT (AI Core boosted gold reward) is gone as
+  // of Phase 4c — AI Core's whole identity became the Cycle Budget scheduler below, one job not two.
 
   // Phase 4b: Economy Depth. Combo streak rewards uninterrupted kill chains;
   // base passive income scales with player level; Fast-Build lets a Command
@@ -210,6 +211,15 @@ export const CONFIG = {
   SCAVENGER_UPGRADE_COST_BASE: 20,
   SCAVENGER_UPGRADE_COST_GROWTH: 1.8,
   SCAVENGER_COLOR: '#D9A441',
+
+  // Phase 4d: Energy System. Reactor's power is a live supply pool combat Towers
+  // draw from continuously (World.powerSupply/powerConsumption/powerFactor) —
+  // consumption > supply throttles fire rate instead of a one-time cost discount.
+  // Only Towers consume power (Scavenger Turret is passive, never fires; Command
+  // Core rooms aren't power consumers). A brownout always throttles, never fully
+  // stops, a tower — floored the same way Shield/Fortification cap well under 100%.
+  TOWER_POWER_CONSUMPTION: [2, 3.5, 5], // per tier, index = tier - 1
+  BROWNOUT_MIN_FIRE_RATE_MULT: 0.25,
 
   // Phase 4: player profile (persistent across runs — level/achievements/prestige).
   // Cascade-style CP economy ported from a sister project (RMUV): a single CP spine

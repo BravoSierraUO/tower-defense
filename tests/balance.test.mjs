@@ -46,11 +46,14 @@ describe('balance: starting position is actually playable', () => {
 });
 
 describe('balance: cost floors hold even at a maxed-out Command Core', () => {
-  test('towerCost() never reaches 0 even with a maxed Reactor (max tier + max modules)', () => {
-    const { world, commandCore } = freshGame(0);
-    maxOutRoom(commandCore, 'reactor', 0, 0);
-    assert.ok(world.towerCost() >= 1,
-      `towerCost() hit ${world.towerCost()} at max Reactor investment — towers would become free`);
+  test('powerFactor() never drops below BROWNOUT_MIN_FIRE_RATE_MULT no matter how many towers are placed with zero Reactor built', () => {
+    // Phase 4d: towerCost() is a flat constant now (Reactor no longer discounts
+    // it — see changelog v1.6), so the analogous floor to guard is powerFactor()'s
+    // brownout clamp instead of a cost floor.
+    const { world } = freshGame(100000);
+    for (let i = 0; i < CONFIG.TOWER_MAX_COUNT; i++) world.placeTower(200 + i * 60, 200);
+    assert.ok(world.powerFactor() >= CONFIG.BROWNOUT_MIN_FIRE_RATE_MULT,
+      `powerFactor() hit ${world.powerFactor()} at max tower count with no Reactor — brownout floor failed`);
   });
 
   test("Shield's damage reduction never reaches 100% even at max tier + max modules", () => {

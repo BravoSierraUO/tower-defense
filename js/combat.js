@@ -86,7 +86,8 @@ export function updateCombat(world, dt) {
     if (target) {
       // Phase 4: Damage Mastery skill multiplies every shot; Tower itself stays untouched.
       world.projectiles.push(new Projectile(tower.x, tower.y, target, tower.damage * world.profile.damageMult()));
-      tower.cooldown = 1 / tower.fireRate;
+      // Phase 4d: a power brownout stretches the cooldown (slower firing) instead of stopping it.
+      tower.cooldown = 1 / (tower.fireRate * world.powerFactor());
     }
   }
 

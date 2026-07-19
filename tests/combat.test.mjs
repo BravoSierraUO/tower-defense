@@ -8,8 +8,12 @@ import { freshGame, finishBuild } from './helpers.mjs';
 const AWAY_FROM_BASE = 200;
 
 describe('combat: tower targeting & firing', () => {
-  test('a tower with an enemy in range fires a projectile and resets its cooldown', () => {
-    const { world } = freshGame(CONFIG.TOWER_COST);
+  test('a tower with an enemy in range fires a projectile and resets its cooldown at full power', () => {
+    const { world } = freshGame(100000);
+    // Phase 4d: an active Reactor covers this one tower's consumption, so
+    // powerFactor() is 1 and the cooldown is the plain 1/fireRate value.
+    const reactor = world.buildRoom('reactor', 0, 0);
+    finishBuild(reactor);
     const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
     const enemy = new Enemy(AWAY_FROM_BASE + 10, AWAY_FROM_BASE, 0, 0);
     world.enemies.push(enemy);
@@ -18,6 +22,7 @@ describe('combat: tower targeting & firing', () => {
 
     assert.equal(world.projectiles.length, 1);
     assert.equal(world.projectiles[0].target, enemy);
+    assert.equal(world.powerFactor(), 1, 'sanity: a tier-1 reactor covers one tier-1 tower, no brownout');
     assert.ok(Math.abs(tower.cooldown - 1 / tower.fireRate) < 1e-9);
   });
 
@@ -42,6 +47,22 @@ describe('combat: tower targeting & firing', () => {
     updateCombat(world, 0.016); // still on cooldown
 
     assert.equal(world.projectiles.length, projectileCountAfterFirst, 'no second projectile while on cooldown');
+  });
+});
+
+describe('combat: Energy System brownout (Phase 4d)', () => {
+  test('a brownout (no Reactor built) stretches a tower\'s cooldown past 1/fireRate without touching damage', () => {
+    const { world } = freshGame(CONFIG.TOWER_COST);
+    const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE); // no Reactor -> supply 0 -> brownout
+    const enemy = new Enemy(AWAY_FROM_BASE + 10, AWAY_FROM_BASE, 0, 0);
+    world.enemies.push(enemy);
+
+    updateCombat(world, 0.016);
+
+    assert.equal(world.projectiles.length, 1, 'a brownout throttles fire rate, it does not stop firing entirely');
+    assert.equal(world.projectiles[0].damage, tower.damage, 'brownout affects cooldown only, never damage');
+    assert.ok(tower.cooldown > 1 / tower.fireRate, 'cooldown is stretched past the full-power value');
+    assert.ok(Math.abs(tower.cooldown - 1 / (tower.fireRate * CONFIG.BROWNOUT_MIN_FIRE_RATE_MULT)) < 1e-9);
   });
 });
 

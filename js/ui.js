@@ -14,6 +14,7 @@ export class UI {
     this.goldEl = document.getElementById('ui-gold');
     this.metalEl = document.getElementById('ui-metal');
     this.comboEl = document.getElementById('ui-combo');
+    this.brownoutEl = document.getElementById('ui-brownout');
     this.waveEl = document.getElementById('ui-wave');
     this.tierEl = document.getElementById('ui-tier');
     this.levelEl = document.getElementById('ui-level');
@@ -48,6 +49,7 @@ export class UI {
     this.coreTowerCost = document.getElementById('core-tower-cost');
     this.coreScavengerCost = document.getElementById('core-scavenger-cost');
     this.coreMetalRate = document.getElementById('core-metal-rate');
+    this.corePowerDraw = document.getElementById('core-power-draw');
     this.towerBuildBar = document.getElementById('tower-build-bar');
     this.coreBuildBar = document.getElementById('core-build-bar');
 
@@ -153,6 +155,7 @@ export class UI {
       this.coreTowerCost.textContent = `${world.towerCost()}m`;
       this.coreScavengerCost.textContent = `${world.scavengerCost()}m`;
       this.coreMetalRate.textContent = `${world.metalPerSecond().toFixed(1)}/s`;
+      this.corePowerDraw.textContent = `${world.powerConsumption()} / ${world.powerSupply()}`;
 
       for (const [type, el] of Object.entries(this.lockedSlotEls)) {
         if (el) el.classList.toggle('locked', !commandCore.isRoomUnlocked(type));
@@ -232,6 +235,7 @@ export class UI {
     this.metalEl.textContent = `${Math.floor(world.metal)} / ${world.metalCap()}`;
     this.comboEl.hidden = world.comboStreak < 2;
     if (!this.comboEl.hidden) this.comboEl.textContent = `🔥 x${world.comboStreak}`;
+    this.brownoutEl.hidden = world.powerFactor() >= 1;
     this.waveEl.textContent = `${spawner.waveNumber} / ${CONFIG.MAX_WAVES}`;
     this.tierEl.textContent = this.currentTierName(spawner.waveNumber);
     this.fpsEl.textContent = Math.round(fps);

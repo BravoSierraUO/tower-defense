@@ -28,15 +28,15 @@ describe('World: tower economy', () => {
     assert.equal(world.towers.length, 0);
   });
 
-  test('Reactor power discounts towerCost() and scavengerCost() (both metal-denominated)', () => {
+  test('towerCost()/scavengerCost() are flat — Reactor no longer discounts cost as of Phase 4d', () => {
     const { world } = freshGame(100000);
-    const baseTowerCost = world.towerCost();
-    const baseScavengerCost = world.scavengerCost();
+    assert.equal(world.towerCost(), CONFIG.TOWER_COST);
+    assert.equal(world.scavengerCost(), CONFIG.SCAVENGER_COST);
 
     const reactor = world.buildRoom('reactor', 0, 0);
     finishBuild(reactor);
-    assert.ok(world.towerCost() < baseTowerCost, 'active reactor cheapens towers');
-    assert.ok(world.scavengerCost() < baseScavengerCost, 'active reactor cheapens scavenger turrets too');
+    assert.equal(world.towerCost(), CONFIG.TOWER_COST, 'Reactor power feeds powerFactor() now, not cost');
+    assert.equal(world.scavengerCost(), CONFIG.SCAVENGER_COST);
   });
 
   test('Storage raises goldCap() and addGold() clamps to it', () => {
@@ -121,6 +121,33 @@ describe('World: Command Core room economy', () => {
     assert.equal(goldBefore - world.gold, CONFIG.DOCK_TRADE_GOLD_COST);
     const expectedGain = CONFIG.DOCK_TRADE_GOLD_COST * (CONFIG.DOCK_TRADE_BASE_RATIO + dock.stats.tradeBonus);
     assert.ok(Math.abs(commandCore.research - researchBefore - expectedGain) < 1e-9);
+  });
+});
+
+describe('World: Energy System — power supply/consumption (Phase 4d)', () => {
+  test('powerFactor() is 1 with zero towers placed — nothing to throttle', () => {
+    const { world } = freshGame(0);
+    assert.equal(world.powerConsumption(), 0);
+    assert.equal(world.powerFactor(), 1);
+  });
+
+  test('powerFactor() is 1 when an active Reactor\'s supply covers total tower consumption', () => {
+    const { world } = freshGame(100000);
+    const reactor = world.buildRoom('reactor', 0, 0);
+    finishBuild(reactor);
+    world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    assert.ok(world.powerSupply() >= world.powerConsumption(), 'sanity: a tier-1 reactor covers one tier-1 tower');
+    assert.equal(world.powerFactor(), 1);
+  });
+
+  test('powerFactor() throttles below 1 once consumption exceeds supply, floored at BROWNOUT_MIN_FIRE_RATE_MULT', () => {
+    const { world } = freshGame(100000);
+    world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE); // no Reactor built -> 0 supply
+    assert.ok(world.powerFactor() < 1);
+    assert.ok(world.powerFactor() >= CONFIG.BROWNOUT_MIN_FIRE_RATE_MULT);
+
+    for (let i = 0; i < 10; i++) world.placeTower(AWAY_FROM_BASE + (i + 1) * 60, AWAY_FROM_BASE);
+    assert.equal(world.powerFactor(), CONFIG.BROWNOUT_MIN_FIRE_RATE_MULT, 'more consumption can\'t push the factor below the floor');
   });
 });
 
@@ -409,7 +436,9 @@ describe('World/CommandCore: onboarding-guarantee starters (Phase 4c)', () => {
     commandCore.placeStarterRoom('reactor', 0, 0);
     world.placeStarterScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
     assert.ok(world.metalPerSecond() > 0);
-    assert.ok(world.towerCost() < CONFIG.TOWER_COST, 'the starter Reactor\'s power discount is already live too');
+    // Phase 4d: the starter Reactor's power feeds powerFactor(), not tower cost
+    // anymore — a lone tier-1 tower should fire at full power on day one too.
+    assert.ok(world.powerSupply() > 0);
   });
 });
 

@@ -31,23 +31,44 @@ export class World {
     this.comboTimer = 0;
   }
 
-  // Command Core output feeds the economy: Reactor(power) cheapens Tower/Scavenger
-  // cost, AI Core(cyclesPerMin) drives the metal Cycle Budget, Storage(storageCap)
-  // raises the gold cap.
+  // Command Core output feeds the economy: Reactor(power) now supplies the Phase 4d
+  // Energy System (see powerSupply/powerConsumption/powerFactor below), AI
+  // Core(cyclesPerMin) drives the metal Cycle Budget, Storage(storageCap) raises
+  // the gold cap.
   goldCap() {
     return CONFIG.GOLD_CAP_BASE + this.commandCore.totals().storageCap;
   }
 
-  // Phase 4c: Reactor's power discount now cheapens both exterior-grid
-  // entities (Tower and Scavenger Turret), since both moved off gold onto metal.
+  // Phase 4d: flat metal cost — Reactor's power no longer discounts this (it's a
+  // live supply pool now, not a one-time discount; see powerFactor()).
   towerCost() {
-    const discount = this.commandCore.totals().power * CONFIG.CORE_POWER_COST_DISCOUNT_PER_POINT;
-    return Math.round(CONFIG.TOWER_COST * (1 - discount));
+    return CONFIG.TOWER_COST;
   }
 
   scavengerCost() {
-    const discount = this.commandCore.totals().power * CONFIG.CORE_POWER_COST_DISCOUNT_PER_POINT;
-    return Math.round(CONFIG.SCAVENGER_COST * (1 - discount));
+    return CONFIG.SCAVENGER_COST;
+  }
+
+  // Phase 4d: Energy System. Same fixed-supply/split-across-consumers shape as
+  // Phase 4c's AI Cycle Budget, but an instantaneous ratio rather than an accruing
+  // resource — no update(dt) needed, just a pure derived getter.
+  powerSupply() {
+    return this.commandCore.totals().power;
+  }
+
+  powerConsumption() {
+    return this.towers.reduce((sum, t) => sum + CONFIG.TOWER_POWER_CONSUMPTION[t.tier - 1], 0);
+  }
+
+  // 1 = every tower fires at full rate. Below 1 = brownout — supply can't cover
+  // consumption, so combat.js throttles fire rate proportionally, floored at
+  // BROWNOUT_MIN_FIRE_RATE_MULT so towers slow down but never fully stop.
+  powerFactor() {
+    const consumption = this.powerConsumption();
+    if (consumption <= 0) return 1;
+    const supply = this.powerSupply();
+    if (supply >= consumption) return 1;
+    return Math.max(CONFIG.BROWNOUT_MIN_FIRE_RATE_MULT, supply / consumption);
   }
 
   // Phase 4: the prestige skill tree's Gold Mastery node stacks on top of the combo bonus.

@@ -118,6 +118,17 @@ html,body{
     color:#F3C969;
 }
 
+.hud-brownout{
+
+    font-size:13px;
+
+    font-weight:700;
+
+    letter-spacing:.5px;
+
+    color:#FF7070;
+}
+
 .hud-center{
 
     width:420px;
