@@ -1663,6 +1663,16 @@ html,body{
     pointer-events:auto;
 }
 
+/* Author CSS's display:flex above beats the browser's default [hidden]{display:none}
+   rule — same bug class that bit .repair-btn (changelog v1.3) and .tower-stat/
+   #tower-combat-stats. Missed here when Phase 5b shipped the modal; issue #1
+   ("can't click the reset modal away") was this — every JS close path (Cancel, OK,
+   backdrop click) was correctly setting .hidden = true, CSS just never honored it. */
+.confirm-modal-overlay[hidden]{
+
+    display:none;
+}
+
 .confirm-modal{
 
     width:360px;

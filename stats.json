@@ -144,27 +144,33 @@
       "date": "07-19",
       "cum": 7258,
       "subject": "Phase 5: /docs folder -- closes out the phase"
+    },
+    {
+      "hash": "13e94ba",
+      "date": "07-19",
+      "cum": 7995,
+      "subject": "Phase 5b (scoped slice): avatar dropdown + real Settings tab (theme, save-data viewer, reset)"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2309,
+      "value": 2417,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 1965,
+      "value": 1982,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1574,
+      "value": 2160,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 1410,
+      "value": 1436,
       "tone": "ok"
     }
   ]

@@ -74,6 +74,11 @@
   .qn{font:600 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
     color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:9px 16px}
   .qn:hover{color:var(--ink);border-color:var(--accent)}
+  .qn.on{color:var(--ink);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+
+  /* ── page tabs (one section visible at a time) ────── */
+  .page-panel{display:none}
+  .page-panel.on{display:block}
 
   /* ── section chrome ───────────────────────────────── */
   section{padding:64px 0}
@@ -213,11 +218,15 @@
     background:linear-gradient(180deg,var(--glass-1),var(--glass-2));
     border-top:1px solid var(--line-soft);border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
     box-shadow:inset 0 1px rgba(255,255,255,.05),0 18px 40px rgba(0,0,0,.35)}
-  .rmap-head{display:flex;align-items:center;gap:14px;margin-bottom:8px;flex-wrap:wrap}
+  .rmap-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;cursor:pointer;user-select:none}
   .rmap-num{font:800 19px/1 var(--body);color:var(--pcolor,var(--accent))}
   .rmap-title{font:700 15px/1.3 var(--body);color:var(--ink)}
   .rmap-status{font:11px var(--mono);color:var(--ink-3);margin-left:auto;padding:4px 10px;
     background:rgba(255,255,255,.06);border-radius:12px;letter-spacing:.04em}
+  .rmap-chevron{font-size:12px;color:var(--ink-3);flex-shrink:0;transition:transform .15s}
+  .rmap-card.open .rmap-chevron{transform:rotate(180deg)}
+  .rmap-body{display:none;margin-top:8px}
+  .rmap-card.open .rmap-body{display:block}
   .rmap-desc{font-size:13.5px;line-height:1.6;color:var(--ink-2);margin:0 0 12px}
   .rmap-items{display:flex;flex-direction:column;gap:7px;margin:0 0 4px}
   .rmap-item{display:flex;gap:8px;font-size:12.5px;line-height:1.5;color:var(--ink-2)}
@@ -248,17 +257,18 @@
   <div class="chips">
     <span class="chip">Vanilla JS · Canvas 2D</span>
     <span class="chip">Solo build · zero deps</span>
-    <span class="chip">76 tests · node --test</span>
+    <span class="chip">116 tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
     <a class="qn" href="#whathow">WhatHow</a>
     <a class="qn" href="#velocity">Velocity</a>
     <a class="qn" href="#primitives">Primitives</a>
+    <a class="qn" href="#built">Built</a>
   </nav>
 </header>
 
-<section class="wrap" id="roadmap">
+<section class="wrap page-panel on" id="roadmap">
   <div class="eyebrow">Roadmap</div>
   <h2>Solo dev plan, phased</h2>
   <p class="lede">Some phases block others; some run parallel. Phases are the reference markers for
@@ -267,7 +277,7 @@
   <div class="rmap-grid" id="roadmapGrid"></div>
 </section>
 
-<section class="wrap" id="whathow">
+<section class="wrap page-panel" id="whathow">
   <div class="eyebrow">WhatHow</div>
   <h2>What happens when…</h2>
   <p class="lede">The real systems, traced end to end. Pick a story, then click any step to
@@ -290,18 +300,18 @@
   </div>
 </section>
 
-<section class="wrap" id="velocity">
+<section class="wrap page-panel" id="velocity">
   <div class="eyebrow">Velocity</div>
   <h2>What shipped, and how fast</h2>
   <p class="lede">Pulled straight from <code style="font-family:var(--mono)">git log</code>, not
-    estimated — 14 commits, one solo dev, a ~51-hour span across 4 days, from an empty canvas to
+    estimated — 24 commits, one solo dev, a ~58-hour span across 4 days, from an empty canvas to
     a base-building economy with a real tech tree, a persistent progression system, and this page.</p>
 
   <div class="stats" style="margin-top:22px">
     <div class="stat"><b id="statTotalLines">·</b><span>lines across the repo</span></div>
-    <div class="stat"><b>14</b><span>commits</span></div>
-    <div class="stat"><b>~51h</b><span>across 4 days</span></div>
-    <div class="stat"><b>55%</b><span>test lines per engine line</span></div>
+    <div class="stat"><b>24</b><span>commits</span></div>
+    <div class="stat"><b>~58h</b><span>across 4 days</span></div>
+    <div class="stat"><b>61%</b><span>test lines per engine line</span></div>
   </div>
 
   <div class="vgrid">
@@ -317,16 +327,17 @@
   </div>
 
   <div class="vcard" style="margin-top:16px">
-    <h4>The 14 commits</h4>
+    <h4>The 24 commits</h4>
     <div class="commitlog" id="commitLog"></div>
   </div>
 </section>
 
-<section class="wrap" id="primitives">
+<section class="wrap page-panel" id="primitives">
   <div class="eyebrow">Primitives</div>
   <h2>One recipe, five screens</h2>
   <p class="lede">The HUD, the build bar, the tower card, the Command Core panel, the profile
-    panel, the About/Analytics panel, the win/lose banner — seven different surfaces in <code style="font-family:var(--mono)">css/style.css</code>,
+    panel, the About/Analytics panel, the win/lose banner, the settings panel, the avatar menu,
+    the confirm modal — ten different surfaces in <code style="font-family:var(--mono)">css/style.css</code>,
     all built from one glass recipe and one accent color instead of seven bespoke looks. This page
     is built from the same recipe — the cards below are the actual CSS values, not a mockup.</p>
 
@@ -336,7 +347,7 @@
       <div class="gv">blur(18px)</div>
       <div class="usedin">backdrop-filter blur(18px) · the same two-stop dark gradient ·
         1px rgba(255,255,255,.06) border · the same inset+drop shadow · 18px radius.
-        One selector list in style.css draws all six surfaces — and every card on this page.</div>
+        One selector list in style.css draws all ten surfaces — and every card on this page.</div>
     </div>
     <div class="vcard">
       <h4>One accent color</h4>
@@ -371,7 +382,7 @@
   </div>
 </section>
 
-<section class="wrap">
+<section class="wrap page-panel" id="built">
   <div class="eyebrow">How it's built</div>
   <h2>Real systems, not a roadmap</h2>
   <p class="lede">These pages aren't drawn in a diagramming tool — they're data, rendered once
@@ -394,7 +405,7 @@
     <div class="stat"><b id="statFlows">·</b><span>system flows</span></div>
     <div class="stat"><b id="statNodes">·</b><span>documented steps</span></div>
     <div class="stat"><b id="statRefs">·</b><span>code references</span></div>
-    <div class="stat"><b>76</b><span>passing tests, zero deps</span></div>
+    <div class="stat"><b>116</b><span>passing tests, zero deps</span></div>
   </div>
 </section>
 
@@ -417,6 +428,24 @@ const syncBtn=()=>modeBtn.textContent=effective()==='dark'?'Light':'Dark';
 modeBtn.onclick=()=>{root.dataset.theme=effective()==='dark'?'light':'dark';
   localStorage.setItem('td-whatever-theme',root.dataset.theme);syncBtn();};
 syncBtn();
+
+// page tabs: one section visible at a time, hash-addressable (#roadmap/#whathow/#velocity/#primitives/#built)
+const PAGE_TABS=['roadmap','whathow','velocity','primitives','built'];
+let curPageTab='roadmap';
+function showPageTab(id){
+  curPageTab=id;
+  PAGE_TABS.forEach(t=>document.getElementById(t).classList.toggle('on',t===id));
+  document.querySelectorAll('.quicknav .qn').forEach(b=>
+    b.classList.toggle('on',b.getAttribute('href')==='#'+id));
+}
+function syncPageTabFromHash(scroll){
+  const h=location.hash.slice(1);
+  const id=PAGE_TABS.includes(h)?h:curPageTab;
+  showPageTab(id);
+  if(scroll)document.getElementById(id).scrollIntoView({block:'start'});
+}
+window.addEventListener('hashchange',()=>syncPageTabFromHash(true));
+syncPageTabFromHash(PAGE_TABS.includes(location.hash.slice(1)));
 
 // ============================= ROADMAP (internal phase tracker) =============================
 const ROADMAP = [
@@ -512,7 +541,7 @@ const ROADMAP = [
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 114 tests across 6 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. 116 tests across 6 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
@@ -530,6 +559,15 @@ const ROADMAP = [
       'Migrating existing Profile (P) and Command Core (B) panels into the new shell without breaking their current hotkey muscle-memory — not attempted; B/P/O/S all still work exactly as before, the avatar menu is a parallel entry point onto the same view-toggle callbacks, not a replacement'
     ],
     note:'Floated during the Phase 5 About-screen build (2026-07-19), explicitly filed rather than built — "a big bite," per the user. Same day, picked back up as a deliberately scoped slice: the avatar dropdown (new, additive) and real Settings-tab content (previously nonexistent) shipped; the tabbed-modal IA redesign and Inventory tab were deliberately left alone — that\'s still a from-scratch panel-system redesign, not an extension, and stays unscoped until picked up on purpose. Same caution Phase 7 already carries.' },
+  { id:'p5c', num:'5c', title:'In-Game Bug Reporting — GitHub Issues', status:'BACKLOG · NOT SCOPED', color:'--phase-5',
+    desc:'A "Report a Bug" entry point in the game itself, filing a real GitHub issue against this repo instead of the player having to leave the game, screenshot, and write it up by hand.',
+    items:[
+      'Today: bugs get reported the manual way — github.com/BravoSierraUO/tower-defense/issues/1 ("can\'t click the reset modal away on loading saved game"), filed by hand outside the game on 2026-07-19. No in-game path exists at all yet.',
+      'Open design question before this can be scoped: GitHub\'s REST API needs an authenticated token to create issues, and a static client-side game with no backend has nowhere safe to hold one — anyone with devtools could read an embedded token and spam or abuse the repo. Three real options, undecided: (a) a small serverless proxy that holds the token server-side, (b) GitHub\'s own pre-filled "New issue" URL scheme (no token needed, but opens a real browser tab instead of staying in-game), (c) skip GitHub entirely and post the report somewhere else (email/webhook).',
+      'Smallest honest slice, if picked up: an in-game "Report a Bug" button using option (b) above, pre-filling the issue body with the same browser/profile snapshot the About panel already reads from stats.json — zero new backend, zero secrets to protect, but still hands off to a browser tab rather than staying fully in-game.',
+      'The fuller "never leaves the game" version stays unscoped until the token/auth question above actually gets answered.'
+    ],
+    note:'Idea surfaced 2026-07-19, right after filing issue #1 the old manual way made the gap obvious. Filed unscoped/backlog like Phase 6 and 7 below — reuses Phase 5\'s tooling-family color rather than a new hue, same call Phase 5b made.' },
   { id:'p6', num:'6', title:'Comms & Station Identity', status:'LATER', color:'--phase-6',
     desc:'From `structures.md`/`lore.md`: a Communications room unlocking active, player-triggered orbital abilities (the game\'s current loop is 100% passive/economic once a wave starts — this is the first thing that gives the player something to *do* mid-wave), plus a station skin that visibly grows from Orbital Platform to Dyson Node as the player prestiges.',
     items:[
@@ -556,20 +594,30 @@ function renderRoadmap(){
   ROADMAP.forEach(ph=>{
     const color=getComputedStyle(document.documentElement).getPropertyValue(ph.color).trim();
     const card=document.createElement('div');
-    card.className='rmap-card';
+    card.className='rmap-card'+(ph.status.startsWith('DONE')?'':' open');
     card.style.setProperty('--pcolor',color);
     const items=ph.items.map(i=>`<div class="rmap-item">${i}</div>`).join('');
-    card.innerHTML=`
-      <div class="rmap-head">
-        <div class="rmap-num">${ph.num}</div>
-        <div class="rmap-title">${ph.title}</div>
-        <div class="rmap-status">${ph.status}</div>
-      </div>
+
+    const head=document.createElement('div');
+    head.className='rmap-head';
+    head.innerHTML=`
+      <div class="rmap-num">${ph.num}</div>
+      <div class="rmap-title">${ph.title}</div>
+      <div class="rmap-status">${ph.status}</div>
+      <div class="rmap-chevron">▾</div>
+    `;
+    head.onclick=()=>card.classList.toggle('open');
+
+    const bodyEl=document.createElement('div');
+    bodyEl.className='rmap-body';
+    bodyEl.innerHTML=`
       <p class="rmap-desc">${ph.desc}</p>
       <div class="rmap-items">${items}</div>
       ${ph.depends?`<div class="rmap-aside rmap-depends"><b>⊗ Waits for:</b> ${ph.depends}</div>`:''}
       ${ph.note?`<div class="rmap-aside rmap-note"><b>◈ Note:</b> ${ph.note}</div>`:''}
     `;
+
+    card.append(head,bodyEl);
     grid.appendChild(card);
   });
 }
@@ -645,6 +693,70 @@ const FLOWS = [
     ]
   },
 
+  {
+    id: 'moduleinstall', group: 'Building your base',
+    title: 'You install a module',
+    summary: 'Every room gets a universal +20%-output slot per tier once the module-slots tech node is unlocked — one module type, not a menu of choices.',
+    lanes: ['Room', 'Gate', 'Cost', 'Install', 'Output'],
+    nodes: [
+      { id: 'pick', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Right-click a finished room\nsame click Fast-Build rush uses',
+        code_ref: 'game.js (handleInput)',
+        detail: "The Command Core view's right-click handler branches on room.isActive() — an unfinished room rushes its build timer instead (see You rush a room's build); a finished one attempts a module install. Same input, different meaning depending on state." },
+      { id: 'gate', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'canInstallModule() ?\ntech + tier slots + active',
+        code_ref: 'commandcore.js (canInstallModule)',
+        detail: "Three conditions: the 'moduleSlots' tech node is unlocked, the room is active (fully built), and modules.length is still below moduleSlotCount() — 0/1/2 slots at tiers 1/2/3 (CONFIG.ROOM_MODULE_SLOTS_PER_TIER)." },
+      { id: 'noslot', col: 1, row: 1.75, kind: 'terminal', tone: 'idle', label: 'No slot available\nnothing happens',
+        detail: 'Same silent no-op convention as every other gated action in this game — no toast, no error, just nothing.' },
+      { id: 'cost', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'gold >= moduleCost() ?',
+        code_ref: 'world.js (installModuleAt) · commandcore.js (moduleCost)',
+        detail: "moduleCost() = MODULE_BASE_COST(25) × room.tier × MODULE_COST_GROWTH(1.6)^(modules already installed) — a room's own tier and its own module count both compound the price, but modules in a different room don't." },
+      { id: 'declined', col: 2, row: 1.75, kind: 'terminal', tone: 'idle', label: "Declined\ngate passed, gold didn't" },
+      { id: 'install', col: 3, row: 0.5, kind: 'process', tone: 'ok', label: 'installModule()\n+1 slot filled, +20% bonusPct',
+        code_ref: 'room.js (installModule)',
+        detail: 'Every module is identical — one universal +20%-output slot, not a menu of different module types.' },
+      { id: 'output', col: 4, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Room output multiplies\nstats × (1 + modules.length×0.2)',
+        code_ref: 'room.js (stats)',
+        detail: "A tier-3 room with both slots filled outputs 1.4× its base tier stats — the multiplier applies to every stat that room produces, whichever ones those are (power, research, dronePower, etc.)." }
+    ],
+    edges: [
+      { from: 'pick', to: 'gate' },
+      { from: 'gate', to: 'noslot', dashed: true, tone: 'idle' },
+      { from: 'gate', to: 'cost' },
+      { from: 'cost', to: 'declined', dashed: true, tone: 'idle' },
+      { from: 'cost', to: 'install', tone: 'ok' },
+      { from: 'install', to: 'output', tone: 'sig' }
+    ]
+  },
+  {
+    id: 'rushbuild', group: 'Building your base',
+    title: "You rush a room's build",
+    summary: "Pay gold to zero out a still-building room's remaining timer instead of waiting it out — priced by exactly how much time is left, not a flat fee.",
+    lanes: ['Room', 'Gate', 'Cost', 'Timer'],
+    nodes: [
+      { id: 'pick', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Right-click an unfinished room',
+        code_ref: 'game.js (handleInput)',
+        detail: 'Same right-click handler as module installs (see You install a module) — branches the other way for a room still mid-construction.' },
+      { id: 'gate', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: "Room exists and\nisn't active yet ?",
+        code_ref: 'world.js (rushBuildRoom)',
+        detail: 'A finished room, or an empty cell, both just return null — nothing to rush.' },
+      { id: 'none', col: 1, row: 1.75, kind: 'terminal', tone: 'idle', label: 'Nothing to rush' },
+      { id: 'cost', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'gold >= rushBuildCost() ?',
+        code_ref: 'world.js (rushBuildCost)',
+        detail: "ceil(buildTimeRemaining × 4) — FAST_BUILD_GOLD_PER_SECOND is a flat 4 gold per second still left on the clock. A room with 20 seconds left costs 80 gold to finish instantly; one with 2 seconds left costs 8." },
+      { id: 'short', col: 2, row: 1.75, kind: 'terminal', tone: 'idle', label: "Can't afford\nnothing happens" },
+      { id: 'finish', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: 'buildTimeRemaining = 0\nroom active next frame',
+        code_ref: 'world.js (rushBuildRoom)',
+        detail: 'No partial rush — either you pay the full remaining-time cost or the timer keeps ticking down for free at its normal rate.' }
+    ],
+    edges: [
+      { from: 'pick', to: 'gate' },
+      { from: 'gate', to: 'none', dashed: true, tone: 'idle' },
+      { from: 'gate', to: 'cost', tone: 'ok' },
+      { from: 'cost', to: 'short', dashed: true, tone: 'idle' },
+      { from: 'cost', to: 'finish', tone: 'sig' }
+    ]
+  },
+
   // ================================== DEFENDING ==================================
   {
     id: 'towerfires', group: 'Defending',
@@ -664,7 +776,7 @@ const FLOWS = [
       { id: 'noshot', col: 2, row: 1.75, kind: 'terminal', tone: 'idle', label: 'No shot fired\nnothing in range' },
       { id: 'fire', col: 3, row: 0.5, kind: 'process', tone: 'special', label: 'Projectile spawned\ndamage × damageMult()',
         code_ref: 'combat.js (updateCombat)',
-        detail: "tower.damage is multiplied by profile.damageMult() — the Damage Mastery prestige skill — at the instant of firing. Tower's own damage field never changes; the multiplier lives entirely on the profile side. cooldown resets to 1/(fireRate × world.powerFactor()) as of Phase 4d — a power brownout (Command Core power supply short of total tower consumption) stretches this cooldown, slowing fire rate, but never touches damage." },
+        detail: "tower.damage is multiplied by profile.damageMult() — the Damage Mastery prestige skill — at the instant of firing. Tower's own damage field never changes; the multiplier lives entirely on the profile side. cooldown resets to 1/(fireRate × world.powerFactor()) as of Phase 4d — a power brownout (Command Core power supply short of total tower consumption) stretches this cooldown, slowing fire rate, but never touches damage (see Power keeps the towers firing)." },
       { id: 'travel', col: 4, row: 0.5, kind: 'process', tone: 'ok', label: 'Projectile steps toward target\nPROJECTILE_SPEED per frame',
         code_ref: 'combat.js (Projectile.update)' },
       { id: 'impact', col: 4, row: 1.75, kind: 'terminal', tone: 'sig', label: 'target.health -= damage\nprojectile marked dead',
@@ -768,11 +880,68 @@ const FLOWS = [
     ]
   },
 
+  {
+    id: 'towerupgrade', group: 'Defending',
+    title: 'You upgrade a tower',
+    summary: 'Click your own placed tower to attempt an upgrade — same click that would place a new one on empty ground.',
+    lanes: ['Click', 'Gate', 'Cost', 'Upgrade'],
+    nodes: [
+      { id: 'click', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Click your own placed tower\nfield view',
+        code_ref: 'game.js (handleInput)',
+        detail: "Clicking empty ground places a new tower; clicking a tower you already own attempts an upgrade instead — the same click means different things depending on what's under it, same convention the Command Core's right-click already uses." },
+      { id: 'gate', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'canUpgrade() ?\ntier < 3',
+        code_ref: 'tower.js (canUpgrade)',
+        detail: "Towers have exactly 3 tiers (CONFIG.TOWER_TIERS) — a maxed tower's click just re-selects it for the tower-card inspector, no upgrade attempt." },
+      { id: 'maxed', col: 1, row: 1.75, kind: 'terminal', tone: 'idle', label: 'Already maxed\njust re-selects the tower' },
+      { id: 'cost', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'metal >= towerUpgradeCost() ?',
+        code_ref: 'world.js (towerUpgradeCost)',
+        detail: "30 × 1.8^(tier−1), in metal — not gold. Tower/Scavenger economics moved entirely to metal in Phase 4c; only Command Core rooms still spend gold." },
+      { id: 'declined', col: 2, row: 1.75, kind: 'terminal', tone: 'idle', label: 'Declined\nnothing charged' },
+      { id: 'upgrade', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: 'tier++, applyTier()\nrange/damage/fireRate all jump',
+        code_ref: 'tower.js (upgrade / applyTier)',
+        detail: "All three combat stats are re-derived from CONFIG.TOWER_TIERS in one call — there's no per-stat upgrade path, tiering up a tower always improves all three at once." }
+    ],
+    edges: [
+      { from: 'click', to: 'gate' },
+      { from: 'gate', to: 'maxed', dashed: true, tone: 'idle' },
+      { from: 'gate', to: 'cost', tone: 'ok' },
+      { from: 'cost', to: 'declined', dashed: true, tone: 'idle' },
+      { from: 'cost', to: 'upgrade', tone: 'sig' }
+    ]
+  },
+  {
+    id: 'baserepair', group: 'Defending',
+    title: 'You repair the base',
+    summary: 'A HUD button heals the base for gold — clamped to exactly the HP that\'s missing, never a wasted overshoot.',
+    lanes: ['HUD', 'Gate', 'Heal', 'Cost'],
+    nodes: [
+      { id: 'show', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Repair button appears\nonly when base HP is missing',
+        code_ref: 'ui.js (update)',
+        detail: "repairBtn.hidden is false only while state==='playing' and missingHealth > 0 — at full health the button doesn't exist to click." },
+      { id: 'afford', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'gold >= repairBaseCost() ?',
+        code_ref: 'ui.js (update) · world.js (repairBaseCost)',
+        detail: 'The button itself is pre-disabled (world.gold < cost) before you can even click it — this is checked visually in the UI as well as enforced again underneath in World.' },
+      { id: 'disabled', col: 1, row: 1.75, kind: 'terminal', tone: 'idle', label: "Button disabled\ncan't click it at all" },
+      { id: 'heal', col: 2, row: 0.5, kind: 'process', tone: 'ok', label: 'repairBase(20)\nclamped to missing HP',
+        code_ref: 'world.js (repairBase)',
+        detail: 'BASE_REPAIR_AMOUNT is a flat 20 HP per click, but Math.min(amount, missing) means the last click before full health only heals — and only costs — exactly what\'s missing, never overshoots.' },
+      { id: 'cost', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: 'gold −= repairBaseCost(heal)\n2 gold per HP actually healed',
+        code_ref: 'world.js (repairBaseCost)',
+        detail: 'BASE_REPAIR_GOLD_PER_HP is 2 — cost is computed off the actual (possibly clamped) heal amount, so the last partial click is proportionally cheaper too.' }
+    ],
+    edges: [
+      { from: 'show', to: 'afford' },
+      { from: 'afford', to: 'disabled', dashed: true, tone: 'idle' },
+      { from: 'afford', to: 'heal', tone: 'ok' },
+      { from: 'heal', to: 'cost', tone: 'sig' }
+    ]
+  },
+
   // ================================ THE ECONOMY ================================
   {
     id: 'goldflow', group: 'The economy',
     title: 'Gold flows through the base',
-    summary: 'Every source, both stacking modifiers, and where it all drains — the wiring the Command Core and the prestige skill tree both plug into. As of Phase 4c, Tower/Scavenger Turret cost and sell refunds moved to a separate metal economy (gold is purely the Command-Core-room currency now) — not diagrammed here yet, see changelog.md v1.4.',
+    summary: 'Every source, both stacking modifiers, and where it all drains — the wiring the Command Core and the prestige skill tree both plug into. As of Phase 4c, Tower/Scavenger Turret cost and sell refunds moved to a separate metal economy (gold is purely the Command-Core-room currency now) — see Metal flows through the base.',
     lanes: ['Sources', 'Pool', 'Modifiers', 'Sinks'],
     nodes: [
       { id: 'srcKill', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Kill reward\nmaxHealth × 0.4 × rewardMultiplier()',
@@ -784,10 +953,10 @@ const FLOWS = [
         detail: "Every source calls addGold(), clamped at goldCap(). Nothing bypasses this one function — there's exactly one place gold enters the pool." },
       { id: 'modCore', col: 2, row: 0.75, kind: 'process', tone: 'special', label: 'Command Core output',
         code_ref: 'world.js (goldCap)',
-        detail: "As of Phase 4d, Storage's storageCap raising goldCap() is the only Command Core output still wired into the GOLD flow. AI Core's cyclesPerMin drives the metal Cycle Budget (see The Economy's metal flow, not diagrammed here yet); Reactor's power no longer touches cost at all — it's a live supply pool combat Towers draw from continuously (World.powerFactor(), a fire-rate brownout when consumption outruns supply), see changelog.md v1.6." },
+        detail: "As of Phase 4d, Storage's storageCap raising goldCap() is the only Command Core output still wired into the GOLD flow. AI Core's cyclesPerMin drives the metal Cycle Budget (see Metal flows through the base); Reactor's power no longer touches cost at all — it's a live supply pool combat Towers draw from continuously (see Power keeps the towers firing)." },
       { id: 'modSkill', col: 2, row: 2.75, kind: 'process', tone: 'special', label: 'Prestige skill tree',
         code_ref: 'profile.js (goldMult / buildMult)',
-        detail: "Gold Mastery's goldMult() multiplies rewardMultiplier(), stacking with the Phase 4b combo-streak bonus (not diagrammed here). Build Mastery's buildMult() shortens every room's build timer — it never touches gold directly, but spends from the same prestige-point pool as Gold Mastery." },
+        detail: "Gold Mastery's goldMult() multiplies rewardMultiplier(), stacking with the Phase 4b combo-streak bonus (see Kills chain into a combo). Build Mastery's buildMult() shortens every room's build timer — it never touches gold directly, but spends from the same prestige-point pool as Gold Mastery." },
       { id: 'sinkRoom', col: 3, row: 1.75, kind: 'terminal', tone: 'ok', label: 'Room build / upgrade / module cost',
         code_ref: 'world.js (buildRoom / upgradeRoom / installModuleAt)' },
       { id: 'sinkDock', col: 3, row: 2.75, kind: 'terminal', tone: 'ok', label: 'Dock trade\ngold → research',
@@ -829,6 +998,141 @@ const FLOWS = [
       { from: 'afford', to: 'short', dashed: true, tone: 'idle' },
       { from: 'afford', to: 'convert', tone: 'ok' },
       { from: 'convert', to: 'stock', tone: 'sig' }
+    ]
+  },
+
+  {
+    id: 'metalflow', group: 'The economy',
+    title: 'Metal flows through the base',
+    summary: 'A fixed AI Cycle Budget splits evenly across every active metal producer — Scavenger Turrets and the Mine room alike — instead of each one earning independently.',
+    lanes: ['Producers', 'AI Budget', 'Split', 'Pool', 'Sinks'],
+    nodes: [
+      { id: 'srcScav', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Scavenger Turrets\neach a metalPerCycle rate',
+        code_ref: 'world.js (activeMetalProducers)',
+        detail: "Every placed Scavenger Turret (up to 20, SCAVENGER_MAX_COUNT) counts as one producer regardless of whether it's 'doing' anything — same 'built = active' rule Hangar's drones use." },
+      { id: 'srcMine', col: 0, row: 1.75, kind: 'input', tone: 'sig', label: 'Mine room\n(Command Core, if built)',
+        code_ref: 'world.js (activeMetalProducers)',
+        detail: 'Exactly one Mine can exist (one-of-each-room-type). If active, its tier-scaled metalPerCycle joins the same producer list as every Scavenger Turret.' },
+      { id: 'budget', col: 1, row: 1, kind: 'process', tone: 'special', label: 'cyclesPerSecond()\n(3 base + AI Core\'s cyclesPerMin) / 60',
+        code_ref: 'world.js (cyclesPerSecond)',
+        detail: 'BASE_CYCLES_PER_MIN=3 is an always-on floor — metal flows even with zero AI Core built. AI Core\'s cyclesPerMin adds on top of that floor, not instead of it.' },
+      { id: 'split', col: 2, row: 1, kind: 'process', tone: 'ok', label: 'Split evenly across\nevery active producer',
+        code_ref: 'world.js (metalPerSecond)',
+        detail: "share = cyclesPerSecond() / producer count — more producers means each one gets a smaller slice of the same fixed budget, then each producer's own per-cycle value (tier-scaled) is applied to its share. Adding a Scavenger Turret dilutes every other producer's payout, it doesn't add a separate stream." },
+      { id: 'pool', col: 3, row: 1, kind: 'store', tone: 'info', label: 'world.metal accrues\nevery frame, capped',
+        code_ref: 'world.js (updateCycleBudget / addMetal)',
+        detail: "updateCycleBudget(dt) is called once per frame from game.js's update() loop, same shape as gold's addGold — capped at metalCap() (METAL_CAP_BASE), a flat ceiling with no Command Core modifier feeding it (unlike gold's Storage-driven cap)." },
+      { id: 'sinks', col: 4, row: 1, kind: 'terminal', tone: 'sig', label: 'Towers, Scavenger Turrets\nbuild/upgrade/sell all spend metal',
+        code_ref: 'world.js (placeTower / upgradeTower / placeScavenger / upgradeScavenger)',
+        detail: 'As of Phase 4c, metal is purely the exterior-grid currency — gold never touches Tower or Scavenger Turret costs at all anymore (see Gold flows through the base).' }
+    ],
+    edges: [
+      { from: 'srcScav', to: 'split' },
+      { from: 'srcMine', to: 'split' },
+      { from: 'budget', to: 'split', tone: 'special' },
+      { from: 'split', to: 'pool', tone: 'ok' },
+      { from: 'pool', to: 'sinks', tone: 'sig' }
+    ]
+  },
+  {
+    id: 'markettrade', group: 'The economy',
+    title: 'You trade at the Market',
+    summary: 'Two independent one-way trades sharing one room and one bonus stat — not a single bidirectional exchange rate.',
+    lanes: ['You', 'Gate', 'Outcome'],
+    nodes: [
+      { id: 'press', col: 0, row: 1, kind: 'input', tone: 'sig', label: 'Click either Market button\nBuy Metal or Buy Gold',
+        code_ref: 'ui.js (marketBuyMetalBtn / marketBuyGoldBtn)',
+        detail: "Both buttons are hidden entirely unless commandCore.isBuilt('market'), and pre-disabled if you can't afford that direction's flat cost — same convention Dock's trade button uses." },
+      { id: 'gate', col: 1, row: 1, kind: 'decision', tone: 'warn', label: 'An active Market\nstill exists ?',
+        code_ref: 'world.js (tradeGoldForMetal / tradeMetalForGold)',
+        detail: 'Re-checked independently in World even though the UI already hid the buttons — the same belt-and-suspenders pattern as every other room-gated action.' },
+      { id: 'gone', col: 1, row: 2.25, kind: 'terminal', tone: 'idle', label: 'No Market\nnothing happens' },
+      { id: 'buyMetal', col: 2, row: 0.25, kind: 'terminal', tone: 'ok', label: 'gold −= 40\nmetal += 40×(0.5+marketBonus)',
+        code_ref: 'world.js (tradeGoldForMetal)',
+        detail: "MARKET_TRADE_GOLD_COST is a flat 40 gold. marketBonus comes from the Market room's own tier, same shape as Dock's tradeBonus." },
+      { id: 'buyGold', col: 2, row: 1.75, kind: 'terminal', tone: 'ok', label: 'metal −= 40\ngold += 40×(0.5+marketBonus)',
+        code_ref: 'world.js (tradeMetalForGold)',
+        detail: 'MARKET_TRADE_METAL_COST is a flat 40 metal — the opposite direction of the same trade, same ratio, same bonus source, spent from the opposite pool.' }
+    ],
+    edges: [
+      { from: 'press', to: 'gate' },
+      { from: 'gate', to: 'gone', dashed: true, tone: 'idle' },
+      { from: 'gate', to: 'buyMetal', tone: 'ok' },
+      { from: 'gate', to: 'buyGold', tone: 'ok' }
+    ]
+  },
+  {
+    id: 'powerbrownout', group: 'The economy',
+    title: 'Power keeps the towers firing',
+    summary: 'Reactor output is a live supply pool combat Towers draw from continuously — run short, and every tower throttles together instead of any one of them stopping.',
+    lanes: ['Reactor', 'Towers', 'Compare', 'Result'],
+    nodes: [
+      { id: 'supply', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'powerSupply()\nReactor\'s power stat',
+        code_ref: 'world.js (powerSupply)',
+        detail: "Reactor's power output (tier + module scaled) is a live pool, not a one-time cost discount like versions before Phase 4d." },
+      { id: 'consume', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'powerConsumption()\nsum of every placed Tower\'s draw',
+        code_ref: 'world.js (powerConsumption)',
+        detail: "TOWER_POWER_CONSUMPTION is [2, 3.5, 5] per tier — every placed Tower always draws its full tier's consumption, whether or not it's actually firing that frame (same 'built = active' rule as metal producers). Scavenger Turrets and Command Core rooms draw nothing." },
+      { id: 'factor', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'supply >= consumption ?',
+        code_ref: 'world.js (powerFactor)',
+        detail: 'If consumption is 0 (no towers placed), factor is always 1 regardless of supply — no brownout with nothing to power.' },
+      { id: 'full', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Every tower fires\nat full rate (factor = 1)' },
+      { id: 'brownout', col: 3, row: 1.75, kind: 'terminal', tone: 'alert', label: 'Brownout\ncooldown stretched by 1/factor',
+        code_ref: 'combat.js (updateCombat)',
+        detail: 'factor = max(0.25, supply/consumption) — BROWNOUT_MIN_FIRE_RATE_MULT floors it at 25% of normal fire rate, so towers always throttle, never fully stop, no matter how far consumption outruns supply (see A tower fires).' }
+    ],
+    edges: [
+      { from: 'supply', to: 'factor' },
+      { from: 'consume', to: 'factor' },
+      { from: 'factor', to: 'full', tone: 'ok' },
+      { from: 'factor', to: 'brownout', dashed: true, tone: 'alert' }
+    ]
+  },
+  {
+    id: 'combostreak', group: 'The economy',
+    title: 'Kills chain into a combo',
+    summary: 'Consecutive kills stack a gold-reward bonus that decays on its own clock — 2.5 seconds without a kill resets it, even mid-wave.',
+    lanes: ['Kill', 'Streak', 'Decay', 'Reward'],
+    nodes: [
+      { id: 'kill', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Enemy dies',
+        code_ref: 'world.js (updateEnemies)',
+        detail: 'Every kill increments comboStreak by exactly 1 and resets comboTimer to COMBO_WINDOW (2.5s) — the cap is only applied later, when the bonus is actually read.' },
+      { id: 'decay', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: '2.5s pass with\nno new kill ?',
+        code_ref: 'world.js (updateCombo)',
+        detail: 'comboTimer ticks down every frame independent of enemy count — the streak decays on its own clock even mid-wave with enemies still alive, and winds down between waves too, not only on the next kill.' },
+      { id: 'reset', col: 1, row: 1.75, kind: 'terminal', tone: 'idle', label: 'Streak resets to 0',
+        code_ref: 'world.js (updateCombo)' },
+      { id: 'stack', col: 2, row: 0.5, kind: 'process', tone: 'ok', label: 'Still within window\nstreak keeps stacking' },
+      { id: 'reward', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: 'rewardMultiplier() reads it\nmin(streak,25) × 2% + Gold Mastery',
+        code_ref: 'world.js (rewardMultiplier)',
+        detail: 'COMBO_MAX_STACKS caps the bonus at +50% (25 stacks × 2%) even if the streak itself keeps counting higher internally. Stacks multiplicatively with the prestige skill tree\'s own Gold Mastery multiplier — see Gold flows through the base.' }
+    ],
+    edges: [
+      { from: 'kill', to: 'stack', tone: 'ok' },
+      { from: 'kill', to: 'decay' },
+      { from: 'decay', to: 'reset', dashed: true, tone: 'idle' },
+      { from: 'stack', to: 'reward', tone: 'sig' }
+    ]
+  },
+  {
+    id: 'passiveincome', group: 'The economy',
+    title: 'Passive income trickles in',
+    summary: 'A trickle of gold that scales with the persistent player level, running from level 1 with no room or skill needed to unlock it.',
+    lanes: ['Level', 'Rate', 'Accrual'],
+    nodes: [
+      { id: 'level', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'profile.level()\nread every frame',
+        code_ref: 'game.js (update)',
+        detail: 'Passed into updatePassiveIncome(dt, level) each frame — passive income scales with the persistent player level, not anything about the current run.' },
+      { id: 'rate', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'level × 0.05 gold/sec',
+        code_ref: 'world.js (updatePassiveIncome)',
+        detail: 'BASE_PASSIVE_INCOME_PER_LEVEL is a flat 0.05 — a level-40 player earns 2 gold/sec doing nothing, before any other gold source fires. No separate skill or room needed to unlock this; it always runs from level 1.' },
+      { id: 'accrue', col: 2, row: 0.5, kind: 'terminal', tone: 'sig', label: 'addGold(rate × dt)\nsame goldCap() as every other source',
+        code_ref: 'world.js (updatePassiveIncome / addGold)',
+        detail: "Same single entry point every gold source uses (see Gold flows through the base) — passive income can't push gold past the Storage-scaled cap any more than a kill reward can." }
+    ],
+    edges: [
+      { from: 'level', to: 'rate' },
+      { from: 'rate', to: 'accrue', tone: 'sig' }
     ]
   },
 
@@ -963,15 +1267,57 @@ const FLOWS = [
     ]
   },
 
+  {
+    id: 'savedatamanage', group: 'Remembering',
+    title: 'You manage your save data',
+    summary: 'The avatar menu and Settings panel — theme, a raw-JSON viewer, and a shared confirm modal that guards the one truly destructive action in the game.',
+    lanes: ['Avatar', 'Settings', 'Action', 'Confirm', 'Outcome'],
+    nodes: [
+      { id: 'avatar', col: 0, row: 1, kind: 'input', tone: 'sig', label: 'Click the avatar button\ntop-right HUD',
+        code_ref: 'ui.js (avatarBtn)',
+        detail: 'Opens a dropdown (Profile/About/Settings/Reset) — a second, parallel entry point onto the same view-toggle callbacks the B/P/O/S hotkeys already use, not a replacement for them (see the Roadmap\'s Phase 5b card).' },
+      { id: 'settings', col: 1, row: 1, kind: 'process', tone: 'ok', label: 'Settings panel opens\ntheme, storage size, raw JSON, reset',
+        code_ref: 'ui.js (settingsPanel)',
+        detail: "Same panel reachable by the S hotkey directly — the avatar menu doesn't gate anything the hotkey couldn't already reach." },
+      { id: 'toggleTheme', col: 2, row: 0, kind: 'terminal', tone: 'ok', label: 'Toggle theme\nlight/dark, saved to localStorage',
+        code_ref: 'ui.js (applyTheme)',
+        detail: "Independent of any gameplay/profile state — just a data-theme attribute plus a 'td.theme' localStorage key read back on next load." },
+      { id: 'viewJson', col: 2, row: 1, kind: 'terminal', tone: 'ok', label: 'View Raw JSON\nexact bytes save() would write',
+        code_ref: 'ui.js (view-json-btn) · profile.js (rawJSON)',
+        detail: 'JSON.stringify(this.data, null, 2) — not a summary, the literal save blob. The storage-size readout above it is measured the same way: new Blob([profile.rawJSON()]).size.' },
+      { id: 'resetClick', col: 2, row: 2, kind: 'input', tone: 'warn', label: 'Click Reset Progress\n(avatar menu or Settings panel)',
+        code_ref: 'ui.js (menu-reset / menu-reset-progress)',
+        detail: 'Two entry points — the avatar dropdown and the Settings panel button — both call the same openConfirmModal(onResetProgress): one shared modal, not two.' },
+      { id: 'confirmModal', col: 3, row: 2, kind: 'decision', tone: 'warn', label: 'Confirm modal opens\nconfirmAction stored',
+        code_ref: 'ui.js (openConfirmModal)',
+        detail: 'confirmModal.hidden = false, and the pending action (profile.hardReset + restart) is stashed in this.confirmAction until Cancel, OK, or a backdrop click resolves it.' },
+      { id: 'cancel', col: 3, row: 3.25, kind: 'terminal', tone: 'idle', label: 'Cancel / backdrop click\nmodal closes, nothing happens',
+        code_ref: 'ui.js (closeConfirmModal)',
+        detail: 'closeConfirmModal() hides the modal and clears confirmAction — the backdrop-click handler only fires if the click target is the backdrop itself (e.target === confirmModal), not any click that merely bubbles up to it.' },
+      { id: 'ok', col: 4, row: 2, kind: 'terminal', tone: 'alert', label: 'OK confirmed\nhardReset() + restart()',
+        code_ref: 'profile.js (hardReset) · game.js (onResetProgress)',
+        detail: "profile.data resets to a blank profile and saves immediately, then the run restarts — level, badges, prestige, and skills are all gone. There's no undo once OK is clicked." }
+    ],
+    edges: [
+      { from: 'avatar', to: 'settings' },
+      { from: 'settings', to: 'toggleTheme', tone: 'ok' },
+      { from: 'settings', to: 'viewJson', tone: 'ok' },
+      { from: 'settings', to: 'resetClick', tone: 'warn' },
+      { from: 'resetClick', to: 'confirmModal' },
+      { from: 'confirmModal', to: 'cancel', dashed: true, tone: 'idle' },
+      { from: 'confirmModal', to: 'ok', tone: 'alert' }
+    ]
+  },
+
   // ================================= PROVING IT =================================
   {
     id: 'balanceguards', group: 'Proving it',
     title: "A tuning pass can't silently break the economy",
-    summary: '76 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
+    summary: '116 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
     lanes: ['Change', 'Run', 'Stress', 'Checks', 'Verdict'],
     nodes: [
       { id: 'tune', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'A constant changes in config.js\ne.g. a tier-3 buff' },
-      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n76 tests, 7 files, zero deps',
+      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n116 tests, 6 files, zero deps',
         code_ref: 'package.json · tests/*.test.mjs',
         detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
       { id: 'maxed', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'maxOutRoom() helper\nfull tech chain, max tier, every module slot',
@@ -1304,27 +1650,33 @@ const STATS = {
       "date": "07-19",
       "cum": 7258,
       "subject": "Phase 5: /docs folder -- closes out the phase"
+    },
+    {
+      "hash": "13e94ba",
+      "date": "07-19",
+      "cum": 7995,
+      "subject": "Phase 5b (scoped slice): avatar dropdown + real Settings tab (theme, save-data viewer, reset)"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2309,
+      "value": 2417,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 1965,
+      "value": 1982,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1574,
+      "value": 2160,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 1410,
+      "value": 1436,
       "tone": "ok"
     }
   ]
