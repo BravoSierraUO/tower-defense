@@ -39,6 +39,16 @@
                 <div id="ui-metal" class="hud-value">0 / 0</div>
             </div>
 
+            <div class="hud-stat" id="ui-module-charges-stat" hidden>
+                <div class="hud-label">MODS</div>
+                <div id="ui-module-charges" class="hud-value">0</div>
+            </div>
+
+            <div class="hud-stat" id="ui-production-parts-stat" hidden>
+                <div class="hud-label">PARTS</div>
+                <div id="ui-production-parts" class="hud-value">0</div>
+            </div>
+
             <span id="ui-combo" class="hud-combo" hidden></span>
 
             <span id="ui-brownout" class="hud-brownout" hidden>⚡ BROWNOUT</span>
@@ -81,6 +91,8 @@
             </div>
 
             <button id="repair-btn" class="repair-btn" hidden>Repair</button>
+
+            <button id="trigger-wave-btn" class="trigger-wave-btn" hidden>Trigger Wave</button>
 
         </div>
 
@@ -279,6 +291,8 @@
     </aside>
 
     <div id="achievement-toast" class="achievement-toast" hidden></div>
+
+    <div id="chest-toast" class="chest-toast" hidden></div>
 
     <!-- =========================
          ABOUT / ANALYTICS PANEL (Phase 5)

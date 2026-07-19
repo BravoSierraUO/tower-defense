@@ -16,10 +16,14 @@ export class UI {
   // onReportBug() } —
   // UI only translates DOM clicks into these; it never mutates gameplay state
   // directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleProfile, onToggleSettings, onResetProgress, onReportBug } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onTriggerWave } = {}) {
     this.scoreEl = document.getElementById('ui-score');
     this.goldEl = document.getElementById('ui-gold');
     this.metalEl = document.getElementById('ui-metal');
+    this.moduleChargesStat = document.getElementById('ui-module-charges-stat');
+    this.moduleChargesEl = document.getElementById('ui-module-charges');
+    this.productionPartsStat = document.getElementById('ui-production-parts-stat');
+    this.productionPartsEl = document.getElementById('ui-production-parts');
     this.comboEl = document.getElementById('ui-combo');
     this.brownoutEl = document.getElementById('ui-brownout');
     this.waveEl = document.getElementById('ui-wave');
@@ -34,6 +38,14 @@ export class UI {
 
     this.repairBtn = document.getElementById('repair-btn');
     this.repairBtn.addEventListener('click', () => onRepairBase?.());
+
+    // ---- Phase 8a: idle wave loop — the only way a wave starts now ----
+    this.triggerWaveBtn = document.getElementById('trigger-wave-btn');
+    this.triggerWaveBtn.addEventListener('click', () => onTriggerWave?.());
+    this.chestToastEl = document.getElementById('chest-toast');
+    this.chestToastQueue = [];
+    this.chestToastUntil = 0;
+    this.lastWaveEndSeq = 0;
 
     // ---- Phase 4b/4c: tower/scavenger inspector & upgrade card ----
     this.towerCard = document.getElementById('tower-card');
@@ -364,9 +376,32 @@ export class UI {
       this.toastUntil = performance.now() + 3000;
     }
 
+    // Phase 8a: wave-conclusion toast — diffs Spawner.waveEndSeq to catch a fresh
+    // full-clear or wipe-chest the instant finalizeWave() runs.
+    if (spawner.waveEndSeq !== this.lastWaveEndSeq) {
+      this.lastWaveEndSeq = spawner.waveEndSeq;
+      const tier = spawner.lastChestTier;
+      const pct = Math.round((spawner.lastWavePct ?? 1) * 100);
+      this.chestToastQueue.push(tier
+        ? { text: `${{ bronze: '🥉', silver: '🥈', gold: '🥇' }[tier]} ${tier[0].toUpperCase()}${tier.slice(1)} Chest — wave ${spawner.waveNumber}, ${pct}% cleared`, tier }
+        : { text: `✅ Wave ${spawner.waveNumber} Cleared — full salvage!`, tier: 'clear' });
+    }
+    if (!this.chestToastEl.hidden && performance.now() > this.chestToastUntil) this.chestToastEl.hidden = true;
+    if (this.chestToastEl.hidden && this.chestToastQueue.length) {
+      const t = this.chestToastQueue.shift();
+      this.chestToastEl.textContent = t.text;
+      this.chestToastEl.className = `chest-toast tier-${t.tier}`;
+      this.chestToastEl.hidden = false;
+      this.chestToastUntil = performance.now() + 3000;
+    }
+
     this.scoreEl.textContent = world.score;
     this.goldEl.textContent = `${Math.floor(world.gold)} / ${world.goldCap()}`;
     this.metalEl.textContent = `${Math.floor(world.metal)} / ${world.metalCap()}`;
+    this.moduleChargesStat.hidden = world.moduleCharges <= 0;
+    this.moduleChargesEl.textContent = world.moduleCharges;
+    this.productionPartsStat.hidden = world.productionParts <= 0;
+    this.productionPartsEl.textContent = world.productionParts;
     this.comboEl.hidden = world.comboStreak < 2;
     if (!this.comboEl.hidden) this.comboEl.textContent = `🔥 x${world.comboStreak}`;
     this.brownoutEl.hidden = world.powerFactor() >= 1;
@@ -386,6 +421,12 @@ export class UI {
       const cost = world.repairBaseCost(heal);
       this.repairBtn.textContent = `Repair ${Math.round(heal)} (${cost}g)`;
       this.repairBtn.disabled = world.gold < cost;
+    }
+
+    // Phase 8a: the only way a wave starts — visible only during the idle phase.
+    this.triggerWaveBtn.hidden = state !== 'playing' || !spawner.canTriggerWave();
+    if (!this.triggerWaveBtn.hidden) {
+      this.triggerWaveBtn.textContent = `Trigger Wave ${spawner.waveNumber + 1}`;
     }
 
     // Phase 4c: field-view build-mode slots — live cost + which one's selected.
@@ -422,14 +463,11 @@ export class UI {
         : 'MAX';
     }
 
+    // Phase 8a: 'lost' is no longer a reachable Game.state — a base wipe now heals and
+    // continues (see game.js/spawner.js). VICTORY at MAX_WAVES is the only banner left.
     if (state === 'won') {
       this.banner.textContent = 'VICTORY';
       this.banner.className = 'ui-banner win';
-      this.banner.hidden = false;
-      this.restartBtn.hidden = false;
-    } else if (state === 'lost') {
-      this.banner.textContent = `DEFEAT — wave ${spawner.waveNumber}`;
-      this.banner.className = 'ui-banner lose';
       this.banner.hidden = false;
       this.restartBtn.hidden = false;
     } else {

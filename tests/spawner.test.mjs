@@ -4,15 +4,29 @@ import { CONFIG } from '../js/config.js';
 import { Spawner } from '../js/spawner.js';
 import { freshGame } from './helpers.mjs';
 
-describe('Spawner: wave state machine', () => {
-  test('starts in countdown and moves to spawning once WAVE_START_DELAY elapses', () => {
+describe('Spawner: idle wave loop (Phase 8a)', () => {
+  test('starts idle and only moves to spawning via triggerWave()', () => {
     const spawner = new Spawner();
     const { world } = freshGame(0);
-    assert.equal(spawner.state, 'countdown');
-    spawner.update(CONFIG.WAVE_START_DELAY + 0.01, world);
+    assert.equal(spawner.state, 'idle');
+    assert.equal(spawner.canTriggerWave(), true);
+
+    spawner.update(999, world); // idle never auto-advances, no matter how much time passes
+    assert.equal(spawner.state, 'idle');
+    assert.equal(spawner.waveNumber, 0);
+
+    assert.equal(spawner.triggerWave(), true);
     assert.equal(spawner.state, 'spawning');
     assert.equal(spawner.waveNumber, 1);
     assert.equal(spawner.enemiesToSpawn, CONFIG.WAVE_BASE_ENEMIES);
+  });
+
+  test('triggerWave() is a no-op outside idle', () => {
+    const spawner = new Spawner();
+    spawner.triggerWave();
+    assert.equal(spawner.state, 'spawning');
+    assert.equal(spawner.triggerWave(), false, 'already spawning — cannot re-trigger');
+    assert.equal(spawner.waveNumber, 1, 'wave number did not advance a second time');
   });
 
   test('enemiesToSpawn grows by WAVE_ENEMY_GROWTH per wave', () => {
@@ -35,23 +49,72 @@ describe('Spawner: wave state machine', () => {
 
     assert.equal(world.enemies.length, total);
     assert.equal(spawner.state, 'active');
+    assert.equal(
+      spawner.waveValueTotal,
+      world.enemies.reduce((sum, e) => sum + e.maxHealth, 0),
+      'every spawned enemy\'s maxHealth is tallied into waveValueTotal'
+    );
   });
 
-  test('active -> countdown once all enemies are cleared, awarding the wave-clear bonus', () => {
+  test('a full clear (100% killed) pays the full salvage bundle and counts as a real clear', () => {
     const spawner = new Spawner();
     const { world } = freshGame(0);
     spawner.waveNumber = 1;
     spawner.state = 'active';
+    spawner.waveValueTotal = 100;
+    spawner.waveValueKilled = 100; // simulates every spawned enemy having died
     // world.enemies is already empty — simulates the last enemy having just died/reached base
 
     spawner.update(0.016, world);
 
-    const expectedBonus = Math.round(
-      (CONFIG.WAVE_CLEAR_BONUS_BASE + 0 * CONFIG.WAVE_CLEAR_BONUS_GROWTH) * world.rewardMultiplier()
-    );
-    assert.equal(world.gold, expectedBonus);
-    assert.equal(spawner.state, 'countdown');
-    assert.equal(spawner.timer, CONFIG.WAVE_INTERVAL);
+    const expectedGold = Math.round((CONFIG.WAVE_CLEAR_BONUS_BASE + 0 * CONFIG.WAVE_CLEAR_BONUS_GROWTH) * world.rewardMultiplier());
+    const expectedMetal = Math.round(CONFIG.WAVE_CLEAR_METAL_BASE + 0 * CONFIG.WAVE_CLEAR_METAL_GROWTH);
+    assert.equal(world.gold, expectedGold);
+    assert.equal(world.metal, expectedMetal);
+    assert.equal(world.moduleCharges, CONFIG.WAVE_CLEAR_MODULE_CHARGE);
+    assert.equal(world.productionParts, CONFIG.WAVE_CLEAR_PRODUCTION_PARTS);
+    assert.equal(spawner.wavesCleared, 1);
+    assert.equal(spawner.lastChestTier, null);
+    assert.equal(spawner.state, 'idle', 'returns to idle, waiting on the next triggerWave()');
+  });
+
+  test('a wipe (base destroyed mid-wave) pays a chest scaled by % killed, heals the base, and does not count as a clear', () => {
+    const spawner = new Spawner();
+    const { world } = freshGame(0);
+    spawner.waveNumber = 1;
+    spawner.state = 'active';
+    spawner.waveValueTotal = 100;
+    spawner.waveValueKilled = 50; // 50% — lands in the silver tier (minPct 0.34)
+    world.base.health = 0; // destroyed
+
+    spawner.update(0.016, world);
+
+    const silver = CONFIG.WIPE_CHEST_TIERS.find(t => t.id === 'silver');
+    const expectedGold = Math.round(CONFIG.WAVE_CLEAR_BONUS_BASE * silver.mult * world.rewardMultiplier());
+    const expectedMetal = Math.round(CONFIG.WAVE_CLEAR_METAL_BASE * silver.mult);
+    assert.equal(world.gold, expectedGold);
+    assert.equal(world.metal, expectedMetal);
+    assert.equal(world.moduleCharges, 0, 'no salvage tokens on a wipe, only on a full clear');
+    assert.equal(world.productionParts, 0);
+    assert.equal(spawner.lastChestTier, 'silver');
+    assert.equal(spawner.wavesCleared, 0, 'a wipe never counts as a true clear');
+    assert.equal(world.base.health, world.base.maxHealth, 'base heals back to full — a wipe costs the chest tier, not the run');
+    assert.equal(spawner.state, 'idle');
+  });
+
+  test('a near-total wipe (0% killed) still floors at the bronze chest tier', () => {
+    const spawner = new Spawner();
+    const { world } = freshGame(0);
+    spawner.waveNumber = 1;
+    spawner.state = 'active';
+    spawner.waveValueTotal = 100;
+    spawner.waveValueKilled = 0;
+    world.base.health = 0;
+
+    spawner.update(0.016, world);
+
+    assert.equal(spawner.lastChestTier, 'bronze');
+    assert.ok(world.gold > 0, 'bronze still pays something, not zero');
   });
 
   test('completes instead of looping once MAX_WAVES is cleared', () => {
@@ -63,7 +126,7 @@ describe('Spawner: wave state machine', () => {
     spawner.update(0.016, world);
 
     assert.equal(spawner.complete, true);
-    assert.equal(spawner.state, 'active', 'state is left as-is once complete — update() short-circuits on spawner.complete');
+    assert.equal(spawner.state, 'active', 'state is left as-is once complete — finalizeWave() only sets it in the non-complete branch');
   });
 
   test('a completed spawner ignores further update() calls entirely', () => {

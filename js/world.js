@@ -22,6 +22,8 @@ export class World {
     this.towersPlaced = 0;
     this.gold = CONFIG.STARTING_GOLD;
     this.metal = CONFIG.STARTING_METAL; // Phase 4c: funds Tower/Scavenger Turret cost, not gold
+    this.moduleCharges = 0;     // Phase 8a: wave-clear salvage — spends as a free module install
+    this.productionParts = 0;  // Phase 8a: wave-clear salvage — spends as a free build-timer rush
     this.commandCore = commandCore;
     this.profile = profile;
     this.base = new Base();
@@ -91,6 +93,16 @@ export class World {
     this.metal = Math.min(this.metalCap(), this.metal + amount);
   }
 
+  // Phase 8a: wave-clear salvage tokens. No cap — these are small discrete counts,
+  // not an accruing rate like gold/metal.
+  addModuleCharges(amount) {
+    this.moduleCharges += amount;
+  }
+
+  addProductionParts(amount) {
+    this.productionParts += amount;
+  }
+
   // AI Cycle Budget scheduler (Phase 4c): a continuous fair-share rate, not
   // literal discrete cycles — mathematically the same long-run average, but
   // deterministic and dt-driven like every other rate in this game
@@ -127,11 +139,14 @@ export class World {
   }
 
   // Spawns an enemy at a random angle on a ring outside the world, aimed at the base.
+  // Returns the enemy so Spawner can tally its maxHealth into the wave's value total.
   spawnEnemy(healthMultiplier = 1, speedMultiplier = 1) {
     const angle = Math.random() * Math.PI * 2;
     const x = this.base.x + Math.cos(angle) * this.spawnRadius;
     const y = this.base.y + Math.sin(angle) * this.spawnRadius;
-    this.enemies.push(new Enemy(x, y, this.base.x, this.base.y, healthMultiplier, speedMultiplier));
+    const enemy = new Enemy(x, y, this.base.x, this.base.y, healthMultiplier, speedMultiplier);
+    this.enemies.push(enemy);
+    return enemy;
   }
 
   updateSpawning(dt) {
@@ -159,9 +174,14 @@ export class World {
         this.score += Math.round(enemy.maxHealth);
         this.kills++;
         this.addGold(Math.round(enemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * this.rewardMultiplier()));
+        this.spawner.waveValueKilled += enemy.maxHealth; // Phase 8a: raw value, feeds finalizeWave()'s chest-tier %
       }
     }
-    this.enemies = this.enemies.filter(e => !e.reachedTarget && !e.isDead());
+    // Frame order is spawning -> combat (resolveBaseHits) -> here. An enemy that just
+    // arrived this frame has reachedTarget=true but hasHitBase=false — filtering on
+    // reachedTarget alone would remove it before combat.js's next pass ever sees it,
+    // so base damage would never actually apply. Keep it one extra frame until hasHitBase flips.
+    this.enemies = this.enemies.filter(e => !e.isDead() && !(e.reachedTarget && e.hasHitBase));
   }
 
   snapToGrid(x, y) {
@@ -298,6 +318,12 @@ export class World {
   rushBuildRoom(gx, gy) {
     const room = this.commandCore.getRoomAt(gx, gy);
     if (!room || room.isActive()) return null;
+    // Phase 8a: a production part (wave-clear salvage) rushes it for free before gold is touched.
+    if (this.productionParts > 0) {
+      this.productionParts--;
+      room.buildTimeRemaining = 0;
+      return room;
+    }
     const cost = this.rushBuildCost(room);
     if (this.gold < cost) return null;
     this.gold -= cost;
@@ -348,6 +374,11 @@ export class World {
   installModuleAt(gx, gy) {
     const room = this.commandCore.getRoomAt(gx, gy);
     if (!this.commandCore.canInstallModule(room)) return null;
+    // Phase 8a: a module charge (wave-clear salvage) installs for free before gold is touched.
+    if (this.moduleCharges > 0) {
+      this.moduleCharges--;
+      return this.commandCore.installModuleAt(gx, gy);
+    }
     const cost = this.commandCore.moduleCost(room);
     if (this.gold < cost) return null;
     this.gold -= cost;

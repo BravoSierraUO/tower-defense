@@ -14,7 +14,7 @@
     --info:#9aa8e8; --idle:#8a93a3; --special:#c79ae8;
     --phase-1:#4A90E2; --phase-2a:#2ECC71; --phase-2b:#F39C12; --phase-3:#9B59B6;
     --phase-4:#E74C3C; --phase-4b:#C0392B; --phase-4c:#C97B3C; --phase-4d:#D9A441; --phase-5:#8B9AB2;
-    --phase-6:#3FA7A0; --phase-7:#6C63FF;
+    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393;
     --body:Inter,system-ui,"Segoe UI",sans-serif;
     --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
     color-scheme:dark;
@@ -586,7 +586,44 @@ const ROADMAP = [
       'Per-satellite XP + evolution curve',
       'Per-satellite module slots (Weapon/Power/Cooling/AI Chip/Targeting/Armor) — a second, parallel module system to the Core\'s room modules from Phase 3'
     ],
-    note:'Deliberately filed unscoped, not as a designed phase card like the others. This is the biggest lift and biggest payoff in either doc — turns one tower type + gold upgrade into an actual build-crafting layer — but it touches combat.js/tower.js/renderer.js/ui.js/tests/balance.test.mjs all at once, on top of a difficulty/balance curve nobody has playtested yet (see the "Later" section below — still blocking). Hard pre-condition: do not start this until the existing single-satellite-type loop has had at least one real playtest pass. Full reasoning in dreams/2026-07-19-fiction-vs-implementation-gaps.md.' }
+    note:'Deliberately filed unscoped, not as a designed phase card like the others. This is the biggest lift and biggest payoff in either doc — turns one tower type + gold upgrade into an actual build-crafting layer — but it touches combat.js/tower.js/renderer.js/ui.js/tests/balance.test.mjs all at once, on top of a difficulty/balance curve nobody has playtested yet (see the "Later" section below — still blocking). Hard pre-condition: do not start this until the existing single-satellite-type loop has had at least one real playtest pass. Full reasoning in dreams/2026-07-19-fiction-vs-implementation-gaps.md.' },
+  { id:'p8a', num:'8a', title:'Idle Wave Loop & Salvage Rewards', status:'DONE', color:'--phase-8',
+    desc:'Replaces spawner.js\'s fully automatic countdown→spawning→active loop with a player-paced idle phase: gather resources, place a turret or two, then manually trigger each wave instead of it auto-starting on a timer. Wave-clear rewards become itemized salvage (metal, upgrade modules, production parts, gold) instead of one gold lump, and a wipe still pays out a tiered chest scaled to how far you got.',
+    items:[
+      'Spawner countdown state becomes idle/manual — CONFIG.WAVE_START_DELAY/WAVE_INTERVAL auto-timers replaced by a player-triggered "Trigger Wave" action; no time pressure between waves, matching the idle-game feel',
+      'Wave-clear rewards itemized — a full clear pays metal + modules + production parts + gold instead of spawner.js\'s single WAVE_CLEAR_BONUS_BASE gold lump',
+      'Partial-clear chest tiers on a wipe — bronze/silver/gold scaled by sum(enemy.maxHealth killed) ÷ sum(enemy.maxHealth spawned this wave), computed on raw base values, before rewardMultiplier()/combo/prestige multipliers touch anything',
+      'Deliberate decoupling: completion % and reward payout never share a formula, so a future "+XP%"-style upgrade can inflate payout without also trivializing the completion threshold'
+    ],
+    note:'Design call made with the user before implementation: reuse enemy.maxHealth (already the canonical per-enemy weight, already driving gold reward) as the completion-% denominator rather than inventing a parallel XP stat — one source of truth instead of two. Foundational — Missions/Hero/Patrols below all assume this loop shape exists first.' },
+  { id:'p8b', num:'8b', title:'Tutorial Missions & Glow-Lead System', status:'LATER', color:'--phase-8',
+    desc:'A mission-driven tutorial that unlocks step by step as the player hits real milestones (first room, first tower, first wave triggered) instead of a wall of text up front. Built around a reusable "glow" affordance — a soft pulsing highlight attachable to any HUD element — designed explicitly for low-vision players who can miss small, sleek buttons.',
+    items:[
+      'Mission list gated on live game-state conditions (first Command Core room built, first Tower placed, first wave triggered, ...), same shape as the ROADMAP/FLOWS data arrays already driving this doc',
+      'Generic glow/pulse highlight mechanism, attachable to any HUD target (a build button, the B-key Core toggle, a specific grid cell) rather than one-off CSS per mission',
+      'In-mission help/"?" affordance re-triggers the same glow on demand, for a player who loses track of where the next step is',
+      'Reusable beyond the opening minutes — Hero recruitment (8c) re-triggers this same system rather than being a special case'
+    ],
+    depends:'Phase 8a',
+    note:'Accessibility was the explicit driver, not a nice-to-have: the user flagged difficulty seeing small sleek upgrade buttons, so the lead-in affordance is a first-class animated highlight, not a tooltip or color change.' },
+  { id:'p8c', num:'8c', title:'Hero — Recruitment & Persistent Leveling', status:'LATER', color:'--phase-8',
+    desc:'A persistent, leveling hero unit recruited through the existing Hangar room (Phase 3 — currently passive interceptor drones) once the player\'s profile level crosses a threshold, timed to land around when waves start outpacing the player\'s current firepower.',
+    items:[
+      'Recruit-hero action added to the already-built Hangar room, gated by profile level (candidate threshold: 12, splitting the user\'s 10-15 range) on top of the room already being built — no new room type invented',
+      'Hero XP/level stored in profile.js alongside badges — permanent across runs, not reset by prestige, same precedent Phase 4 set for badge/life stats',
+      'Recruiting the hero re-triggers the Phase 8b mission system for a short onboarding chain'
+    ],
+    depends:'Phase 3 (Hangar room), Phase 8b (mission system)',
+    note:'Design call made with the user: reuse Hangar rather than add a second room — thematically "hangar" already means where combat units are housed, and it avoids a new tech-tree node just to gate one unlock.' },
+  { id:'p8d', num:'8d', title:'Patrols — Push-Stage Combat Mode', status:'LATER', color:'--phase-8',
+    desc:'A second combat mode, unlocked once a hero exists, that reverses the game\'s base-defense geometry: instead of enemies walking toward your central Base while towers defend it, the hero (with an escort ship that can grant periodic special abilities) pushes toward an enemy stronghold that\'s generating its own defensive fire back at you. Referenced against a mobile idle-game screenshot: a single-lane push stage with a stage number, timer, and enemy density that escalates as you advance.',
+    items:[
+      'Role reversal from the core loop: enemies target the hero directly (not a Base), and the hero\'s escort ship is the "generator" side occasionally, granting abilities rather than pure damage',
+      'Timed push-stage structure (stage number, countdown, escalating enemy density) rather than the ring-spawn/central-Base geometry the core loop uses',
+      'Escort-ship special abilities — not yet itemized, same "needs real design" flag Phase 6\'s orbital abilities carry'
+    ],
+    depends:'Phase 8c (hero must exist first)',
+    note:'Least scoped of the four — geometry and stage-progression math still need real numbers, same standing caution every other phase in this doc gives before a difficulty curve gets invented from nothing. Sequenced last per the user\'s own ordering: loop rework, then missions, then hero, then patrols.' }
 ];
 
 function renderRoadmap(){
@@ -812,11 +849,12 @@ const FLOWS = [
       { id: 'damage', col: 3, row: 0.5, kind: 'process', tone: 'ok', label: 'base.takeDamage()\nENEMY_BASE_DAMAGE × (1 − reduction)',
         code_ref: 'base.js (takeDamage)',
         detail: 'Health is clamped at 0, never negative — ENEMY_BASE_DAMAGE is 10 before any reduction.' },
-      { id: 'destroyed', col: 3, row: 1.75, kind: 'decision', tone: 'warn', label: 'isDestroyed() ?\nchecked every update',
-        code_ref: 'base.js (isDestroyed) · game.js (update)' },
-      { id: 'lost', col: 4, row: 1.75, kind: 'terminal', tone: 'alert', label: "state = 'lost'\nprofile.emit('runEnd', …)",
-        code_ref: 'game.js (update)',
-        detail: "The run-end event feeds Cascade Points and the achievement sweep even on a loss — see Getting Better. A loss still banks CP scaled by the wave reached, so a failed run isn't a wasted one." }
+      { id: 'destroyed', col: 3, row: 1.75, kind: 'decision', tone: 'warn', label: 'isDestroyed() ?\nchecked by Spawner.update()',
+        code_ref: 'base.js (isDestroyed) · spawner.js (update)',
+        detail: "Phase 8a retired the direct game.js check that used to flip state to 'lost' here. Now Spawner itself polls isDestroyed() every frame while a wave is in progress — see A wave lives and dies for what happens next." },
+      { id: 'wiped', col: 4, row: 1.75, kind: 'terminal', tone: 'alert', label: 'Wave ends early\nSpawner.finalizeWave(), base heals to full',
+        code_ref: 'spawner.js (finalizeWave)',
+        detail: "A wipe no longer ends the run — it ends that wave attempt on whatever % of the wave's enemy value was killed so far, pays a bronze/silver/gold consolation chest instead of the full salvage bundle, and heals the base back to full so the next triggered wave starts clean. See A wave lives and dies." }
     ],
     edges: [
       { from: 'arrive', to: 'guard' },
@@ -824,38 +862,48 @@ const FLOWS = [
       { from: 'guard', to: 'reduce', tone: 'special' },
       { from: 'reduce', to: 'damage' },
       { from: 'damage', to: 'destroyed' },
-      { from: 'destroyed', to: 'lost', tone: 'alert' }
+      { from: 'destroyed', to: 'wiped', tone: 'alert' }
     ]
   },
   {
     id: 'wavelifecycle', group: 'Defending',
     title: 'A wave lives and dies',
-    summary: 'The three-state spawner loop — countdown, spawning, active — and the wave-clear payout that ends a run or starts the next one.',
-    lanes: ['Countdown', 'Spawn', 'Waiting', 'Outcome'],
+    summary: "Phase 8a's idle wave loop — idle (player-paced, no timer) → spawning → active — and the itemized salvage/chest payout that ends a wave attempt without ever ending the run.",
+    lanes: ['Idle', 'Spawn', 'Waiting', 'Outcome'],
     nodes: [
-      { id: 'countdown', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'countdown\nWAVE_START_DELAY / WAVE_INTERVAL',
-        code_ref: 'spawner.js (update)',
-        detail: 'Ticks down from WAVE_START_DELAY (first wave only) or WAVE_INTERVAL (every wave after). At 0, startNextWave() runs.' },
+      { id: 'idle', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: "idle\nwaits on triggerWave()",
+        code_ref: 'spawner.js (update, canTriggerWave, triggerWave)',
+        detail: "No auto-timer — Phase 8a replaced the old countdown state with an indefinite idle phase. The player builds, upgrades, and spends at their own pace; the HUD's Trigger Wave button (hidden unless canTriggerWave()) is the only thing that calls startNextWave()." },
       { id: 'spawning', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'startNextWave() + spawning\nweighted tier pick, one every 1.2s',
         code_ref: 'spawner.js (startNextWave, pickTier, update) · world.js (spawnEnemy)',
-        detail: "enemiesToSpawn = 5 + 2×(wave−1). Every 1.2s, pickTier() weighted-randoms among difficulty tiers already unlocked at this wave (easy from wave 1, medium from 4, hard from 8, each scaling enemy health and speed) and spawns one. Once enemiesToSpawn hits 0, state flips to 'active'." },
-      { id: 'waiting', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'world.enemies.length === 0 ?',
+        detail: "enemiesToSpawn = 5 + 2×(wave−1). Every 1.2s, pickTier() weighted-randoms among difficulty tiers already unlocked at this wave (easy from wave 1, medium from 4, hard from 8, each scaling enemy health and speed) and spawns one. Each spawned enemy's maxHealth is added to waveValueTotal — the raw denominator finalizeWave() uses for the completion %. Once enemiesToSpawn hits 0, state flips to 'active'." },
+      { id: 'waiting', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'enemies.length === 0\nOR base.isDestroyed() ?',
         code_ref: 'spawner.js (update)',
-        detail: 'Waits until every spawned enemy is either dead or has hit the base — no timer, purely a headcount.' },
-      { id: 'bonus', col: 3, row: 0.5, kind: 'process', tone: 'ok', label: 'Wave-clear bonus paid\n20 + 5×(wave−1), × rewardMultiplier()',
-        code_ref: 'spawner.js (update)' },
-      { id: 'done', col: 3, row: 1.75, kind: 'decision', tone: 'warn', label: 'waveNumber >= MAX_WAVES (20) ?',
-        code_ref: 'spawner.js (update)' },
-      { id: 'complete', col: 3, row: 2.75, kind: 'terminal', tone: 'sig', label: "spawner.complete = true\ngame.js -> state 'won'",
+        detail: "Checked every frame during spawning/active. Either every spawned enemy has left the field (dead or reached the base) or the base died mid-wave — both call finalizeWave() on whatever waveValueKilled/waveValueTotal has accrued so far." },
+      { id: 'pct', col: 3, row: 0.5, kind: 'process', tone: 'special', label: 'pct = waveValueKilled\n÷ waveValueTotal',
+        code_ref: 'spawner.js (finalizeWave)',
+        detail: "Raw enemy.maxHealth sums, deliberately never passed through rewardMultiplier()/combo/prestige — a future \"+XP%\"-style upgrade can inflate the payout below without also inflating this completion percentage." },
+      { id: 'full', col: 4, row: 0, kind: 'terminal', tone: 'sig', label: 'pct ≥ 1: full salvage\ngold + metal + 1 module charge + 1 production part',
+        code_ref: 'spawner.js (computeRewards)',
+        detail: "wavesCleared++ only fires here — a wipe never counts as a true clear for profile/achievement purposes, even though it still pays out." },
+      { id: 'chest', col: 4, row: 1, kind: 'terminal', tone: 'warn', label: 'pct < 1: bronze/silver/gold chest\ngold + metal scaled by tier.mult, no tokens',
+        code_ref: 'spawner.js (computeRewards, CONFIG.WIPE_CHEST_TIERS)',
+        detail: "Tier picked by the highest WIPE_CHEST_TIERS.minPct the pct clears (bronze always applies as the floor). If the base was destroyed, it heals back to full right here — Phase 8a's core design call: a wipe costs you a worse chest, not the run." },
+      { id: 'done', col: 5, row: 0.5, kind: 'decision', tone: 'warn', label: 'waveNumber >= MAX_WAVES (20) ?',
+        code_ref: 'spawner.js (finalizeWave)' },
+      { id: 'complete', col: 5, row: 1.75, kind: 'terminal', tone: 'sig', label: "spawner.complete = true\ngame.js -> state 'won'",
         code_ref: 'spawner.js · game.js (update)',
-        detail: "Reached once, at wave 20. game.js's update() sees spawner.complete and flips state to 'won', firing profile.emit('runEnd', {won:true, …}) — the CP payout and achievement sweep read the same event whether you won or lost (see The base takes a hit, and Getting Better)." }
+        detail: "The only way a run ends now — always a win. game.js's update() sees spawner.complete and flips state to 'won', firing profile.emit('runEnd', {won:true, …}). There is no losing emit anymore; see The base takes a hit." }
     ],
     edges: [
-      { from: 'countdown', to: 'spawning' },
+      { from: 'idle', to: 'spawning' },
       { from: 'spawning', to: 'waiting' },
-      { from: 'waiting', to: 'bonus', tone: 'ok' },
-      { from: 'bonus', to: 'done' },
-      { from: 'done', to: 'countdown', dashed: true, label: 'more waves', tone: 'info' },
+      { from: 'waiting', to: 'pct', tone: 'special' },
+      { from: 'pct', to: 'full', tone: 'sig' },
+      { from: 'pct', to: 'chest', dashed: true, tone: 'warn' },
+      { from: 'full', to: 'done' },
+      { from: 'chest', to: 'done' },
+      { from: 'done', to: 'idle', dashed: true, label: 'more waves', tone: 'info' },
       { from: 'done', to: 'complete', tone: 'sig' }
     ]
   },
@@ -1692,6 +1740,12 @@ const STATS = {
       "date": "07-19",
       "cum": 8455,
       "subject": "changelog.md: log v2.3 (in-game Report a Bug slice)"
+    },
+    {
+      "hash": "9cd9140",
+      "date": "07-19",
+      "cum": 8545,
+      "subject": "Add .gitignore, commit package-lock.json for Playwright devDependency"
     }
   ],
   "categories": [
@@ -1702,7 +1756,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 2402,
+      "value": 2492,
       "tone": "special"
     },
     {

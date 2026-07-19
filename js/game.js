@@ -29,6 +29,7 @@ export class Game {
       onRepairBase: () => this.world.repairBase(CONFIG.BASE_REPAIR_AMOUNT),
       onMarketBuyMetal: () => this.world.tradeGoldForMetal(),
       onMarketBuyGold: () => this.world.tradeMetalForGold(),
+      onTriggerWave: () => this.world.spawner.triggerWave(),
       onToggleAbout: () => { this.view = this.view === 'about' ? 'field' : 'about'; this.selectedRoomType = null; },
       onToggleProfile: () => { this.view = this.view === 'profile' ? 'field' : 'profile'; this.selectedRoomType = null; },
       onToggleSettings: () => { this.view = this.view === 'settings' ? 'field' : 'settings'; this.selectedRoomType = null; },
@@ -37,7 +38,7 @@ export class Game {
     });
     this.lastTime = 0;
     this.fps = 0;
-    this.state = 'playing'; // 'playing' | 'won' | 'lost'
+    this.state = 'playing'; // 'playing' | 'won' — 'lost' retired in Phase 8a, see update() below
     this.view = 'field'; // 'field' | 'core' | 'profile' | 'about' | 'settings'
     this.selectedRoomType = null;
     this.selectedTower = null; // Phase 4b: tower the tower-card is showing
@@ -217,10 +218,13 @@ export class Game {
       this.world.updateCycleBudget(dt);
       this.watchProfileEvents();
 
-      if (this.world.base.isDestroyed()) {
-        this.state = 'lost';
-        this.profile.emit('runEnd', { won: false, wave: this.world.spawner.waveNumber, baseHealthPct: 0 });
-      } else if (this.world.spawner.complete) {
+      // Phase 8a: a base wipe no longer ends the run — Spawner.finalizeWave() heals it back
+      // up and pays a lesser chest instead (see spawner.js). The only way a run now ends is
+      // MAX_WAVES, always a win. 'lost' is dead as a Game.state value; runEnd is only ever
+      // emitted won:true. Known side effect, not fixed here: achievements.js's
+      // 'lessons-learned' badge (lose a run) is unearnable until Phase 8d's Patrol mode
+      // brings back a real loss condition.
+      if (this.world.spawner.complete) {
         this.state = 'won';
         this.profile.emit('runEnd', { won: true, wave: this.world.spawner.waveNumber, baseHealthPct: this.world.base.health / this.world.base.maxHealth });
       }

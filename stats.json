@@ -180,6 +180,12 @@
       "date": "07-19",
       "cum": 8455,
       "subject": "changelog.md: log v2.3 (in-game Report a Bug slice)"
+    },
+    {
+      "hash": "9cd9140",
+      "date": "07-19",
+      "cum": 8545,
+      "subject": "Add .gitignore, commit package-lock.json for Playwright devDependency"
     }
   ],
   "categories": [
@@ -190,7 +196,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 2402,
+      "value": 2492,
       "tone": "special"
     },
     {

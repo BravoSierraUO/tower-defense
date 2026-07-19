@@ -39,8 +39,6 @@ export const CONFIG = {
   TOWER_MIN_BASE_DISTANCE: 60, // keeps towers off/adjacent to the base
 
   MAX_WAVES: 20,
-  WAVE_START_DELAY: 3,
-  WAVE_INTERVAL: 6,
   WAVE_BASE_ENEMIES: 5,
   WAVE_ENEMY_GROWTH: 2,
 
@@ -168,6 +166,24 @@ export const CONFIG = {
   GOLD_PER_ENEMY_HEALTH: 0.4,
   WAVE_CLEAR_BONUS_BASE: 20,
   WAVE_CLEAR_BONUS_GROWTH: 5,
+
+  // Phase 8a: idle wave loop. Waves no longer auto-start on a timer — the spawner sits in
+  // 'idle' until Spawner.triggerWave() is called (a HUD button). A full clear (100% of the
+  // wave's enemy value killed) pays the full salvage bundle below; a wipe (base destroyed
+  // mid-wave) still pays out, scaled down by a bronze/silver/gold chest tier instead of
+  // ending the run. WIPE_CHEST_TIERS.minPct is checked against
+  // Spawner.waveValueKilled / Spawner.waveValueTotal — raw enemy.maxHealth sums, deliberately
+  // never passed through rewardMultiplier()/combo/prestige, so a future "+XP%"-style upgrade
+  // only inflates payout, never the completion percentage itself.
+  WAVE_CLEAR_METAL_BASE: 15,
+  WAVE_CLEAR_METAL_GROWTH: 3,
+  WAVE_CLEAR_MODULE_CHARGE: 1,     // free module install (see World.installModuleAt)
+  WAVE_CLEAR_PRODUCTION_PARTS: 1,  // free build-timer rush (see World.rushBuildRoom)
+  WIPE_CHEST_TIERS: [
+    { id: 'bronze', minPct: 0,    mult: 0.25 },
+    { id: 'silver', minPct: 0.34, mult: 0.5 },
+    { id: 'gold',   minPct: 0.67, mult: 0.75 }
+  ],
   // Phase 2b's CORE_POWER_COST_DISCOUNT_PER_POINT (Reactor cheapened Tower/Scavenger cost) is gone
   // as of Phase 4d — Reactor's power is a live supply pool now, not a one-time cost discount (see
   // below). Phase 2b's CORE_COMPUTE_REWARD_BONUS_PER_POINT (AI Core boosted gold reward) is gone as

@@ -169,6 +169,11 @@ html,body{
 .hud-center{
 
     width:420px;
+
+    /* .ui-overlay sets pointer-events:none globally — without this, nothing in here
+       (repair-btn, trigger-wave-btn) is clickable. Caught by an actual Playwright
+       click-through, not code trace — see changelog.md v2.4. */
+    pointer-events:auto;
 }
 
 .hud-health-title{
@@ -235,6 +240,45 @@ html,body{
 }
 
 .repair-btn[hidden]{
+
+    display:none;
+}
+
+.trigger-wave-btn{
+
+    display:block;
+
+    margin:10px auto 0;
+
+    padding:8px 22px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+    letter-spacing:.5px;
+
+    color:#0B1020;
+
+    background:var(--accent);
+
+    border:none;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    transition:.15s;
+
+    box-shadow:0 0 14px rgba(126,217,255,.5);
+}
+
+.trigger-wave-btn:hover{
+
+    filter:brightness(1.1);
+}
+
+.trigger-wave-btn[hidden]{
 
     display:none;
 }
@@ -971,6 +1015,42 @@ html,body{
 
 .achievement-toast.tier-epic{ border-color:rgba(155,89,182,.6); }
 .achievement-toast.tier-legendary{ border-color:rgba(255,210,63,.7); color:#FFD23F; }
+
+/* Phase 8a: wave-conclusion toast — a full clear or a wipe's consolation chest. */
+.chest-toast{
+
+    position:absolute;
+
+    top:132px;
+
+    left:50%;
+
+    transform:translateX(-50%);
+
+    padding:12px 20px;
+
+    border-radius:12px;
+
+    font-size:13px;
+
+    font-weight:700;
+
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+
+    background:linear-gradient(rgba(32,42,58,.9),rgba(14,18,28,.95));
+
+    border:1px solid rgba(126,217,255,.4);
+
+    box-shadow:0 12px 30px rgba(0,0,0,.4);
+
+    color:var(--text-primary);
+}
+
+.chest-toast.tier-bronze{ border-color:rgba(197,123,60,.65); color:#C97B3C; }
+.chest-toast.tier-silver{ border-color:rgba(180,190,200,.6); color:#C7D0DA; }
+.chest-toast.tier-gold{ border-color:rgba(255,210,63,.7); color:#FFD23F; }
+.chest-toast.tier-clear{ border-color:rgba(46,204,113,.6); color:#2ECC71; }
 
 /* ===========================
    PHASE 5: ABOUT / ANALYTICS PANEL (reads stats.json — see scripts/gen-stats.mjs)
