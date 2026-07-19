@@ -22,7 +22,17 @@ http.server` (or any static server) from the repo root is enough.
 | `commandcore.js` / `room.js` | The interior base-building grid: room placement, tiers, build timers, tech tree, module slots. Exposes `totals()` — the one aggregate object `world.js` reads to apply Core bonuses to the field economy. |
 | `profile.js` | Persistent player progression: level/CP, prestige, skill tree, lifetime stats, save/load. Survives `Game.restart()` — everything else doesn't. |
 | `achievements.js` | Pure data: 21 badges, each a `test(profile, event)` predicate. Evaluated by `profile.js`'s fixpoint loop. |
-| `ui.js` | Reads world/profile/commandCore state each frame and writes it into the DOM overlay (`index.html`'s `.ui-overlay`). Never mutates gameplay state directly — only translates DOM clicks into callbacks passed in by `game.js`. |
+| `ui.js` | Thin composition shell: owns the view switch (which side panel is visible) and forwards per-frame updates to whichever `js/ui/*.js` panel owns each concern. Never mutates gameplay state directly — only translates DOM clicks into callbacks passed in by `game.js`. |
+| `ui/hudPanel.js` | Persistent top-bar stats, base health bar, repair/trigger-wave buttons, win banner, and the two toast queues (achievement unlock, wave-end chest). |
+| `ui/corePanel.js` | Command Core view: room slots, tech tree, power/compute/storage/research readouts, dock/market trade. |
+| `ui/fieldPanel.js` | Field view: build-mode picker slots + the tower/scavenger inspector card. |
+| `ui/profilePanel.js` | Level/XP, prestige, skill tree, achievement list. |
+| `ui/aboutPanel.js` | Renders the `stats.json` snapshot once on load (see Docs tooling below). |
+| `ui/settingsPanel.js` | Theme toggle, raw-save-data JSON viewer, storage-size readout, delete-save entry point. |
+| `ui/avatarMenu.js` | Top-right avatar dropdown — routes to Profile/About/Settings/Report-bug/Reset. |
+| `ui/confirmModal.js` | Shared yes/no confirmation modal used by both reset-progress entry points. |
+| `ui/missionBanner.js` | Tutorial mission banner + the reusable `.mission-glow` highlight. |
+| `ui/toast.js` | Reusable timed-toast queue, used by `hudPanel.js` for both toast types. |
 | `stats.js` | Fetches and caches `stats.json` for the in-game About panel. |
 | `utils.js` | Grab-bag of small pure helpers. |
 
@@ -39,7 +49,8 @@ http.server` (or any static server) from the repo root is enough.
    in both directions.
 2. `render()` — draws the canvas for whichever view is active, then calls `ui.update(...)`
    with a long positional-argument list (world, fps, state, view, commandCore, profile,
-   selection state) — `Ui` is otherwise stateless read-only reflection of all of it.
+   selection state) — `Ui` forwards this to whichever `js/ui/*.js` panel is active; the
+   `UI` class itself holds no gameplay state, just DOM refs and per-panel instances.
 3. Schedules the next `requestAnimationFrame`.
 
 ## View state machine
@@ -101,9 +112,9 @@ decrease as you buy more, floors must never hit zero, the tech tree must stay re
 bounded time). Passing tests mean the code is *structurally sane*, not *fun* — no
 playtesting has happened yet; see `changelog.md`'s "Later" notes.
 
-`game.js`, `renderer.js`, `input.js`, and `ui.js` have **no test coverage** — they're
-DOM/canvas-dependent and were verified by code trace + manual `getElementById` cross-checks
-instead (see `changelog.md`'s per-version notes for specifics). Every other module is
+`game.js`, `renderer.js`, `input.js`, and `ui.js`/`ui/*.js` have **no test coverage** —
+they're DOM/canvas-dependent and were verified by code trace + manual `getElementById`
+cross-checks instead (see `changelog.md`'s per-version notes for specifics). Every other module is
 plain JS with no DOM dependency and can be imported directly under Node, which is what makes
 the zero-dependency test harness possible at all.
 

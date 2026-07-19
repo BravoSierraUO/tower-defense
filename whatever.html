@@ -680,10 +680,10 @@ const FLOWS = [
         code_ref: 'js/missions.js (MissionTracker#current)',
         detail: "Always the first mission in list order that hasn't completed yet, regardless of which ones completed out of order — the banner never shows step 3 while step 1 is still open." },
       { id: 'glow', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Banner + .mission-glow\non mission.target',
-        code_ref: 'ui.js (update → setGlowTarget)',
+        code_ref: 'js/ui/missionBanner.js (setGlowTarget)',
         detail: "target is a plain CSS selector (#field-slot-tower, #trigger-wave-btn, #ui-mode-hint, #core-panel) — every target is DOM-addressable HUD chrome, nothing on the canvas-drawn Core grid. setGlowTarget only touches the DOM when the target element actually changes, not every frame." },
       { id: 'help', col: 3, row: 1.75, kind: 'process', tone: 'idle', label: '"?" button re-flashes\n.mission-glow-flash',
-        code_ref: 'ui.js (mission-help-btn handler)',
+        code_ref: 'js/ui/missionBanner.js (mission-help-btn handler)',
         detail: "Removes then re-adds the class (forcing a reflow in between) so the CSS animation restarts on demand, layered on top of the steady glow that was already pulsing underneath." }
     ],
     edges: [
@@ -997,10 +997,10 @@ const FLOWS = [
     lanes: ['HUD', 'Gate', 'Heal', 'Cost'],
     nodes: [
       { id: 'show', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Repair button appears\nonly when base HP is missing',
-        code_ref: 'ui.js (update)',
+        code_ref: 'js/ui/hudPanel.js (update)',
         detail: "repairBtn.hidden is false only while state==='playing' and missingHealth > 0 — at full health the button doesn't exist to click." },
       { id: 'afford', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'gold >= repairBaseCost() ?',
-        code_ref: 'ui.js (update) · world.js (repairBaseCost)',
+        code_ref: 'js/ui/hudPanel.js (update) · world.js (repairBaseCost)',
         detail: 'The button itself is pre-disabled (world.gold < cost) before you can even click it — this is checked visually in the UI as well as enforced again underneath in World.' },
       { id: 'disabled', col: 1, row: 1.75, kind: 'terminal', tone: 'idle', label: "Button disabled\ncan't click it at all" },
       { id: 'heal', col: 2, row: 0.5, kind: 'process', tone: 'ok', label: 'repairBase(20)\nclamped to missing HP',
@@ -1122,7 +1122,7 @@ const FLOWS = [
     lanes: ['You', 'Gate', 'Outcome'],
     nodes: [
       { id: 'press', col: 0, row: 1, kind: 'input', tone: 'sig', label: 'Click either Market button\nBuy Metal or Buy Gold',
-        code_ref: 'ui.js (marketBuyMetalBtn / marketBuyGoldBtn)',
+        code_ref: 'js/ui/corePanel.js (marketBuyMetalBtn / marketBuyGoldBtn)',
         detail: "Both buttons are hidden entirely unless commandCore.isBuilt('market'), and pre-disabled if you can't afford that direction's flat cost — same convention Dock's trade button uses." },
       { id: 'gate', col: 1, row: 1, kind: 'decision', tone: 'warn', label: 'An active Market\nstill exists ?',
         code_ref: 'world.js (tradeGoldForMetal / tradeMetalForGold)',
@@ -1355,25 +1355,25 @@ const FLOWS = [
     lanes: ['Avatar', 'Settings', 'Action', 'Confirm', 'Outcome'],
     nodes: [
       { id: 'avatar', col: 0, row: 1, kind: 'input', tone: 'sig', label: 'Click the avatar button\ntop-right HUD',
-        code_ref: 'ui.js (avatarBtn)',
+        code_ref: 'js/ui/avatarMenu.js (avatarBtn)',
         detail: 'Opens a dropdown (Profile/About/Settings/Reset) — a second, parallel entry point onto the same view-toggle callbacks the B/P/O/S hotkeys already use, not a replacement for them (see the Roadmap\'s Phase 5b card).' },
       { id: 'settings', col: 1, row: 1, kind: 'process', tone: 'ok', label: 'Settings panel opens\ntheme, storage size, raw JSON, reset',
-        code_ref: 'ui.js (settingsPanel)',
+        code_ref: 'js/ui/settingsPanel.js',
         detail: "Same panel reachable by the S hotkey directly — the avatar menu doesn't gate anything the hotkey couldn't already reach." },
       { id: 'toggleTheme', col: 2, row: 0, kind: 'terminal', tone: 'ok', label: 'Toggle theme\nlight/dark, saved to localStorage',
-        code_ref: 'ui.js (applyTheme)',
+        code_ref: 'js/ui/settingsPanel.js (applyTheme)',
         detail: "Independent of any gameplay/profile state — just a data-theme attribute plus a 'td.theme' localStorage key read back on next load." },
       { id: 'viewJson', col: 2, row: 1, kind: 'terminal', tone: 'ok', label: 'View Raw JSON\nexact bytes save() would write',
-        code_ref: 'ui.js (view-json-btn) · profile.js (rawJSON)',
+        code_ref: 'js/ui/settingsPanel.js (view-json-btn) · profile.js (rawJSON)',
         detail: 'JSON.stringify(this.data, null, 2) — not a summary, the literal save blob. The storage-size readout above it is measured the same way: new Blob([profile.rawJSON()]).size.' },
       { id: 'resetClick', col: 2, row: 2, kind: 'input', tone: 'warn', label: 'Click Reset Progress\n(avatar menu or Settings panel)',
-        code_ref: 'ui.js (menu-reset / menu-reset-progress)',
+        code_ref: 'js/ui/avatarMenu.js (menu-reset) · js/ui/settingsPanel.js (menu-reset-progress)',
         detail: 'Two entry points — the avatar dropdown and the Settings panel button — both call the same openConfirmModal(onResetProgress): one shared modal, not two.' },
       { id: 'confirmModal', col: 3, row: 2, kind: 'decision', tone: 'warn', label: 'Confirm modal opens\nconfirmAction stored',
-        code_ref: 'ui.js (openConfirmModal)',
+        code_ref: 'js/ui/confirmModal.js (open)',
         detail: 'confirmModal.hidden = false, and the pending action (profile.hardReset + restart) is stashed in this.confirmAction until Cancel, OK, or a backdrop click resolves it.' },
       { id: 'cancel', col: 3, row: 3.25, kind: 'terminal', tone: 'idle', label: 'Cancel / backdrop click\nmodal closes, nothing happens',
-        code_ref: 'ui.js (closeConfirmModal)',
+        code_ref: 'js/ui/confirmModal.js (close)',
         detail: 'closeConfirmModal() hides the modal and clears confirmAction — the backdrop-click handler only fires if the click target is the backdrop itself (e.target === confirmModal), not any click that merely bubbles up to it.' },
       { id: 'ok', col: 4, row: 2, kind: 'terminal', tone: 'alert', label: 'OK confirmed\nhardReset() + restart()',
         code_ref: 'profile.js (hardReset) · game.js (onResetProgress)',
@@ -1447,7 +1447,7 @@ const FLOWS = [
         code_ref: 'js/stats.js' },
       { id: 'velocity', col: 4, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Velocity charts\n(out-of-game, this page)' },
       { id: 'about', col: 4, row: 2, kind: 'terminal', tone: 'sig', label: 'In-game About panel\nO / ABOUT button',
-        code_ref: 'js/ui.js (renderAbout)',
+        code_ref: 'js/ui/aboutPanel.js (render)',
         detail: 'Same numbers as the Velocity tab, rendered once when the fetch resolves — the panel is a static snapshot for the session, not a live poll.' }
     ],
     edges: [
@@ -1796,22 +1796,28 @@ const STATS = {
       "date": "07-19",
       "cum": 9250,
       "subject": "Harden game loop against silent freezes"
+    },
+    {
+      "hash": "9d38054",
+      "date": "07-19",
+      "cum": 9278,
+      "subject": "v2.7 - Fix stuck build-bar/avatar-menu: global [hidden] CSS cascade bug + day-one metal gate"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2695,
+      "value": 2699,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2617,
+      "value": 2630,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2389,
+      "value": 2400,
       "tone": "info"
     },
     {

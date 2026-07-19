@@ -204,22 +204,28 @@
       "date": "07-19",
       "cum": 9250,
       "subject": "Harden game loop against silent freezes"
+    },
+    {
+      "hash": "9d38054",
+      "date": "07-19",
+      "cum": 9278,
+      "subject": "v2.7 - Fix stuck build-bar/avatar-menu: global [hidden] CSS cascade bug + day-one metal gate"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2695,
+      "value": 2699,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2617,
+      "value": 2630,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2389,
+      "value": 2400,
       "tone": "info"
     },
     {

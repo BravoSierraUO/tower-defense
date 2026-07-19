@@ -86,18 +86,13 @@ html,body{
 .hud-avatar-menu,
 .confirm-modal,
 .mission-banner{
-
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
-
     background:var(--glass-bg);
-
     border:1px solid var(--glass-border);
-
     box-shadow:
         inset 0 1px rgba(255,255,255,.05),
         0 18px 40px rgba(0,0,0,.35);
-
     border-radius:18px;
 }
 
@@ -106,82 +101,57 @@ html,body{
 =========================== */
 
 .hud-top{
-
     position:absolute;
-
     left:24px;
     right:24px;
     top:24px;
-
     height:92px;
-
     display:flex;
-
     align-items:center;
-
     justify-content:space-between;
-
     padding:0 28px;
 }
 
 .hud-group{
-
     display:flex;
     align-items:center;
     gap:20px;
 }
 
 .hud-divider{
-
     width:1px;
     height:46px;
     background:var(--control-bg);
 }
 
 .hud-label{
-
     font-size:11px;
-
     opacity:.55;
-
     letter-spacing:2px;
 }
 
 .hud-value{
-
     margin-top:4px;
-
     font-size:28px;
-
     font-weight:700;
-
     color:var(--accent);
 }
 
 .hud-combo{
-
     font-size:16px;
-
     font-weight:700;
-
     color:#F3C969;
 }
 
 .hud-brownout{
-
     font-size:13px;
-
     font-weight:700;
-
     letter-spacing:.5px;
-
     color:#FF7070;
 }
 
 .hud-center{
-
     width:420px;
-
     /* .ui-overlay sets pointer-events:none globally — without this, nothing in here
        (repair-btn, trigger-wave-btn) is clickable. Caught by an actual Playwright
        click-through, not code trace — see changelog.md v2.4. */
@@ -189,186 +159,117 @@ html,body{
 }
 
 .hud-health-title{
-
     text-align:center;
-
     font-size:12px;
-
     opacity:.65;
-
     margin-bottom:8px;
-
     letter-spacing:2px;
 }
 
 .hud-health-value{
-
     margin-top:8px;
-
     text-align:center;
-
     font-size:13px;
-
     opacity:.85;
 }
 
 .repair-btn{
-
     display:block;
-
     margin:10px auto 0;
-
     padding:6px 16px;
-
     font-size:11px;
-
     font-weight:700;
-
     letter-spacing:.5px;
-
     color:#0B1020;
-
     background:var(--accent);
-
     border:none;
-
     border-radius:8px;
-
     cursor:pointer;
-
     transition:.15s;
 }
 
 .repair-btn:hover:not(:disabled){
-
     filter:brightness(1.1);
 }
 
 .repair-btn:disabled{
-
     opacity:.4;
-
     cursor:default;
 }
 
 .repair-btn[hidden]{
-
     display:none;
 }
 
 .trigger-wave-btn{
-
     display:block;
-
     margin:10px auto 0;
-
     padding:8px 22px;
-
     font-size:12px;
-
     font-weight:700;
-
     letter-spacing:.5px;
-
     color:#0B1020;
-
     background:var(--accent);
-
     border:none;
-
     border-radius:8px;
-
     cursor:pointer;
-
     transition:.15s;
-
     box-shadow:0 0 14px rgba(126,217,255,.5);
 }
 
 .trigger-wave-btn:hover{
-
     filter:brightness(1.1);
 }
 
 .trigger-wave-btn[hidden]{
-
     display:none;
 }
 
 .ui-bar-track{
-
     height:14px;
-
     overflow:hidden;
-
     border-radius:999px;
-
     background:var(--control-bg);
 }
 
 .ui-bar-fill{
-
     height:100%;
-
     width:100%;
-
     background:
     linear-gradient(90deg,#48B8FF,#82E2FF);
-
     border-radius:999px;
-
     transition:.25s;
-
     box-shadow:0 0 18px rgba(130,226,255,.35);
 }
 
 .hud-fps{
-
     font-size:12px;
-
     opacity:.45;
 }
 
 .hud-mode-hint{
-
     font-size:12px;
-
     opacity:.55;
-
     letter-spacing:1px;
 }
 
 .hud-docs-link{
-
     font-size:11px;
-
     letter-spacing:1.5px;
-
     color:var(--accent);
-
     text-decoration:none;
-
     opacity:.75;
-
     pointer-events:auto;
-
     border:1px solid rgba(126,217,255,.3);
-
     border-radius:8px;
-
     padding:4px 10px;
-
     background:transparent;
-
     font-family:inherit;
-
     cursor:pointer;
 }
 
 .hud-docs-link:hover{
-
     opacity:1;
-
     background:rgba(126,217,255,.08);
 }
 
@@ -377,65 +278,58 @@ html,body{
 =========================== */
 
 .build-bar{
-
     position:absolute;
-
     left:50%;
-
     bottom:28px;
-
     transform:translateX(-50%);
-
     display:flex;
-
     gap:12px;
-
     padding:14px;
-
     pointer-events:auto;
 }
 
 .build-slot{
-
     width:96px;
-
     height:74px;
-
     background:var(--control-bg);
-
     border:1px solid var(--control-border);
-
     border-radius:14px;
-
     color:var(--text-primary);
-
     cursor:pointer;
-
     transition:.18s;
-
     font-size:14px;
 }
 
 .build-slot:hover{
-
     transform:translateY(-3px);
-
     border-color:var(--accent);
-
     background:rgba(126,217,255,.08);
 }
 
 .build-slot span{
-
     display:block;
-
     margin-bottom:8px;
-
     font-size:22px;
-
     color:var(--accent);
-
     font-weight:700;
+}
+
+.build-slot.locked{
+    opacity:.35;
+    filter:grayscale(1);
+    cursor:not-allowed;
+}
+
+/* Phase 4c: which field-view placement mode (Tower/Scavenger) is active. */
+.build-slot.selected{
+    border-color:var(--accent);
+    background:rgba(126,217,255,.12);
+}
+
+.build-slot-cost{
+    margin-top:4px;
+    font-size:11px;
+    opacity:.6;
 }
 
 /* ===========================
@@ -443,44 +337,29 @@ html,body{
 =========================== */
 
 .tower-card{
-
     position:absolute;
-
     right:24px;
-
     bottom:130px;
-
     width:260px;
-
     padding:22px;
-
     pointer-events:none;
 }
 
 .tower-name{
-
     font-size:24px;
-
     font-weight:700;
-
     margin-bottom:4px;
 }
 
 .tower-tier{
-
     color:var(--accent);
-
     margin-bottom:20px;
 }
 
 .tower-stat{
-
     display:flex;
-
     justify-content:space-between;
-
     padding:8px 0;
-
     border-bottom:1px solid var(--hairline);
 }
 
@@ -491,16 +370,12 @@ html,body{
    button the same way (see changelog v1.3), fixing it up front this time. */
 .tower-stat[hidden],
 #tower-combat-stats[hidden]{
-
     display:none;
 }
 
 .tower-hint{
-
     margin-top:12px;
-
     font-size:11px;
-
     opacity:.5;
 }
 
@@ -509,39 +384,25 @@ html,body{
 =========================== */
 
 .core-panel{
-
     position:absolute;
-
     right:24px;
-
     bottom:130px;
-
     width:260px;
-
     padding:22px;
-
     pointer-events:none;
 }
 
 .core-panel-title{
-
     font-size:16px;
-
     font-weight:700;
-
     margin-bottom:16px;
-
     color:var(--accent);
 }
 
 .core-stat{
-
     display:flex;
-
     justify-content:space-between;
-
     padding:8px 0;
-
     border-bottom:1px solid var(--hairline);
 }
 
@@ -550,31 +411,21 @@ html,body{
 =========================== */
 
 .ui-banner{
-
     position:absolute;
-
     top:38%;
-
     left:50%;
-
     transform:translate(-50%,-50%);
-
     padding:24px 44px;
-
     font-size:40px;
-
     font-weight:800;
-
     letter-spacing:3px;
 }
 
 .ui-banner.win{
-
     color:#6EF2A3;
 }
 
 .ui-banner.lose{
-
     color:#FF7070;
 }
 
@@ -583,411 +434,245 @@ html,body{
 =========================== */
 
 .tech-tree-list{
-
     display:flex;
     flex-direction:column;
     gap:6px;
 }
 
 .tech-node-btn{
-
     pointer-events:auto;
-
     text-align:left;
-
     font-size:11px;
-
     color:var(--text-primary);
-
     background:var(--control-bg);
-
     border:1px solid var(--control-border);
-
     border-radius:8px;
-
     padding:6px 10px;
-
     cursor:pointer;
-
     transition:.15s;
 }
 
 .tech-node-btn:hover:not(:disabled){
-
     border-color:var(--accent);
-
     background:rgba(126,217,255,.08);
 }
 
 .tech-node-btn:disabled{
-
     opacity:.35;
-
     cursor:not-allowed;
 }
 
 .tech-node-btn.unlocked{
-
     color:#6EF2A3;
-
     border-color:rgba(110,242,163,.4);
 }
 
 .dock-trade-btn{
-
     pointer-events:auto;
-
     margin-top:14px;
-
     width:100%;
-
     padding:10px;
-
     font-size:12px;
-
     font-weight:700;
-
     color:#0B1020;
-
     background:#C9A24B;
-
     border:none;
-
     border-radius:10px;
-
     cursor:pointer;
-
     transition:.15s;
 }
 
 .dock-trade-btn:hover:not(:disabled){
-
     filter:brightness(1.1);
 }
 
 .dock-trade-btn:disabled{
-
     opacity:.4;
-
     cursor:not-allowed;
 }
-
-.build-slot.locked{
-
-    opacity:.35;
-
-    filter:grayscale(1);
-
-    cursor:not-allowed;
-}
-
-/* Phase 4c: which field-view placement mode (Tower/Scavenger) is active. */
-.build-slot.selected{
-
-    border-color:var(--accent);
-
-    background:rgba(126,217,255,.12);
-}
-
-.build-slot-cost{
-
-    margin-top:4px;
-
-    font-size:11px;
-
-    opacity:.6;
-}
-
 /* ===========================
    PHASE 4: PROFILE PANEL (level/XP, prestige, skills, achievements)
 =========================== */
 
 .profile-panel{
-
     position:absolute;
-
     left:50%;
-
     top:132px;
-
     bottom:28px;
-
     transform:translateX(-50%);
-
     width:600px;
-
     max-width:calc(100% - 48px);
-
     padding:24px;
-
     overflow-y:auto;
-
     pointer-events:auto;
 }
 
 .profile-header{
-
     display:flex;
-
     align-items:center;
-
     gap:18px;
-
     margin-bottom:18px;
 }
 
 .profile-level-badge{
-
     flex-shrink:0;
-
     width:64px;
-
     height:64px;
-
     border-radius:50%;
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     flex-direction:column;
-
     font-size:10px;
-
     font-weight:700;
-
     letter-spacing:1px;
-
     color:#0B1020;
-
     background:linear-gradient(135deg,var(--accent),#48B8FF);
 }
 
 .profile-level-badge span{
-
     font-size:22px;
 }
 
 .profile-header-info{
-
     flex:1;
 }
 
 .profile-cp{
-
     font-size:12px;
-
     opacity:.7;
-
     margin-bottom:8px;
 }
 
 .profile-stats-row{
-
     display:flex;
-
     gap:24px;
-
     margin-bottom:16px;
 }
 
 .profile-stat{
-
     font-size:12px;
-
     opacity:.7;
-
     display:flex;
-
     flex-direction:column;
-
     gap:4px;
 }
 
 .profile-stat span{
-
     font-size:20px;
-
     font-weight:700;
-
     opacity:1;
-
     color:var(--accent);
 }
 
 .prestige-btn{
-
     pointer-events:auto;
-
     width:100%;
-
     padding:12px;
-
     margin-bottom:16px;
-
     font-size:13px;
-
     font-weight:700;
-
     color:#0B1020;
-
     background:linear-gradient(90deg,#FFD23F,#FF9F5B);
-
     border:none;
-
     border-radius:10px;
-
     cursor:pointer;
-
     transition:.15s;
 }
 
 .prestige-btn:hover:not(:disabled){
-
     filter:brightness(1.1);
 }
 
 .prestige-btn:disabled{
-
     background:var(--control-bg);
-
     color:var(--text-primary);
-
     opacity:.5;
-
     cursor:not-allowed;
 }
 
 .profile-lifetime-stats{
-
     font-size:11px;
-
     opacity:.6;
-
     margin-bottom:20px;
-
     padding-bottom:16px;
-
     border-bottom:1px solid var(--hairline);
 }
 
 .profile-panel-title{
-
     font-size:14px;
-
     font-weight:700;
-
     margin-bottom:12px;
-
     color:var(--accent);
 }
 
 .skill-list{
-
     display:flex;
-
     flex-direction:column;
-
     gap:8px;
-
     margin-bottom:20px;
 }
 
 .skill-btn{
-
     pointer-events:auto;
-
     text-align:left;
-
     font-size:12px;
-
     color:var(--text-primary);
-
     background:var(--control-bg);
-
     border:1px solid var(--control-border);
-
     border-radius:8px;
-
     padding:10px 12px;
-
     cursor:pointer;
-
     transition:.15s;
 }
 
 .skill-btn:hover:not(:disabled){
-
     border-color:var(--accent);
-
     background:rgba(126,217,255,.08);
 }
 
 .skill-btn:disabled{
-
     opacity:.35;
-
     cursor:not-allowed;
 }
 
 .skill-btn.maxed{
-
     color:#6EF2A3;
-
     border-color:rgba(110,242,163,.4);
 }
 
 .achievement-list{
-
     display:grid;
-
     grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));
-
     gap:8px;
 }
 
 .achievement-item{
-
     display:flex;
-
     flex-direction:column;
-
     gap:2px;
-
     padding:10px;
-
     border-radius:10px;
-
     background:var(--control-bg);
-
     border:1px solid var(--control-border);
-
     opacity:.4;
 }
 
 .achievement-item.earned{
-
     opacity:1;
 }
 
 .achievement-icon{
-
     font-size:20px;
 }
 
 .achievement-name{
-
     font-size:11px;
-
     font-weight:700;
 }
 
 .achievement-hint{
-
     font-size:10px;
-
     opacity:.6;
 }
 
@@ -996,32 +681,19 @@ html,body{
 .achievement-item.tier-legendary.earned{ border-color:rgba(255,210,63,.55); background:rgba(255,210,63,.08); }
 
 .achievement-toast{
-
     position:absolute;
-
     top:132px;
-
     left:50%;
-
     transform:translateX(-50%);
-
     padding:12px 20px;
-
     border-radius:12px;
-
     font-size:13px;
-
     font-weight:700;
-
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
-
     background:linear-gradient(rgba(32,42,58,.9),rgba(14,18,28,.95));
-
     border:1px solid rgba(126,217,255,.4);
-
     box-shadow:0 12px 30px rgba(0,0,0,.4);
-
     color:var(--text-primary);
 }
 
@@ -1030,32 +702,19 @@ html,body{
 
 /* Phase 8a: wave-conclusion toast — a full clear or a wipe's consolation chest. */
 .chest-toast{
-
     position:absolute;
-
     top:132px;
-
     left:50%;
-
     transform:translateX(-50%);
-
     padding:12px 20px;
-
     border-radius:12px;
-
     font-size:13px;
-
     font-weight:700;
-
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
-
     background:linear-gradient(rgba(32,42,58,.9),rgba(14,18,28,.95));
-
     border:1px solid rgba(126,217,255,.4);
-
     box-shadow:0 12px 30px rgba(0,0,0,.4);
-
     color:var(--text-primary);
 }
 
@@ -1069,263 +728,167 @@ html,body{
 =========================== */
 
 .about-panel{
-
     position:absolute;
-
     left:50%;
-
     top:132px;
-
     bottom:28px;
-
     transform:translateX(-50%);
-
     width:520px;
-
     max-width:calc(100% - 48px);
-
     padding:24px;
-
     overflow-y:auto;
-
     pointer-events:auto;
 }
 
 .about-header{
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:baseline;
-
     margin-bottom:16px;
 }
 
 .about-title{
-
     font-size:16px;
-
     font-weight:700;
-
     color:var(--accent);
 }
 
 .about-generated{
-
     font-size:11px;
-
     opacity:.55;
 }
 
 .about-total-row{
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:baseline;
-
     padding-bottom:16px;
-
     margin-bottom:16px;
-
     border-bottom:1px solid var(--hairline);
 }
 
 .about-total-label{
-
     font-size:12px;
-
     opacity:.7;
 }
 
 .about-total-value{
-
     font-size:28px;
-
     font-weight:700;
-
     color:var(--accent);
 }
 
 .about-category-list{
-
     display:flex;
-
     flex-direction:column;
-
     gap:10px;
-
     margin-bottom:20px;
 }
 
 .about-category-row{
-
     display:flex;
-
     flex-direction:column;
-
     gap:4px;
 }
 
 .about-category-label{
-
     display:flex;
-
     justify-content:space-between;
-
     font-size:11px;
-
     opacity:.75;
 }
 
 .about-category-track{
-
     height:6px;
-
     border-radius:3px;
-
     background:var(--control-bg);
-
     overflow:hidden;
 }
 
 .about-category-fill{
-
     height:100%;
-
     border-radius:3px;
 }
 
 .about-panel-title{
-
     font-size:14px;
-
     font-weight:700;
-
     margin-bottom:12px;
-
     color:var(--accent);
 }
 
 .about-commit-list{
-
     display:flex;
-
     flex-direction:column;
-
     gap:6px;
-
     margin-bottom:20px;
 }
 
 .about-commit-row{
-
     display:flex;
-
     align-items:baseline;
-
     gap:10px;
-
     font-size:11px;
-
     padding:6px 0;
-
     border-bottom:1px solid var(--hairline);
 }
 
 .about-commit-row .h{
-
     font-family:monospace;
-
     opacity:.5;
-
     flex-shrink:0;
 }
 
 .about-commit-row .d{
-
     opacity:.5;
-
     flex-shrink:0;
 }
 
 .about-commit-row .s{
-
     flex:1;
-
     opacity:.85;
-
     white-space:nowrap;
-
     overflow:hidden;
-
     text-overflow:ellipsis;
 }
 
 .about-commit-row .n{
-
     font-family:monospace;
-
     color:#6EF2A3;
-
     flex-shrink:0;
 }
 
 .about-link{
-
     display:inline-block;
-
     font-size:11px;
-
     color:var(--accent);
-
     opacity:.75;
-
     pointer-events:auto;
 }
 
 .about-link:hover{
-
     opacity:1;
 }
 
 .restart-btn{
-
     position:absolute;
-
     top:56%;
-
     left:50%;
-
     transform:translateX(-50%);
-
     pointer-events:auto;
-
     padding:12px 32px;
-
     font-size:14px;
-
     font-weight:700;
-
     letter-spacing:1px;
-
     color:#0B1020;
-
     background:var(--accent);
-
     border:none;
-
     border-radius:10px;
-
     cursor:pointer;
-
     transition:.15s;
 }
 
 .restart-btn:hover{
-
     filter:brightness(1.1);
 }
 
@@ -1334,112 +897,71 @@ html,body{
 =========================== */
 
 .hud-avatar-wrap{
-
     position:relative;
-
     pointer-events:auto;
 }
 
 .hud-avatar-btn{
-
     width:40px;
-
     height:40px;
-
     border-radius:50%;
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     background:var(--control-bg);
-
     border:1px solid var(--control-border);
-
     color:var(--text-primary);
-
     cursor:pointer;
-
     transition:.15s;
 }
 
 .hud-avatar-btn:hover,
 .hud-avatar-btn[aria-expanded="true"]{
-
     border-color:var(--accent);
-
     background:rgba(126,217,255,.1);
 }
 
 .hud-avatar-menu{
-
     position:absolute;
-
     top:calc(100% + 10px);
-
     right:0;
-
     width:190px;
-
     padding:8px;
-
     display:flex;
-
     flex-direction:column;
-
     gap:2px;
-
     pointer-events:auto;
-
     z-index:20;
 }
 
 .hud-avatar-menu-item{
-
     text-align:left;
-
     font-size:13px;
-
     font-family:inherit;
-
     color:var(--text-primary);
-
     background:transparent;
-
     border:none;
-
     border-radius:8px;
-
     padding:9px 10px;
-
     cursor:pointer;
-
     transition:.12s;
 }
 
 .hud-avatar-menu-item:hover{
-
     background:var(--control-hover-bg);
 }
 
 .hud-avatar-menu-item-danger{
-
     color:#FF7070;
 }
 
 .hud-avatar-menu-item-danger:hover{
-
     background:rgba(255,112,112,.12);
 }
 
 .hud-avatar-menu-divider{
-
     height:1px;
-
     margin:6px 2px;
-
     background:var(--hairline);
 }
 
@@ -1448,287 +970,178 @@ html,body{
 =========================== */
 
 .settings-panel{
-
     position:absolute;
-
     left:50%;
-
     top:132px;
-
     bottom:28px;
-
     transform:translateX(-50%);
-
     width:460px;
-
     max-width:calc(100% - 48px);
-
     padding:24px;
-
     overflow-y:auto;
-
     pointer-events:auto;
 }
 
 .settings-header{
-
     margin-bottom:18px;
 }
 
 .settings-title{
-
     font-size:16px;
-
     font-weight:700;
-
     color:var(--accent);
 }
 
 .settings-panel-title{
-
     font-size:12px;
-
     font-weight:700;
-
     letter-spacing:1px;
-
     opacity:.6;
-
     margin-bottom:12px;
 }
 
 .settings-row{
-
     display:flex;
-
     align-items:center;
-
     justify-content:space-between;
-
     padding:12px 0;
-
     border-bottom:1px solid var(--hairline);
-
     font-size:13px;
 }
 
 .settings-mono{
-
     font-family:monospace;
-
     font-size:12px;
-
     opacity:.65;
 }
 
 .settings-btn-row{
-
     display:flex;
-
     gap:10px;
-
     margin-top:16px;
 }
 
 .settings-btn{
-
     flex:1;
-
     pointer-events:auto;
-
     padding:10px 14px;
-
     font-size:12px;
-
     font-weight:700;
-
     font-family:inherit;
-
     color:var(--text-primary);
-
     background:var(--control-bg);
-
     border:1px solid var(--control-border);
-
     border-radius:8px;
-
     cursor:pointer;
-
     transition:.15s;
 }
 
 .settings-btn:hover{
-
     border-color:var(--accent);
-
     background:rgba(126,217,255,.08);
 }
 
 .settings-btn-danger{
-
     color:#FF7070;
-
     border-color:rgba(255,112,112,.35);
 }
 
 .settings-btn-danger:hover{
-
     border-color:#FF7070;
-
     background:rgba(255,112,112,.1);
 }
 
 .settings-btn-sm{
-
     pointer-events:auto;
-
     padding:5px 10px;
-
     margin-left:6px;
-
     font-size:11px;
-
     font-family:inherit;
-
     color:var(--text-primary);
-
     background:var(--control-bg);
-
     border:1px solid var(--control-border);
-
     border-radius:6px;
-
     cursor:pointer;
 }
 
 .settings-btn-sm:hover{
-
     border-color:var(--accent);
 }
 
 /* ---- theme toggle switch ---- */
 
 .theme-toggle{
-
     display:flex;
-
     align-items:center;
-
     gap:10px;
-
     pointer-events:auto;
-
     background:transparent;
-
     border:none;
-
     font-family:inherit;
-
     font-size:12px;
-
     color:var(--text-primary);
-
     cursor:pointer;
 }
 
 .theme-toggle-track{
-
     position:relative;
-
     width:40px;
-
     height:22px;
-
     border-radius:999px;
-
     background:var(--control-bg);
-
     border:1px solid var(--control-border);
-
     transition:.2s;
 }
 
 .theme-toggle-thumb{
-
     position:absolute;
-
     top:2px;
-
     left:2px;
-
     width:16px;
-
     height:16px;
-
     border-radius:50%;
-
     background:var(--accent);
-
     transition:.2s;
 }
 
 .theme-toggle[aria-checked="true"] .theme-toggle-thumb{
-
     transform:translateX(18px);
 }
 
 .theme-toggle[aria-checked="true"] .theme-toggle-track{
-
     border-color:var(--accent);
 }
 
 /* ---- raw JSON viewer ---- */
 
 .json-viewer{
-
     margin-top:16px;
-
     border:1px solid var(--control-border);
-
     border-radius:10px;
-
     overflow:hidden;
 }
 
 .json-viewer-header{
-
     display:flex;
-
     align-items:center;
-
     justify-content:space-between;
-
     padding:8px 12px;
-
     font-size:11px;
-
     font-family:monospace;
-
     opacity:.7;
-
     background:var(--control-bg);
-
     border-bottom:1px solid var(--hairline);
 }
 
 .json-viewer-content{
-
     margin:0;
-
     padding:12px;
-
     max-height:280px;
-
     overflow:auto;
-
     font-family:monospace;
-
     font-size:11px;
-
     line-height:1.5;
-
     white-space:pre-wrap;
-
     word-break:break-all;
 }
 
@@ -1737,21 +1150,13 @@ html,body{
 =========================== */
 
 .confirm-modal-overlay{
-
     position:fixed;
-
     inset:0;
-
     z-index:50;
-
     display:flex;
-
     align-items:center;
-
     justify-content:center;
-
     background:rgba(4,8,14,.55);
-
     pointer-events:auto;
 }
 
@@ -1761,45 +1166,31 @@ html,body{
    ("can't click the reset modal away") was this — every JS close path (Cancel, OK,
    backdrop click) was correctly setting .hidden = true, CSS just never honored it. */
 .confirm-modal-overlay[hidden]{
-
     display:none;
 }
 
 .confirm-modal{
-
     width:360px;
-
     max-width:calc(100% - 48px);
-
     padding:24px;
-
     pointer-events:auto;
 }
 
 .confirm-modal-title{
-
     font-size:16px;
-
     font-weight:700;
-
     margin-bottom:10px;
 }
 
 .confirm-modal-body{
-
     font-size:13px;
-
     opacity:.75;
-
     line-height:1.5;
-
     margin-bottom:20px;
 }
 
 .confirm-modal-actions{
-
     display:flex;
-
     gap:10px;
 }
 
@@ -1808,83 +1199,53 @@ html,body{
 =========================== */
 
 .mission-banner{
-
     position:absolute;
-
     left:24px;
-
     top:132px;
-
     width:300px;
-
     padding:16px 18px;
-
     display:flex;
-
     align-items:flex-start;
-
     gap:10px;
-
     pointer-events:auto;
 }
 
 .mission-icon{
-
     font-size:18px;
-
     line-height:1;
 }
 
 .mission-body{
-
     flex:1;
 }
 
 .mission-text{
-
     font-size:14px;
-
     font-weight:700;
 }
 
 .mission-hint{
-
     margin-top:4px;
-
     font-size:12px;
-
     opacity:.65;
-
     line-height:1.4;
 }
 
 .mission-help-btn{
-
     width:24px;
-
     height:24px;
-
     border-radius:50%;
-
     border:1px solid var(--glass-border);
-
     background:var(--control-bg);
-
     color:var(--text-primary);
-
     font-size:12px;
-
     font-weight:700;
-
     cursor:pointer;
-
     flex-shrink:0;
 }
 
 .mission-help-btn:hover{
-
     border-color:var(--accent);
-
     color:var(--accent);
 }
 
