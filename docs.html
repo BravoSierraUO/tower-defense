@@ -304,6 +304,7 @@
         <g id="edges"></g>
         <g id="nodes"></g>
       </svg>
+      <div id="roadmap-slot" hidden></div>
     </div>
 
     <div class="card detail" id="detail">
@@ -714,6 +715,7 @@ const titleEl = document.getElementById('flow-title');
 const nodesEl = document.getElementById('nodes');
 const edgesEl = document.getElementById('edges');
 const svgEl = document.getElementById('flow-svg');
+const roadmapSlot = document.getElementById('roadmap-slot');
 const detailEl = document.getElementById('detail');
 const bannerSlot = document.getElementById('gap-banner-slot');
 const legendSlot = document.getElementById('legend-slot');
@@ -764,6 +766,9 @@ function renderRoadmap(){
   bannerSlot.innerHTML = '';
   nodesEl.innerHTML = '';
   edgesEl.innerHTML = '';
+  svgEl.style.display = 'none';
+  roadmapSlot.hidden = false;
+  roadmapSlot.innerHTML = '';
   detailEl.querySelector('.chrome')?.remove?.();
   detailEl.innerHTML = '<div class="chrome"><span class="r"></span><span class="y"></span><span class="g"></span></div><p class="placeholder">Click any phase card to expand details.</p>';
 
@@ -817,9 +822,7 @@ function renderRoadmap(){
     grid.appendChild(card);
   });
 
-  const layout = document.querySelector('.layout');
-  if(layout) layout.innerHTML = '';
-  layout.appendChild(grid);
+  roadmapSlot.appendChild(grid);
 }
 
 function showPhaseDetail(ph){
@@ -863,6 +866,9 @@ function rectPort(node, dirX, dirY){
 function buildFlow(){
   const view = PHASES[currentTab].subviews[currentSub];
   if(view.isRoadmap) return renderRoadmap();
+
+  roadmapSlot.hidden = true;
+  svgEl.style.display = '';
 
   titleEl.innerHTML = view.title;
   buildLegend(view);
