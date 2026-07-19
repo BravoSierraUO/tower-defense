@@ -572,9 +572,9 @@ const FLOWS = [
     summary: 'Placing a room in the interior 8×8 grid: the validity checks, the gold gate, the build timer, and the moment it starts contributing to the base.',
     lanes: ['Input', 'Guard', 'Gold', 'Timer', 'Output'],
     nodes: [
-      { id: 'pick', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Pick a room type\n1–8 key, unlocked only',
+      { id: 'pick', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Pick a room type\nnumber key, unlocked only',
         code_ref: 'game.js (handleInput)',
-        detail: "Number keys 1–8 map to CONFIG.ROOM_TYPES in order. A key only arms selectedRoomType when commandCore.isRoomUnlocked(type) — a locked type (Factory/Hangar/Shield/Dock, gated by the tech tree) just doesn't respond to its key yet." },
+        detail: "Number keys 1–9 then 0 map to CONFIG.ROOM_TYPES in order (10 room types as of the Market room — Mine and Market were both added after this flow was first drawn, growing the list from 8). A key only arms selectedRoomType when commandCore.isRoomUnlocked(type) — a locked type (Factory/Hangar/Shield/Dock, gated by the tech tree) just doesn't respond to its key yet." },
       { id: 'valid', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'placeRoom() validity\ntype, tech, slot, cell',
         code_ref: 'commandcore.js (placeRoom)',
         detail: "Five checks in one function: the type exists, its requiresTech gate is unlocked, no room of that type already exists (one-of-each is deliberate — see the Roadmap above for why), the cell is inside the 8×8 grid, and the cell is empty. Any failure returns null before a single grain of gold is touched." },
@@ -590,7 +590,7 @@ const FLOWS = [
         detail: "buildTimeTotal is ROOM_BUILD_TIME_BASE minus Factory's buildTimeReduction, then further divided by the Build Mastery prestige skill's buildMult(). Both can shrink it, neither can make a room build instantly — a ≥1s floor is enforced, and guarded by a balance test (see Proving It)." },
       { id: 'contributes', col: 4, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Room goes active\nfeeds commandCore.totals()',
         code_ref: 'room.js (isActive) · commandcore.js (totals)',
-        detail: "Every frame, room.update(dt) ticks buildTimeRemaining toward 0. The instant isActive() flips true, the room's tier-scaled stats join the sum every economy formula reads — towerCost(), rewardMultiplier(), goldCap(), shieldPct, dronePower, all of it. Before that moment, a half-built room contributes exactly nothing." }
+        detail: "Every frame, room.update(dt) ticks buildTimeRemaining toward 0. The instant isActive() flips true, the room's tier-scaled stats join the sum every economy formula reads — towerCost()/scavengerCost() (metal-denominated as of the metal economy), goldCap(), World.metalPerSecond(), shieldPct, dronePower, all of it. Before that moment, a half-built room contributes exactly nothing." }
     ],
     edges: [
       { from: 'pick', to: 'valid' },
