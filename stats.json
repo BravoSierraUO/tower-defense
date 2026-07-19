@@ -1,0 +1,147 @@
+{
+  "generatedAt": "2026-07-19",
+  "growth": [
+    {
+      "hash": "c488b9d",
+      "date": "07-16",
+      "cum": 211,
+      "subject": "Initial commit: v01 camera, grid, zoom, pan"
+    },
+    {
+      "hash": "93d95e0",
+      "date": "07-16",
+      "cum": 295,
+      "subject": "step 2: Tower placement"
+    },
+    {
+      "hash": "1e903a4",
+      "date": "07-16",
+      "cum": 431,
+      "subject": "step 3: Enemy Movement"
+    },
+    {
+      "hash": "c4876a9",
+      "date": "07-16",
+      "cum": 514,
+      "subject": "step 4: Combat (targeting, firing, damage, projectiles)"
+    },
+    {
+      "hash": "be70deb",
+      "date": "07-16",
+      "cum": 1017,
+      "subject": "step 5: The Pivot"
+    },
+    {
+      "hash": "773aa2c",
+      "date": "07-16",
+      "cum": 781,
+      "subject": "step 6: The UI"
+    },
+    {
+      "hash": "5464244",
+      "date": "07-17",
+      "cum": 788,
+      "subject": "Fix: cap towers at 50, prevent placement on/near base"
+    },
+    {
+      "hash": "87955e9",
+      "date": "07-17",
+      "cum": 1142,
+      "subject": "updated ui"
+    },
+    {
+      "hash": "bd71892",
+      "date": "07-18",
+      "cum": 2509,
+      "subject": "Phase 1 closeout + Phase 2a Command Core MVP, add docs.html"
+    },
+    {
+      "hash": "fe909e0",
+      "date": "07-18",
+      "cum": 2530,
+      "subject": "Add Phase 5 roadmap: dev tooling & portfolio polish"
+    },
+    {
+      "hash": "343d3e7",
+      "date": "07-18",
+      "cum": 2536,
+      "subject": "Fix docs.html: tabs stuck on Roadmap after first visit"
+    },
+    {
+      "hash": "1100168",
+      "date": "07-18",
+      "cum": 2662,
+      "subject": "Phase 2b: Skeleton Economy"
+    },
+    {
+      "hash": "5dc2acf",
+      "date": "07-18",
+      "cum": 4996,
+      "subject": "Phase 3 (Full Core + Room Variety), test harness, and Phase 4 (Progression: levels/achievements/prestige)"
+    },
+    {
+      "hash": "6c4e803",
+      "date": "07-19",
+      "cum": 5987,
+      "subject": "Add whathow.html portfolio page, fix profile-panel glass-recipe drift"
+    },
+    {
+      "hash": "3b994c1",
+      "date": "07-19",
+      "cum": 5068,
+      "subject": "Merge docs.html + whathow.html into whatever.html, re-theme to real game palette"
+    },
+    {
+      "hash": "cf9b3bd",
+      "date": "07-19",
+      "cum": 5527,
+      "subject": "Phase 4b: Economy Depth (combo streak, passive income, Fast-Build rush, tower upgrades, base repair)"
+    },
+    {
+      "hash": "ccd165e",
+      "date": "07-19",
+      "cum": 5980,
+      "subject": "Phase 4c: Day-One Power & Metal (onboarding guarantee, metal economy, AI Cycle Budget)"
+    },
+    {
+      "hash": "6f284ec",
+      "date": "07-19",
+      "cum": 6131,
+      "subject": "Fix room-type number-key regression; add Market room (gold<->metal trading)"
+    },
+    {
+      "hash": "83e11a2",
+      "date": "07-19",
+      "cum": 6131,
+      "subject": "Fix stale claims in whatever.html's roombuild WhatHow flow"
+    },
+    {
+      "hash": "524cfcc",
+      "date": "07-19",
+      "cum": 6238,
+      "subject": "Phase 4d: Energy System (power becomes a live supply/consumption constraint)"
+    }
+  ],
+  "categories": [
+    {
+      "label": "Engine (JS)",
+      "value": 2243,
+      "tone": "sig"
+    },
+    {
+      "label": "Docs & tooling",
+      "value": 1273,
+      "tone": "special"
+    },
+    {
+      "label": "Game shell (HTML/CSS)",
+      "value": 1312,
+      "tone": "info"
+    },
+    {
+      "label": "Tests",
+      "value": 1410,
+      "tone": "ok"
+    }
+  ]
+}
