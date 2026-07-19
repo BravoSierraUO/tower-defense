@@ -64,9 +64,17 @@ export class Renderer {
       ctx.font = '11px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(def.label, x + cell / 2, y + cell / 2 - 4);
-      ctx.fillText('T' + room.tier, x + cell / 2, y + cell / 2 + 12);
+
+      if (!room.isActive()) {
+        const pct = Math.round((1 - room.buildTimeRemaining / room.buildTimeTotal) * 100);
+        ctx.fillText(`building ${pct}%`, x + cell / 2, y + cell / 2 + 12);
+      } else {
+        ctx.fillText('T' + room.tier, x + cell / 2, y + cell / 2 + 12);
+        this.drawModuleSlots(room, x, y, cell, def.color);
+      }
     }
 
+    ctx.textAlign = 'left';
     if (selectedType) {
       ctx.fillStyle = 'rgba(234,241,248,0.7)';
       ctx.font = '13px monospace';
@@ -77,6 +85,28 @@ export class Renderer {
       );
     }
     ctx.textAlign = 'left';
+  }
+
+  // Small dot row under an active room's tier label — filled = module
+  // installed, hollow = empty slot. No-op if the room has no slots (tier 1,
+  // or 'moduleSlots' tech not yet unlocked keeps everyone's count effectively 0
+  // via CommandCore.canInstallModule, but slot count itself is tier-based).
+  drawModuleSlots(room, x, y, cell, color) {
+    const slots = room.moduleSlotCount();
+    if (slots <= 0) return;
+    const ctx = this.ctx;
+    const dotR = 3;
+    const spacing = dotR * 2 + 4;
+    const totalW = slots * spacing - 4;
+    const startX = x + cell / 2 - totalW / 2 + dotR;
+    const dotY = y + cell / 2 + 22;
+
+    for (let i = 0; i < slots; i++) {
+      ctx.beginPath();
+      ctx.arc(startX + i * spacing, dotY, dotR, 0, Math.PI * 2);
+      ctx.fillStyle = i < room.modules.length ? color : 'rgba(255,255,255,0.15)';
+      ctx.fill();
+    }
   }
 
   drawBase(world, camera) {

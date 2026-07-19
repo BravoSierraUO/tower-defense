@@ -9,6 +9,7 @@ export class Spawner {
     this.enemiesToSpawn = 0;
     this.spawnTimer = 0;
     this.complete = false;
+    this.wavesCleared = 0;
   }
 
   // Weighted pick among difficulty tiers unlocked at the current wave.
@@ -56,6 +57,7 @@ export class Spawner {
       if (world.enemies.length === 0) {
         const bonus = CONFIG.WAVE_CLEAR_BONUS_BASE + (this.waveNumber - 1) * CONFIG.WAVE_CLEAR_BONUS_GROWTH;
         world.addGold(Math.round(bonus * world.rewardMultiplier()));
+        this.wavesCleared++;
 
         if (this.waveNumber >= CONFIG.MAX_WAVES) {
           this.complete = true;

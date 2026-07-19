@@ -45,14 +45,38 @@ function findTarget(tower, enemies) {
   return closest;
 }
 
-// Enemies that reached the base deal damage once, then become eligible for cleanup.
+// Enemies that reached the base deal damage once, then become eligible for
+// cleanup. Phase 3: Shield room reduces the damage by its shieldPct. Phase 4:
+// the Fortification skill stacks on top, combined reduction capped well under
+// 100% so a maxed-out Core + maxed skill can never zero out base damage.
 function resolveBaseHits(world) {
+  const reduction = Math.min(0.95, world.commandCore.totals().shieldPct + world.profile.fortifyMult());
   for (const enemy of world.enemies) {
     if (enemy.reachedTarget && !enemy.hasHitBase) {
-      world.base.takeDamage(CONFIG.ENEMY_BASE_DAMAGE);
+      world.base.takeDamage(CONFIG.ENEMY_BASE_DAMAGE * (1 - reduction));
       enemy.hasHitBase = true;
     }
   }
+}
+
+// Phase 3: Hangar's "interceptor drones" are a passive, tower-independent
+// DPS source — no projectile/visual, just damage applied straight to
+// whichever live enemy is closest to the base each frame.
+function applyHangarDrones(world, dt) {
+  const dronePower = world.commandCore.totals().dronePower;
+  if (dronePower <= 0) return;
+
+  let closest = null;
+  let closestDist = Infinity;
+  for (const enemy of world.enemies) {
+    if (enemy.isDead() || enemy.reachedTarget) continue;
+    const dist = Math.hypot(enemy.x - world.base.x, enemy.y - world.base.y);
+    if (dist < closestDist) {
+      closest = enemy;
+      closestDist = dist;
+    }
+  }
+  if (closest) closest.health -= dronePower * dt;
 }
 
 export function updateCombat(world, dt) {
@@ -60,7 +84,8 @@ export function updateCombat(world, dt) {
     if (tower.cooldown > 0) continue;
     const target = findTarget(tower, world.enemies);
     if (target) {
-      world.projectiles.push(new Projectile(tower.x, tower.y, target, tower.damage));
+      // Phase 4: Damage Mastery skill multiplies every shot; Tower itself stays untouched.
+      world.projectiles.push(new Projectile(tower.x, tower.y, target, tower.damage * world.profile.damageMult()));
       tower.cooldown = 1 / tower.fireRate;
     }
   }
@@ -70,5 +95,6 @@ export function updateCombat(world, dt) {
   }
   world.projectiles = world.projectiles.filter(p => !p.dead);
 
+  applyHangarDrones(world, dt);
   resolveBaseHits(world);
 }

@@ -3,17 +3,24 @@ import { Tower } from './tower.js';
 import { Enemy } from './enemy.js';
 import { Base } from './base.js';
 import { Spawner } from './spawner.js';
+import { Profile } from './profile.js';
 
 export class World {
-  constructor(commandCore) {
+  // `profile` defaults to a fresh Profile so every existing caller (tests
+  // included) keeps working unmodified — Game wires in the real persistent
+  // one (see game.js) so its skill-tree bonuses (goldMult/buildMult) apply.
+  constructor(commandCore, profile = new Profile()) {
     this.width = CONFIG.WORLD_WIDTH;
     this.height = CONFIG.WORLD_HEIGHT;
     this.towers = [];
     this.enemies = [];
     this.projectiles = [];
     this.score = 0;
+    this.kills = 0;
+    this.towersPlaced = 0;
     this.gold = CONFIG.STARTING_GOLD;
     this.commandCore = commandCore;
+    this.profile = profile;
     this.base = new Base();
     this.spawner = new Spawner();
     this.spawnRadius = Math.hypot(this.width / 2, this.height / 2) + CONFIG.SPAWN_MARGIN;
@@ -30,8 +37,9 @@ export class World {
     return Math.round(CONFIG.TOWER_COST * (1 - discount));
   }
 
+  // Phase 4: the prestige skill tree's Gold Mastery node stacks on top of AI Core's bonus.
   rewardMultiplier() {
-    return 1 + this.commandCore.totals().compute * CONFIG.CORE_COMPUTE_REWARD_BONUS_PER_POINT;
+    return (1 + this.commandCore.totals().compute * CONFIG.CORE_COMPUTE_REWARD_BONUS_PER_POINT) * this.profile.goldMult();
   }
 
   addGold(amount) {
@@ -55,6 +63,7 @@ export class World {
       enemy.update(dt);
       if (enemy.isDead()) {
         this.score += Math.round(enemy.maxHealth);
+        this.kills++;
         this.addGold(Math.round(enemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * this.rewardMultiplier()));
       }
     }
@@ -93,6 +102,7 @@ export class World {
 
 	const tower = new Tower(snapped.x, snapped.y, cost);
 	this.towers.push(tower);
+	this.towersPlaced++;
 	return tower;
   }
 
@@ -103,6 +113,50 @@ export class World {
     if (idx === -1) return false;
     const [tower] = this.towers.splice(idx, 1);
     this.addGold(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));
+    return true;
+  }
+
+  // Phase 3: Command Core rooms now cost gold to build/upgrade/mod — these
+  // wrap CommandCore's validity checks with the gold gate (same split as
+  // towerCost()/placeTower() above: CommandCore owns state, World owns gold).
+  buildRoom(type, gx, gy) {
+    const cost = this.commandCore.buildCost(type);
+    if (this.gold < cost) return null;
+    const room = this.commandCore.placeRoom(type, gx, gy);
+    if (!room) return null;
+    this.gold -= cost;
+    // Phase 4: Build Mastery skill shortens the timer CommandCore already set, floored the same way.
+    room.buildTimeTotal = Math.max(1, room.buildTimeTotal / this.profile.buildMult());
+    room.buildTimeRemaining = room.buildTimeTotal;
+    return room;
+  }
+
+  upgradeRoom(gx, gy) {
+    const room = this.commandCore.getRoomAt(gx, gy);
+    if (!room || !room.isActive() || !room.canUpgrade()) return null;
+    const cost = this.commandCore.upgradeCost(room);
+    if (this.gold < cost) return null;
+    this.gold -= cost;
+    return this.commandCore.upgradeRoomAt(gx, gy);
+  }
+
+  installModuleAt(gx, gy) {
+    const room = this.commandCore.getRoomAt(gx, gy);
+    if (!this.commandCore.canInstallModule(room)) return null;
+    const cost = this.commandCore.moduleCost(room);
+    if (this.gold < cost) return null;
+    this.gold -= cost;
+    return this.commandCore.installModuleAt(gx, gy);
+  }
+
+  // Dock: manually convert gold into research. Ratio improves with Dock's tier.
+  tradeAtDock() {
+    const dockRoom = this.commandCore.rooms.find(r => r.type === 'dock' && r.isActive());
+    if (!dockRoom) return false;
+    const cost = CONFIG.DOCK_TRADE_GOLD_COST;
+    if (this.gold < cost) return false;
+    this.gold -= cost;
+    this.commandCore.research += cost * (CONFIG.DOCK_TRADE_BASE_RATIO + dockRoom.stats.tradeBonus);
     return true;
   }
 }

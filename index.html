@@ -46,6 +46,13 @@
                 <div id="ui-tier" class="hud-value">I</div>
             </div>
 
+            <div class="hud-divider"></div>
+
+            <div class="hud-stat">
+                <div class="hud-label">LEVEL</div>
+                <div id="ui-level" class="hud-value">1</div>
+            </div>
+
         </div>
 
         <div class="hud-center">
@@ -132,6 +139,11 @@
             <span id="core-storage">0</span>
         </div>
 
+        <div class="core-stat">
+            Research
+            <span id="core-research">0</span>
+        </div>
+
         <div class="core-panel-title" style="margin-top:16px;">Economy Effect</div>
 
         <div class="core-stat">
@@ -144,7 +156,64 @@
             <span id="core-reward-bonus">+0%</span>
         </div>
 
+        <div class="core-panel-title" style="margin-top:16px;">Tech Tree</div>
+
+        <div id="tech-tree-list" class="tech-tree-list"></div>
+
+        <button id="dock-trade-btn" class="dock-trade-btn" hidden></button>
+
     </aside>
+
+    <!-- =========================
+         PROFILE PANEL (Phase 4)
+    ========================== -->
+
+    <aside class="profile-panel" id="profile-panel" hidden>
+
+        <div class="profile-header">
+
+            <div class="profile-level-badge">
+                LV <span id="profile-level">1</span>
+            </div>
+
+            <div class="profile-header-info">
+                <div id="profile-cp" class="profile-cp">0 CP (0 → 40)</div>
+                <div class="ui-bar-track">
+                    <div id="profile-xp-fill" class="ui-bar-fill"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="profile-stats-row">
+
+            <div class="profile-stat">
+                Prestige
+                <span id="profile-prestige">0</span>
+            </div>
+
+            <div class="profile-stat">
+                Skill Points
+                <span id="profile-points">0</span>
+            </div>
+
+        </div>
+
+        <button id="prestige-btn" class="prestige-btn"></button>
+
+        <div id="profile-stats" class="profile-lifetime-stats"></div>
+
+        <div class="profile-panel-title">Prestige Skills</div>
+
+        <div id="skill-list" class="skill-list"></div>
+
+        <div class="profile-panel-title">Achievements</div>
+
+        <div id="achievement-list" class="achievement-list"></div>
+
+    </aside>
+
+    <div id="achievement-toast" class="achievement-toast" hidden></div>
 
     <!-- =========================
          BUILD BARS
@@ -196,9 +265,36 @@
             Storage
         </button>
 
+        <button class="build-slot">
+            <span>4</span>
+            Lab
+        </button>
+
+        <button class="build-slot" id="core-slot-factory">
+            <span>5</span>
+            Factory
+        </button>
+
+        <button class="build-slot" id="core-slot-hangar">
+            <span>6</span>
+            Hangar
+        </button>
+
+        <button class="build-slot" id="core-slot-shield">
+            <span>7</span>
+            Shield
+        </button>
+
+        <button class="build-slot" id="core-slot-dock">
+            <span>8</span>
+            Dock
+        </button>
+
     </footer>
 
     <div id="ui-banner" class="ui-banner" hidden></div>
+
+    <button id="restart-btn" class="restart-btn" hidden>Play Again</button>
 
 </div>
 

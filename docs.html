@@ -20,6 +20,7 @@
     --phase-2b:#F39C12;
     --phase-3:#9B59B6;
     --phase-4:#E74C3C;
+    --phase-4b:#C0392B;
     --phase-5:#8B9AB2;
   }
   *{box-sizing:border-box;}
@@ -220,6 +221,7 @@
   .roadmap-phase.p2b{border-left-color:var(--phase-2b); background:rgba(243,156,18,0.06);}
   .roadmap-phase.p3{border-left-color:var(--phase-3); background:rgba(155,89,182,0.06);}
   .roadmap-phase.p4{border-left-color:var(--phase-4); background:rgba(231,76,60,0.06);}
+  .roadmap-phase.p4b{border-left-color:var(--phase-4b); background:rgba(192,57,43,0.06);}
   .roadmap-phase.p5{border-left-color:var(--phase-5); background:rgba(139,154,178,0.06);}
 
   .roadmap-header{display:flex; align-items:center; gap:14px; margin-bottom:12px;}
@@ -229,6 +231,7 @@
   .roadmap-phase.p2b .roadmap-num{color:var(--phase-2b);}
   .roadmap-phase.p3 .roadmap-num{color:var(--phase-3);}
   .roadmap-phase.p4 .roadmap-num{color:var(--phase-4);}
+  .roadmap-phase.p4b .roadmap-num{color:var(--phase-4b);}
   .roadmap-phase.p5 .roadmap-num{color:var(--phase-5);}
   .roadmap-title{font-size:13px; font-weight:600; color:var(--text);}
   .roadmap-status{font-size:10px; color:var(--text-dim); margin-left:auto; padding:4px 8px; background:rgba(255,255,255,0.06); border-radius:12px;}
@@ -322,7 +325,7 @@ const PHASES = {
     subviews: {
       timeline: {
         label: 'Timeline & Blockers',
-        title: 'Five-phase solo dev plan. Some phases block others; some can run parallel. Phases are the reference markers for each chat session.',
+        title: 'Solo dev plan, phased. Some phases block others; some can run parallel. Phases are the reference markers for each chat session.',
         isRoadmap: true,
         phases: [
           {
@@ -377,22 +380,41 @@ const PHASES = {
             id: 'p3',
             num: 3,
             title: 'Full Core + Room Variety',
-            status: 'NEXT',
-            desc: 'Add 7 more room types (Lab, Factory, Hangar, Shield, Dock, etc). Module slots. Research unlocks.',
+            status: 'DONE',
+            desc: 'Added Lab, Factory, Hangar, Shield, Dock. Module slots. Research + tech-tree gates. Room building is now a real gold sink with a build timer, not a free instant toggle.',
             items: [
-              'Lab (research tree hub)',
-              'Factory (build time reduction)',
-              'Hangar (interceptor drones)',
-              'Shield Generator (orbit buff)',
-              'Dock (trading)',
-              'Module slot system',
-              'Tech-tree progression gates'
+              'Lab (research tree hub) — done, produces researchRate → CommandCore.research stockpile (commandcore.js update())',
+              'Factory (build time reduction) — done, totals().buildTimeReduction shortens every future room\'s construction timer',
+              'Hangar (interceptor drones) — done, passive DPS applied each frame to the enemy closest to the base (combat.js applyHangarDrones)',
+              'Shield Generator (damage reduction) — done, totals().shieldPct cuts base damage in resolveBaseHits',
+              'Dock (trading) — done, manual gold→research conversion button, ratio scales with Dock tier',
+              'Module slot system — done, tier-gated slot count (0/1/2), one universal +20%-output module per slot, gold cost scales with tier & slot count',
+              'Tech-tree progression gates — done, 5-node tree (config.js TECH_TREE): Factory → {Hangar, Shield} → Dock, plus a parallel Module Slots node',
+              'Room build/upgrade gold costs — done (world.js buildRoom/upgradeRoom), extended to the original 3 starter rooms too for a coherent Core economy'
             ],
-            notes: 'Depends on Phase 2a & 2b foundation.'
+            notes: 'Design calls made without back-and-forth (documented in changelog v0.9): kept one-of-each-room-type (not build-many), Lab needs no tech node (root — no researchRate without it, which gates the whole tree naturally), Shield/Hangar are combat-side modifiers so they read commandCore.totals() directly from combat.js rather than routing through the gold-focused Economy web. The Economy tab below reflects the new real room-cost sinks and the corrected Lab/research node — the "Research Lab discounts costs" idea in the old speculative diagram was actually a Phase 4b concept and was replaced with what Lab actually does.'
           },
           {
             id: 'p4',
             num: 4,
+            title: 'Progression — Levels, Achievements & Prestige',
+            status: 'DONE',
+            desc: 'Persistent player profile: a CP/level curve, a data-driven achievement registry, and a prestige loop that resets the climb for a permanent bonus + a spendable skill tree. Skeleton ported from a sister project (RMUV), stripped of everything that was really about RMUV\'s 40-game arcade catalog.',
+            items: [
+              'Persistent profile (localStorage, survives run restarts) — done, profile.js',
+              'CP economy fed by run events (kills/wave clears/towers/rooms/tech/run end) — done, game.js diff-watches engine counters and calls profile.emit()',
+              'Gentle sqrt level curve — done, levelFromCp()/cpForLevel()',
+              '21-badge achievement registry, fixpoint-tested per event — done, achievements.js',
+              'Prestige: escalating level gate, permanent CP-gain bonus, spendable points — done, profile.js prestige()',
+              '4-node prestige skill tree (Gold/Damage/Build/Fortification Mastery), stacks with Command Core bonuses — done, wired into world.js/combat.js',
+              '"Play Again" restart flow (previously the win/lose banner was a dead end) — done, game.js restart()',
+              'Profile view (P key): level/XP, prestige, skill tree, achievement grid, unlock toast — done, ui.js/index.html/style.css'
+            ],
+            notes: 'Renumbered ahead of the original "Economy Depth" Phase 4 (now Phase 4b below) — this profile/achievement/prestige system was judged the bigger structural addition. Deliberate scope cut vs. RMUV: prestige here only resets CP, not lifetime stats/badges (RMUV\'s mastery-star re-earn-across-lifetimes mechanic was skipped — see changelog.md v1.0 notes). 21 new tests in tests/profile.test.mjs.'
+          },
+          {
+            id: 'p4b',
+            num: '4b',
             title: 'Economy Depth',
             status: 'LATER',
             desc: 'Combo streaks, passive income, base levels, Research Lab modifier, fast-build upgrades.',
@@ -403,7 +425,7 @@ const PHASES = {
               'Fast-Build upgrade modifier',
               'Cost reduction per Lab level'
             ],
-            notes: 'Depends on Phase 2b economy shell. Pure additions after that.'
+            notes: 'Depends on Phase 2b economy shell. Pure additions after that. Renumbered from "Phase 4" to "Phase 4b" when the Progression system claimed the Phase 4 slot.'
           },
           {
             id: 'p5',
@@ -415,10 +437,10 @@ const PHASES = {
               'Git hook bakes `git log` into stats.json — commit count, timestamps, lines changed, per-phase tags',
               'In-game About/Analytics screen: commit timeline + LOC growth chart + phase completion, reading stats.json',
               'Script to auto-sync docs.html roadmap status from changelog.md so the doc can\'t go stale',
-              'Test harness for combat/economy/spawner logic — needs a JS test runner (Node) on the dev machine',
+              'Test harness for combat/economy/spawner logic — done. Node (now installed) has a built-in test runner, so no npm/deps needed: `node --test tests/` (or `npm test`, same command via package.json). 52 tests across 4 files: commandcore.test.mjs (rooms/tiers/tech-tree/modules), economy.test.mjs (gold sinks/sources, room+tower cost gating), combat.test.mjs (tower targeting, Shield/Hangar effects, base-hit guard), spawner.test.mjs (wave state machine). Plus balance.test.mjs specifically — regression guards for the economy tuning concern below: cost floors that must never hit 0 (towerCost, Shield\'s damage reduction must stay under 100%), costs that must never get cheaper the more you buy, and a tech-tree-reachability sanity check. `tests/helpers.mjs` builds a real CommandCore+World since only the DOM-touching modules (camera/renderer/ui/input/game) are out of reach for a plain Node test.',
               '/docs folder: architecture notes + contribution guide, separate from the visual roadmap'
             ],
-            notes: 'Interview-portfolio motivated — "built a working game AND the tooling to prove how it was built." Interleave in slow moments between 2b/3/4, don\'t block on it.'
+            notes: 'Interview-portfolio motivated — "built a working game AND the tooling to prove how it was built." Interleave in slow moments between 2b/3/4, don\'t block on it. The test harness landed ahead of the rest of Phase 5 because Phase 3\'s room-cost/tech-tree economy needed a way to catch balance regressions before real playtesting starts — see balance.test.mjs.'
           }
         ]
       }
@@ -652,7 +674,7 @@ else { this.state = 'countdown'; this.timer = CONFIG.WAVE_INTERVAL; }`}
       web: {
         label: 'Full Economy Web',
         layout: 'web',
-        title: 'Phase 2b landed the gold pool, sources, and the Command Core → economy link. Phase 3 & 4 modifiers are still speculative.',
+        title: 'Phase 2b landed the gold pool, sources, and the Command Core → economy link. Phase 3 added Lab/research + real Core-room costs. Phase 4b modifiers are still speculative.',
         nodes: [
           {id:'hub',   x:330,y:290, w:220,h:70, type:'real', tag:'hub · real', title:'Gold Pool', ref:'world.js:15,37-39',
             phase:'p2b', desc:'Central currency every source feeds and every sink drains. Capped by goldCap() — Storage room output raises the cap.',
@@ -672,8 +694,8 @@ addGold(amount) { this.gold = Math.min(this.goldCap(), this.gold + amount); }`},
             code:`const bonus = CONFIG.WAVE_CLEAR_BONUS_BASE
   + (this.waveNumber - 1) * CONFIG.WAVE_CLEAR_BONUS_GROWTH;
 world.addGold(Math.round(bonus * world.rewardMultiplier()));`},
-          {id:'srcBase', x:560,y:40, w:220,h:64, type:'imagined', tag:'source', title:'Base Level — Passive Income', ref:'Phase 4',
-            phase:'p4', desc:'Slow trickle per second, scaled by upgradeable base level. Phase 4 addition.'},
+          {id:'srcBase', x:560,y:40, w:220,h:64, type:'imagined', tag:'source', title:'Base Level — Passive Income', ref:'Phase 4b',
+            phase:'p4b', desc:'Slow trickle per second, scaled by upgradeable base level. Phase 4b addition.'},
 
           {id:'modCore', x:330,y:150, w:240,h:70, type:'real', tag:'modifier · real', title:'Command Core Output', ref:'world.js:22-35',
             phase:'p2a', desc:'Reactor(power) discounts tower cost, AI Core(compute) boosts the reward multiplier, Storage(storageCap) raises the gold cap. Reads commandCore.totals() live.',
@@ -681,31 +703,41 @@ world.addGold(Math.round(bonus * world.rewardMultiplier()));`},
   (1 - this.commandCore.totals().power * CONFIG.CORE_POWER_COST_DISCOUNT_PER_POINT)); }
 rewardMultiplier() { return 1 +
   this.commandCore.totals().compute * CONFIG.CORE_COMPUTE_REWARD_BONUS_PER_POINT; }`},
-          {id:'modCombo', x:20,y:300, w:200,h:70, type:'imagined', tag:'modifier', title:'Combo Streak Bonus', ref:'Phase 4',
-            phase:'p4', desc:'Kills inside short window stack a multiplier on next kill reward.'},
-          {id:'modResearch', x:630,y:300, w:210,h:70, type:'imagined', tag:'modifier · phase 3', title:'Research Lab', ref:'Phase 3',
-            phase:'p3', desc:'A second building type (not Tower) that discounts costs elsewhere by a %.'},
-          {id:'modFast', x:630,y:430, w:210,h:64, type:'imagined', tag:'modifier · phase 4', title:'Fast-Build Upgrade', ref:'Phase 4',
-            phase:'p4', desc:'Reduces tower cooldown recovery — fire-rate buff bought with gold.'},
+          {id:'modCombo', x:20,y:300, w:200,h:70, type:'imagined', tag:'modifier', title:'Combo Streak Bonus', ref:'Phase 4b',
+            phase:'p4b', desc:'Kills inside short window stack a multiplier on next kill reward.'},
+          {id:'modResearch', x:630,y:230, w:210,h:70, type:'real', tag:'modifier · real', title:'Lab — Research Stockpile', ref:'commandcore.js update()/totals()',
+            phase:'p3', desc:'Lab\'s researchRate output accrues into CommandCore.research each frame. Spent on tech-tree nodes (config.js TECH_TREE) that gate Factory/Hangar/Shield/Dock and the module-slot system. Replaces the old speculative "Research Lab discounts costs" idea — that turned out to be a Phase 4b concept, not what Lab does.',
+            code:`update(dt) {
+  this.research += this.totals().researchRate * dt;
+  for (const room of this.rooms) room.update(dt);
+}`},
+          {id:'modDock', x:630,y:360, w:210,h:64, type:'real', tag:'modifier · real', title:'Dock — Gold → Research Trade', ref:'world.js tradeAtDock()',
+            phase:'p3', desc:'Manual button, converts a fixed gold cost into research at a ratio that improves with Dock\'s tier (tradeBonus).'},
+          {id:'modFast', x:630,y:490, w:210,h:64, type:'imagined', tag:'modifier · phase 4b', title:'Fast-Build Upgrade', ref:'Phase 4b',
+            phase:'p4b', desc:'Reduces tower cooldown recovery — fire-rate buff bought with gold.'},
 
           {id:'sinkBuild', x:80,y:460, w:220,h:70, type:'real', tag:'sink · real', title:'Tower Build Cost (gate)', ref:'world.js:78-97',
             phase:'p2b', desc:'world.placeTower() checks world.gold against the (Command Core-discounted) towerCost() before creating the tower.',
             code:`const cost = this.towerCost();
 if (this.gold < cost) return null;
 this.gold -= cost;`},
-          {id:'sinkUpgrade', x:330,y:460, w:210,h:64, type:'imagined', tag:'sink · phase 3', title:'Tower Upgrade Cost', ref:'Phase 3',
-            phase:'p3', desc:'Spend gold to bump a tower\'s damage/range/fireRate.'},
+          {id:'sinkUpgrade', x:80,y:560, w:210,h:64, type:'imagined', tag:'sink · phase 4b', title:'Tower Upgrade Cost', ref:'Phase 4b',
+            phase:'p4b', desc:'Spend gold to bump a tower\'s damage/range/fireRate. (Room tier upgrades already shipped in Phase 3 — see Room Upgrade + Module Cost below — this is the still-unbuilt Tower-side equivalent.)'},
+          {id:'sinkRoomBuild', x:330,y:460, w:210,h:70, type:'real', tag:'sink · real', title:'Room Build Cost + Timer', ref:'world.js buildRoom(), commandcore.js placeRoom()',
+            phase:'p3', desc:'Placing any Core room (including the original 3 starters) now costs gold and takes a build timer to finish — reduced by Factory\'s buildTimeReduction. A room contributes nothing to totals() until its timer hits 0.'},
+          {id:'sinkRoomUpgrade', x:330,y:560, w:210,h:64, type:'real', tag:'sink · real', title:'Room Upgrade + Module Cost', ref:'world.js upgradeRoom()/installModuleAt()',
+            phase:'p3', desc:'Tier upgrades and module installs both cost gold, growing per tier / per module already installed.'},
           {id:'sinkSell', x:560,y:460, w:200,h:64, type:'real', tag:'sink · real', title:'Tower Sell / Refund', ref:'world.js:100-107, input.js',
             phase:'p2b', desc:'Right-click a placed tower to remove it and refund 60% of what was paid.',
             code:`const [tower] = this.towers.splice(idx, 1);
 this.addGold(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));`},
-          {id:'sinkRepair', x:20,y:560, w:190,h:64, type:'imagined', tag:'sink · phase 4', title:'Base Repair Cost', ref:'Phase 4',
-            phase:'p4', desc:'Spend gold to restore base health mid-wave.'},
+          {id:'sinkRepair', x:560,y:560, w:190,h:64, type:'imagined', tag:'sink · phase 4b', title:'Base Repair Cost', ref:'Phase 4b',
+            phase:'p4b', desc:'Spend gold to restore base health mid-wave.'},
 
-          {id:'realPlace', x:80,y:640, w:260,h:60, type:'real', tag:'real · phase 1', title:'world.placeTower() [geometry checks]', ref:'world.js:78-97',
+          {id:'realPlace', x:80,y:660, w:260,h:60, type:'real', tag:'real · phase 1', title:'world.placeTower() [geometry checks]', ref:'world.js:78-97',
             phase:'p1', desc:'Grid/distance/occupancy checks, same function as the cost gate above — this node is the placement half, sinkBuild is the gold half.'},
-          {id:'realCooldown', x:400,y:610, w:260,h:60, type:'real', tag:'real · phase 1', title:'Tower.cooldown / fireRate [existing]', ref:'tower.js:9-14',
-            phase:'p1', desc:'Real fields today. Phase 4 multiplies fireRate to apply Fast-Build.'}
+          {id:'realCooldown', x:400,y:660, w:260,h:60, type:'real', tag:'real · phase 1', title:'Tower.cooldown / fireRate [existing]', ref:'tower.js:9-14',
+            phase:'p1', desc:'Real fields today. Phase 4b multiplies fireRate to apply Fast-Build.'}
         ],
         edges:[
           ['srcKill','hub','real'],
@@ -716,12 +748,13 @@ this.addGold(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));`},
           ['modCore','srcWave','real','+% reward'],
           ['modCore','hub','real','raises cap'],
           ['modCombo','srcKill','imagined','×streak'],
-          ['srcBase','modResearch','imagined','unlocks @ lvl 3'],
-          ['modResearch','sinkBuild','imagined','−% cost'],
-          ['modResearch','sinkUpgrade','imagined','−% cost'],
-          ['modResearch','modFast','imagined','further discount'],
+          ['hub','modDock','real','spend'],
+          ['modDock','modResearch','real','gain research'],
+          ['modResearch','modFast','imagined','future: further discount'],
           ['hub','sinkBuild','real','spend'],
           ['hub','sinkUpgrade','imagined','spend'],
+          ['hub','sinkRoomBuild','real','spend'],
+          ['hub','sinkRoomUpgrade','real','spend'],
           ['hub','sinkRepair','imagined','spend'],
           ['sinkSell','hub','real','+refund %'],
           ['sinkBuild','realPlace','real','gate inserts here'],
@@ -779,7 +812,7 @@ function getPhaseColor(phase){
 }
 
 function getPhaseClass(phase){
-  const classes = {p1:'p1', p2a:'p2a', p2b:'p2b', p3:'p3', p4:'p4', p5:'p5'};
+  const classes = {p1:'p1', p2a:'p2a', p2b:'p2b', p3:'p3', p4:'p4', p4b:'p4b', p5:'p5'};
   return classes[phase] || 'p1';
 }
 
@@ -1035,7 +1068,7 @@ function selectNode(n){
               : n.type === 'imagined' ? '<span class="badge imagined">imagined — not built</span>'
               : n.type === 'note' ? '<span class="badge missing">not implemented</span>'
               : n.type === 'real' ? '<span class="badge real">real code today</span>' : '';
-  const phaseBadge = n.phase ? `<span class="phase-badge ${getPhaseClass(n.phase)}">Phase ${n.phase === 'p1' ? '1' : n.phase === 'p2a' ? '2a' : n.phase === 'p2b' ? '2b' : n.phase === 'p3' ? '3' : n.phase === 'p4' ? '4' : n.phase}</span>` : '';
+  const phaseBadge = n.phase ? `<span class="phase-badge ${getPhaseClass(n.phase)}">Phase ${n.phase === 'p1' ? '1' : n.phase === 'p2a' ? '2a' : n.phase === 'p2b' ? '2b' : n.phase === 'p3' ? '3' : n.phase === 'p4' ? '4' : n.phase === 'p4b' ? '4b' : n.phase}</span>` : '';
 
   detailEl.innerHTML = `
     <div class="chrome"><span class="r"></span><span class="y"></span><span class="g"></span></div>
