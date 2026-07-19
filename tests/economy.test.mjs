@@ -124,6 +124,61 @@ describe('World: Command Core room economy', () => {
   });
 });
 
+describe('World: Market trading, gold<->metal', () => {
+  // 200, not freshGame's usual 100000 — enough to build Market (30 gold) and
+  // afford either trade, but still under METAL_CAP_BASE/GOLD_CAP_BASE so the
+  // addMetal()/addGold() the trade triggers doesn't get clamped DOWN to the
+  // cap instead of actually adding (a 100000 starting balance is already over
+  // both caps, which addGold/addMetal would silently clamp back down to).
+  const TRADE_TEST_FUNDS = 200;
+
+  test('tradeGoldForMetal is unavailable with no active Market, and converts gold to metal at base+tier ratio once built', () => {
+    const { world } = freshGame(TRADE_TEST_FUNDS);
+    assert.equal(world.tradeGoldForMetal(), false, 'no market built yet');
+
+    const market = world.buildRoom('market', 0, 0);
+    finishBuild(market);
+
+    const goldBefore = world.gold;
+    const metalBefore = world.metal;
+    assert.equal(world.tradeGoldForMetal(), true);
+    assert.equal(goldBefore - world.gold, CONFIG.MARKET_TRADE_GOLD_COST);
+    const expectedGain = CONFIG.MARKET_TRADE_GOLD_COST * (CONFIG.MARKET_TRADE_BASE_RATIO + market.stats.marketBonus);
+    assert.ok(Math.abs(world.metal - metalBefore - expectedGain) < 1e-9);
+  });
+
+  test('tradeMetalForGold is unavailable with no active Market, and converts metal to gold at base+tier ratio once built', () => {
+    const { world } = freshGame(TRADE_TEST_FUNDS);
+    assert.equal(world.tradeMetalForGold(), false, 'no market built yet');
+
+    const market = world.buildRoom('market', 0, 0);
+    finishBuild(market);
+
+    const goldBefore = world.gold;
+    const metalBefore = world.metal;
+    assert.equal(world.tradeMetalForGold(), true);
+    assert.equal(metalBefore - world.metal, CONFIG.MARKET_TRADE_METAL_COST);
+    const expectedGain = CONFIG.MARKET_TRADE_METAL_COST * (CONFIG.MARKET_TRADE_BASE_RATIO + market.stats.marketBonus);
+    assert.ok(Math.abs(world.gold - goldBefore - expectedGain) < 1e-9);
+  });
+
+  test('both trade directions refuse when the relevant pool is short, and neither pool moves on refusal', () => {
+    const { world } = freshGame(100000);
+    const market = world.buildRoom('market', 0, 0);
+    finishBuild(market);
+    world.gold = 0;
+    world.metal = 0;
+
+    assert.equal(world.tradeGoldForMetal(), false, 'refused: not enough gold');
+    assert.equal(world.gold, 0);
+    assert.equal(world.metal, 0);
+
+    assert.equal(world.tradeMetalForGold(), false, 'refused: not enough metal');
+    assert.equal(world.gold, 0);
+    assert.equal(world.metal, 0);
+  });
+});
+
 describe('World: combo streak (Phase 4b)', () => {
   function killEnemies(world, count) {
     for (let i = 0; i < count; i++) {

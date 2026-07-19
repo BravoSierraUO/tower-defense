@@ -26,7 +26,9 @@ export class Game {
       onPrestige: () => this.doPrestige(),
       onBuySkill: id => this.profile.buySkill(id),
       onRestart: () => this.restart(),
-      onRepairBase: () => this.world.repairBase(CONFIG.BASE_REPAIR_AMOUNT)
+      onRepairBase: () => this.world.repairBase(CONFIG.BASE_REPAIR_AMOUNT),
+      onMarketBuyMetal: () => this.world.tradeGoldForMetal(),
+      onMarketBuyGold: () => this.world.tradeMetalForGold()
     });
     this.lastTime = 0;
     this.fps = 0;
@@ -87,10 +89,18 @@ export class Game {
       } else if (key === 'p') {
         this.view = this.view === 'profile' ? 'field' : 'profile';
         this.selectedRoomType = null;
-      } else if (this.view === 'core' && ['1', '2', '3', '4', '5', '6', '7', '8'].includes(key)) {
-        const type = Object.keys(CONFIG.ROOM_TYPES)[Number(key) - 1];
-        if (type && this.commandCore.isRoomUnlocked(type)) {
-          this.selectedRoomType = this.commandCore.isBuilt(type) ? null : type;
+      } else if (this.view === 'core') {
+        // Still positional (index into Object.keys(CONFIG.ROOM_TYPES)) — index.html's
+        // core-build-bar labels must be kept in the same order by hand. Explicit
+        // keyOrder (not Number(key)-1) just supports all 10 current room types,
+        // with '0' as the 10th slot instead of computing to -1.
+        const keyOrder = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+        const idx = keyOrder.indexOf(key);
+        if (idx !== -1) {
+          const type = Object.keys(CONFIG.ROOM_TYPES)[idx];
+          if (type && this.commandCore.isRoomUnlocked(type)) {
+            this.selectedRoomType = this.commandCore.isBuilt(type) ? null : type;
+          }
         }
       } else if (this.view === 'field' && (key === '1' || key === '2')) {
         // Phase 4c: same number-key-selects-buildable-type convention the Core

@@ -6,9 +6,10 @@ import { ACHIEVEMENTS } from './achievements.js';
 // sits above the canvas via CSS).
 export class UI {
   // callbacks: { onUnlockTech(id), onDockTrade(), onPrestige(), onBuySkill(id),
-  // onRestart(), onRepairBase() } — UI only translates DOM clicks into these;
-  // it never mutates gameplay state directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase } = {}) {
+  // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold() } — UI
+  // only translates DOM clicks into these; it never mutates gameplay state
+  // directly (Game/World/Profile do).
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold } = {}) {
     this.scoreEl = document.getElementById('ui-score');
     this.goldEl = document.getElementById('ui-gold');
     this.metalEl = document.getElementById('ui-metal');
@@ -76,6 +77,14 @@ export class UI {
     this.dockTradeBtn = document.getElementById('dock-trade-btn');
     this.dockTradeBtn.textContent = `Trade ${CONFIG.DOCK_TRADE_GOLD_COST} Gold → Research`;
     this.dockTradeBtn.addEventListener('click', () => onDockTrade?.());
+
+    this.marketBuyMetalBtn = document.getElementById('market-buy-metal-btn');
+    this.marketBuyMetalBtn.textContent = `Trade ${CONFIG.MARKET_TRADE_GOLD_COST} Gold → Metal`;
+    this.marketBuyMetalBtn.addEventListener('click', () => onMarketBuyMetal?.());
+
+    this.marketBuyGoldBtn = document.getElementById('market-buy-gold-btn');
+    this.marketBuyGoldBtn.textContent = `Trade ${CONFIG.MARKET_TRADE_METAL_COST} Metal → Gold`;
+    this.marketBuyGoldBtn.addEventListener('click', () => onMarketBuyGold?.());
 
     // ---- Phase 4: profile panel (level/XP, prestige, skill tree, achievements) ----
     this.profilePanel = document.getElementById('profile-panel');
@@ -160,6 +169,14 @@ export class UI {
       const dockBuilt = commandCore.isBuilt('dock');
       this.dockTradeBtn.hidden = !dockBuilt;
       if (dockBuilt) this.dockTradeBtn.disabled = world.gold < CONFIG.DOCK_TRADE_GOLD_COST;
+
+      const marketBuilt = commandCore.isBuilt('market');
+      this.marketBuyMetalBtn.hidden = !marketBuilt;
+      this.marketBuyGoldBtn.hidden = !marketBuilt;
+      if (marketBuilt) {
+        this.marketBuyMetalBtn.disabled = world.gold < CONFIG.MARKET_TRADE_GOLD_COST;
+        this.marketBuyGoldBtn.disabled = world.metal < CONFIG.MARKET_TRADE_METAL_COST;
+      }
     }
 
     const snap = profile.snapshot();

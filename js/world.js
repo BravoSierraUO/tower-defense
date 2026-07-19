@@ -343,4 +343,25 @@ export class World {
     this.commandCore.research += cost * (CONFIG.DOCK_TRADE_BASE_RATIO + dockRoom.stats.tradeBonus);
     return true;
   }
+
+  // Market: manual gold<->metal trading, both directions. Ratio improves with Market's tier.
+  tradeGoldForMetal() {
+    const marketRoom = this.commandCore.rooms.find(r => r.type === 'market' && r.isActive());
+    if (!marketRoom) return false;
+    const cost = CONFIG.MARKET_TRADE_GOLD_COST;
+    if (this.gold < cost) return false;
+    this.gold -= cost;
+    this.addMetal(cost * (CONFIG.MARKET_TRADE_BASE_RATIO + marketRoom.stats.marketBonus));
+    return true;
+  }
+
+  tradeMetalForGold() {
+    const marketRoom = this.commandCore.rooms.find(r => r.type === 'market' && r.isActive());
+    if (!marketRoom) return false;
+    const cost = CONFIG.MARKET_TRADE_METAL_COST;
+    if (this.metal < cost) return false;
+    this.metal -= cost;
+    this.addGold(cost * (CONFIG.MARKET_TRADE_BASE_RATIO + marketRoom.stats.marketBonus));
+    return true;
+  }
 }

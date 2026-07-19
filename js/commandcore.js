@@ -115,7 +115,8 @@ export class CommandCore {
   totals() {
     const out = {
       power: 0, cyclesPerMin: 0, storageCap: 0, metalPerCycle: 0,
-      researchRate: 0, buildTimeReduction: 0, dronePower: 0, shieldPct: 0, tradeBonus: 0
+      researchRate: 0, buildTimeReduction: 0, dronePower: 0, shieldPct: 0, tradeBonus: 0,
+      marketBonus: 0
     };
     for (const room of this.rooms) {
       if (!room.isActive()) continue;

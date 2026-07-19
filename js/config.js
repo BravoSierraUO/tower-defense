@@ -109,6 +109,13 @@ export const CONFIG = {
       label: 'Dock', color: '#C9A24B', output: 'tradeBonus',
       tiers: [{ tradeBonus: 0.1 }, { tradeBonus: 0.25 }, { tradeBonus: 0.45 }],
       requiresTech: 'dockAccess'
+    },
+    // Free root like Reactor/Lab/Mine, not gated behind dockAccess like Dock —
+    // gold<->metal rebalancing should be available from minute one, same as
+    // metal itself. Appended last so every existing room type's key stays put.
+    market: {
+      label: 'Market', color: '#7ED9FF', output: 'marketBonus',
+      tiers: [{ marketBonus: 0.1 }, { marketBonus: 0.25 }, { marketBonus: 0.45 }]
     }
   },
 
@@ -144,6 +151,12 @@ export const CONFIG = {
   // improves with Dock's tier (tradeBonus, from ROOM_TYPES.dock.tiers).
   DOCK_TRADE_GOLD_COST: 50,
   DOCK_TRADE_BASE_RATIO: 0.5, // research per gold at tradeBonus = 0
+
+  // Market: manual gold<->metal trading, same shape as Dock's gold->research
+  // trade above (two directions instead of one).
+  MARKET_TRADE_GOLD_COST: 40,
+  MARKET_TRADE_METAL_COST: 40,
+  MARKET_TRADE_BASE_RATIO: 0.5, // output per unit spent at marketBonus = 0
 
   // Phase 2b: Skeleton Economy. Command Core output now has a real effect —
   // Reactor(power) discounts tower cost, AI Core(compute) boosts gold

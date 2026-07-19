@@ -211,6 +211,25 @@ describe('balance: combo streak bonus stays bounded no matter how long a run goe
   });
 });
 
+describe('balance: Market trading ratios stay sane', () => {
+  test('MARKET_TRADE_BASE_RATIO is positive (a 0-or-negative ratio would make trading pointless or pay you)', () => {
+    assert.ok(CONFIG.MARKET_TRADE_BASE_RATIO > 0);
+  });
+});
+
+describe('balance: room-type key mapping (game.js number-key selector) stays sane', () => {
+  // Regression guard for the Phase 4c bug where inserting `mine` into ROOM_TYPES
+  // silently desynced game.js's number-key handler and index.html's build-bar
+  // labels from the actual key order. game.js's keyOrder array supports exactly
+  // 10 slots ('1'-'9' then '0') — if ROOM_TYPES ever grows past that, the same
+  // class of bug (a room type with no reachable key) happens again silently.
+  test('CONFIG.ROOM_TYPES has at most 10 entries — game.js\'s number-key selector only supports 10 slots', () => {
+    const count = Object.keys(CONFIG.ROOM_TYPES).length;
+    assert.ok(count <= 10,
+      `ROOM_TYPES has ${count} entries — game.js's keyOrder ('1'-'9','0') can't address a room type past slot 10`);
+  });
+});
+
 describe('balance: difficulty tiers stay internally consistent', () => {
   test('unlockWave is non-decreasing from easy -> medium -> hard, and multipliers actually get harder', () => {
     const { easy, medium, hard } = CONFIG.DIFFICULTY_TIERS;
