@@ -560,15 +560,15 @@ const ROADMAP = [
       'Migrating existing Profile (P) and Command Core (B) panels into the new shell without breaking their current hotkey muscle-memory — not attempted; B/P/O/S all still work exactly as before, the avatar menu is a parallel entry point onto the same view-toggle callbacks, not a replacement'
     ],
     note:'Floated during the Phase 5 About-screen build (2026-07-19), explicitly filed rather than built — "a big bite," per the user. Same day, picked back up as a deliberately scoped slice: the avatar dropdown (new, additive) and real Settings-tab content (previously nonexistent) shipped; the tabbed-modal IA redesign and Inventory tab were deliberately left alone — that\'s still a from-scratch panel-system redesign, not an extension, and stays unscoped until picked up on purpose. Same caution Phase 7 already carries.' },
-  { id:'p5c', num:'5c', title:'In-Game Bug Reporting — GitHub Issues', status:'BACKLOG · NOT SCOPED', color:'--phase-5',
+  { id:'p5c', num:'5c', title:'In-Game Bug Reporting — GitHub Issues', status:'BACKLOG · PARTIAL', color:'--phase-5',
     desc:'A "Report a Bug" entry point in the game itself, filing a real GitHub issue against this repo instead of the player having to leave the game, screenshot, and write it up by hand.',
     items:[
-      'Today: bugs get reported the manual way — github.com/BravoSierraUO/tower-defense/issues/1 ("can\'t click the reset modal away on loading saved game"), filed by hand outside the game on 2026-07-19. No in-game path exists at all yet.',
-      'Open design question before this can be scoped: GitHub\'s REST API needs an authenticated token to create issues, and a static client-side game with no backend has nowhere safe to hold one — anyone with devtools could read an embedded token and spam or abuse the repo. Three real options, undecided: (a) a small serverless proxy that holds the token server-side, (b) GitHub\'s own pre-filled "New issue" URL scheme (no token needed, but opens a real browser tab instead of staying in-game), (c) skip GitHub entirely and post the report somewhere else (email/webhook).',
-      'Smallest honest slice, if picked up: an in-game "Report a Bug" button using option (b) above, pre-filling the issue body with the same browser/profile snapshot the About panel already reads from stats.json — zero new backend, zero secrets to protect, but still hands off to a browser tab rather than staying fully in-game.',
-      'The fuller "never leaves the game" version stays unscoped until the token/auth question above actually gets answered.'
+      'Issue #1 ("can\'t click the reset modal away on loading saved game"), filed by hand outside the game on 2026-07-19, was the case that surfaced this gap — it\'s since been fixed (a missing `.confirm-modal-overlay[hidden]{display:none}` CSS rule) and closed.',
+      'Open design question, still unresolved: GitHub\'s REST API needs an authenticated token to create issues, and a static client-side game with no backend has nowhere safe to hold one — anyone with devtools could read an embedded token and spam or abuse the repo. Three real options were on record: (a) a small serverless proxy holding the token server-side, (b) GitHub\'s own pre-filled "New issue" URL scheme (no token needed, but opens a real browser tab), (c) skip GitHub entirely.',
+      'Smallest honest slice — done (2026-07-19): a "Report a Bug" item in the avatar dropdown menu (`Game.reportBug()`, `js/game.js`) opens option (b) above in a new tab, pre-filled with run context (state, view, wave, profile level/prestige, browser UA) via `URLSearchParams`-style encoding. Zero new backend, zero secrets to protect — but it does hand off to a browser tab rather than staying in-game.',
+      'The fuller "never leaves the game" version (actually filing the issue via the API without a tab-switch) stays unscoped until the token/auth question above actually gets answered.'
     ],
-    note:'Idea surfaced 2026-07-19, right after filing issue #1 the old manual way made the gap obvious. Filed unscoped/backlog like Phase 6 and 7 below — reuses Phase 5\'s tooling-family color rather than a new hue, same call Phase 5b made.' },
+    note:'Idea surfaced 2026-07-19, right after filing issue #1 the old manual way made the gap obvious; the smallest safe slice shipped the same day once the token/auth blocker made clear which option was actually buildable now. Reuses Phase 5\'s tooling-family color rather than a new hue, same call Phase 5b made.' },
   { id:'p6', num:'6', title:'Comms & Station Identity', status:'LATER', color:'--phase-6',
     desc:'From `structures.md`/`lore.md`: a Communications room unlocking active, player-triggered orbital abilities (the game\'s current loop is 100% passive/economic once a wave starts — this is the first thing that gives the player something to *do* mid-wave), plus a station skin that visibly grows from Orbital Platform to Dyson Node as the player prestiges.',
     items:[
@@ -1674,6 +1674,12 @@ const STATS = {
       "date": "07-19",
       "cum": 8386,
       "subject": "whatever.html: derive Velocity's commit count from STATS instead of hand-typing it"
+    },
+    {
+      "hash": "551e36e",
+      "date": "07-19",
+      "cum": 8400,
+      "subject": "changelog.md: log v2.2 and file Phase 5c, closing the roadmap-sync advisory"
     }
   ],
   "categories": [
@@ -1684,7 +1690,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 2363,
+      "value": 2377,
       "tone": "special"
     },
     {

@@ -162,6 +162,12 @@
       "date": "07-19",
       "cum": 8386,
       "subject": "whatever.html: derive Velocity's commit count from STATS instead of hand-typing it"
+    },
+    {
+      "hash": "551e36e",
+      "date": "07-19",
+      "cum": 8400,
+      "subject": "changelog.md: log v2.2 and file Phase 5c, closing the roadmap-sync advisory"
     }
   ],
   "categories": [
@@ -172,7 +178,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 2363,
+      "value": 2377,
       "tone": "special"
     },
     {

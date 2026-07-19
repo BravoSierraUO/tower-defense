@@ -32,7 +32,8 @@ export class Game {
       onToggleAbout: () => { this.view = this.view === 'about' ? 'field' : 'about'; this.selectedRoomType = null; },
       onToggleProfile: () => { this.view = this.view === 'profile' ? 'field' : 'profile'; this.selectedRoomType = null; },
       onToggleSettings: () => { this.view = this.view === 'settings' ? 'field' : 'settings'; this.selectedRoomType = null; },
-      onResetProgress: () => { this.profile.hardReset(); this.restart(); }
+      onResetProgress: () => { this.profile.hardReset(); this.restart(); },
+      onReportBug: () => this.reportBug()
     });
     this.lastTime = 0;
     this.fps = 0;
@@ -83,6 +84,32 @@ export class Game {
 
   doPrestige() {
     if (this.profile.prestige()) this.restart();   // banked the payout — start the next climb fresh
+  }
+
+  // Phase 5c, smallest safe slice: no backend, no embedded token (a static client-side
+  // game has nowhere safe to hold one) — just GitHub's own pre-filled "new issue" URL
+  // scheme, auto-populated with enough run context to be useful, opened in a new tab.
+  // The "never leaves the game" fuller version stays unscoped (see the Roadmap card)
+  // until the token/auth question it depends on actually gets answered.
+  reportBug() {
+    const snap = this.profile.snapshot();
+    const body = [
+      '**Steps to reproduce:**',
+      '_(please fill in)_',
+      '',
+      '**What happened:**',
+      '_(please fill in)_',
+      '',
+      '**Context (auto-filled):**',
+      `- Run state: ${this.state}`,
+      `- View: ${this.view}`,
+      `- Wave: ${this.world.spawner.waveNumber}`,
+      `- Profile level: ${snap.level} (prestige ${snap.prestige})`,
+      `- Browser: ${navigator.userAgent}`
+    ].join('\n');
+    const url = 'https://github.com/BravoSierraUO/tower-defense/issues/new'
+      + `?title=${encodeURIComponent('[Bug] ')}&body=${encodeURIComponent(body)}`;
+    window.open(url, '_blank', 'noopener');
   }
 
   handleInput() {

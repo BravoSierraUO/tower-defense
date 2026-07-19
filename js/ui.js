@@ -12,10 +12,11 @@ const CATEGORY_BAR_OPACITIES = [1, 0.75, 0.55, 0.4];
 // sits above the canvas via CSS).
 export class UI {
   // callbacks: { onUnlockTech(id), onDockTrade(), onPrestige(), onBuySkill(id),
-  // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold(), onToggleAbout() } —
+  // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold(), onToggleAbout(),
+  // onReportBug() } —
   // UI only translates DOM clicks into these; it never mutates gameplay state
   // directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleProfile, onToggleSettings, onResetProgress } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleProfile, onToggleSettings, onResetProgress, onReportBug } = {}) {
     this.scoreEl = document.getElementById('ui-score');
     this.goldEl = document.getElementById('ui-gold');
     this.metalEl = document.getElementById('ui-metal');
@@ -157,6 +158,7 @@ export class UI {
     document.getElementById('menu-profile').addEventListener('click', () => { this.setAvatarMenuOpen(false); onToggleProfile?.(); });
     document.getElementById('menu-about').addEventListener('click', () => { this.setAvatarMenuOpen(false); onToggleAbout?.(); });
     document.getElementById('menu-settings').addEventListener('click', () => { this.setAvatarMenuOpen(false); onToggleSettings?.(); });
+    document.getElementById('menu-report-bug').addEventListener('click', () => { this.setAvatarMenuOpen(false); onReportBug?.(); });
     document.getElementById('menu-reset').addEventListener('click', () => { this.setAvatarMenuOpen(false); this.openConfirmModal(onResetProgress); });
 
     // ---- Settings panel: theme toggle, raw-save-data JSON viewer, hard reset ----
