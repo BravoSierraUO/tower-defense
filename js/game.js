@@ -7,6 +7,7 @@ import { updateCombat } from './combat.js';
 import { UI } from './ui.js';
 import { CommandCore } from './commandcore.js';
 import { Profile } from './profile.js';
+import { MissionTracker } from './missions.js';
 
 export class Game {
   constructor(canvas) {
@@ -20,6 +21,9 @@ export class Game {
     this.commandCore = new CommandCore();
     this.world = new World(this.commandCore, this.profile);
     this.placeStarters();
+    // Phase 8b: session-scoped, deliberately NOT rebuilt in restart()/prestige — a
+    // one-time onboarding chain, not something a run should have to re-earn.
+    this.missions = new MissionTracker();
     this.ui = new UI({
       onUnlockTech: id => this.commandCore.unlockTech(id),
       onDockTrade: () => this.world.tradeAtDock(),
@@ -217,6 +221,12 @@ export class Game {
       this.world.updatePassiveIncome(dt, this.profile.level());
       this.world.updateCycleBudget(dt);
       this.watchProfileEvents();
+      this.missions.update({
+        towersPlaced: this.world.towersPlaced,
+        waveNumber: this.world.spawner.waveNumber,
+        roomsBuilt: this.commandCore.rooms.length,
+        view: this.view
+      });
 
       // Phase 8a: a base wipe no longer ends the run — Spawner.finalizeWave() heals it back
       // up and pays a lesser chest instead (see spawner.js). The only way a run now ends is
@@ -264,7 +274,7 @@ export class Game {
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.fieldBuildType);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.fieldBuildType, this.missions);
   }
 
   loop(timestamp) {

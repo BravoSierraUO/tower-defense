@@ -201,6 +201,20 @@ export class UI {
 
     document.getElementById('menu-reset-progress').addEventListener('click', () => this.openConfirmModal(onResetProgress));
 
+    // ---- Phase 8b: tutorial mission banner + reusable glow highlight ----
+    this.missionBanner = document.getElementById('mission-banner');
+    this.missionTextEl = document.getElementById('mission-text');
+    this.missionHintEl = document.getElementById('mission-hint');
+    this.glowTargetEl = null; // the HUD element currently wearing .mission-glow, if any
+    document.getElementById('mission-help-btn').addEventListener('click', () => {
+      // Re-trigger the flash by removing then re-adding the class next frame —
+      // an already-present animation class won't restart just by re-adding it.
+      if (!this.glowTargetEl) return;
+      this.glowTargetEl.classList.remove('mission-glow-flash');
+      void this.glowTargetEl.offsetWidth; // force reflow so the browser sees the removal
+      this.glowTargetEl.classList.add('mission-glow-flash');
+    });
+
     // ---- confirm modal: shared by both reset-progress entry points above ----
     this.confirmModal = document.getElementById('confirm-modal');
     this.confirmAction = null;
@@ -262,6 +276,18 @@ export class UI {
     }).join('');
   }
 
+  // Moves the .mission-glow pulse onto `selector`'s element, off whatever wore it
+  // before. Only touches the DOM when the target actually changes (called every
+  // frame from update()), same "don't rebuild what didn't change" convention as
+  // the tech-tree/skill buttons above.
+  setGlowTarget(selector) {
+    const el = selector ? document.querySelector(selector) : null;
+    if (el === this.glowTargetEl) return;
+    if (this.glowTargetEl) this.glowTargetEl.classList.remove('mission-glow', 'mission-glow-flash');
+    this.glowTargetEl = el;
+    if (el) el.classList.add('mission-glow');
+  }
+
   currentTierName(waveNumber) {
     const entries = Object.entries(CONFIG.DIFFICULTY_TIERS)
       .filter(([, t]) => waveNumber >= t.unlockWave)
@@ -269,7 +295,7 @@ export class UI {
     return entries.length ? entries[0][0] : '-';
   }
 
-  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, fieldBuildType) {
+  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, fieldBuildType, missions) {
     const spawner = world.spawner;
     const base = world.base;
 
@@ -461,6 +487,17 @@ export class UI {
       this.towerUpgradeCostEl.textContent = selectedScavenger.canUpgrade()
         ? `${world.scavengerUpgradeCost(selectedScavenger)}m`
         : 'MAX';
+    }
+
+    // Phase 8b: tutorial mission banner + glow highlight on the mission's target.
+    const mission = missions?.current();
+    this.missionBanner.hidden = !mission;
+    if (mission) {
+      this.missionTextEl.textContent = mission.text;
+      this.missionHintEl.textContent = mission.hint;
+      this.setGlowTarget(mission.target);
+    } else {
+      this.setGlowTarget(null);
     }
 
     // Phase 8a: 'lost' is no longer a reachable Game.state — a base wipe now heals and

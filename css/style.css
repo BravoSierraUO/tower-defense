@@ -73,7 +73,8 @@ html,body{
 .about-panel,
 .settings-panel,
 .hud-avatar-menu,
-.confirm-modal{
+.confirm-modal,
+.mission-banner{
 
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
@@ -1789,4 +1790,114 @@ html,body{
     display:flex;
 
     gap:10px;
+}
+
+/* ===========================
+   MISSION BANNER (Phase 8b)
+=========================== */
+
+.mission-banner{
+
+    position:absolute;
+
+    left:24px;
+
+    top:132px;
+
+    width:300px;
+
+    padding:16px 18px;
+
+    display:flex;
+
+    align-items:flex-start;
+
+    gap:10px;
+
+    pointer-events:auto;
+}
+
+.mission-icon{
+
+    font-size:18px;
+
+    line-height:1;
+}
+
+.mission-body{
+
+    flex:1;
+}
+
+.mission-text{
+
+    font-size:14px;
+
+    font-weight:700;
+}
+
+.mission-hint{
+
+    margin-top:4px;
+
+    font-size:12px;
+
+    opacity:.65;
+
+    line-height:1.4;
+}
+
+.mission-help-btn{
+
+    width:24px;
+
+    height:24px;
+
+    border-radius:50%;
+
+    border:1px solid var(--glass-border);
+
+    background:var(--control-bg);
+
+    color:var(--text-primary);
+
+    font-size:12px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    flex-shrink:0;
+}
+
+.mission-help-btn:hover{
+
+    border-color:var(--accent);
+
+    color:var(--accent);
+}
+
+/* Reusable pulsing highlight — attachable to any HUD target (build-bar slot,
+   trigger-wave button, mode hint, panel). Same one accent color as everywhere
+   else, just animated instead of a new hue. */
+@keyframes mission-glow-pulse{
+    0%, 100%{ box-shadow:0 0 0 0 rgba(126,217,255,.55); }
+    50%{ box-shadow:0 0 0 10px rgba(126,217,255,0); }
+}
+
+.mission-glow{
+    animation:mission-glow-pulse 1.6s ease-out infinite;
+    outline:2px solid rgba(126,217,255,.8);
+    outline-offset:2px;
+}
+
+/* Re-triggered by the "?" help button — a brief stronger flash on top of the
+   steady pulse, for a player who's lost track of the target. */
+@keyframes mission-glow-flash{
+    0%{ box-shadow:0 0 0 0 rgba(126,217,255,.9); }
+    100%{ box-shadow:0 0 0 22px rgba(126,217,255,0); }
+}
+
+.mission-glow-flash{
+    animation:mission-glow-flash .6s ease-out;
 }

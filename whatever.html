@@ -596,16 +596,16 @@ const ROADMAP = [
       'Deliberate decoupling: completion % and reward payout never share a formula, so a future "+XP%"-style upgrade can inflate payout without also trivializing the completion threshold'
     ],
     note:'Design call made with the user before implementation: reuse enemy.maxHealth (already the canonical per-enemy weight, already driving gold reward) as the completion-% denominator rather than inventing a parallel XP stat — one source of truth instead of two. Foundational — Missions/Hero/Patrols below all assume this loop shape exists first.' },
-  { id:'p8b', num:'8b', title:'Tutorial Missions & Glow-Lead System', status:'LATER', color:'--phase-8',
-    desc:'A mission-driven tutorial that unlocks step by step as the player hits real milestones (first room, first tower, first wave triggered) instead of a wall of text up front. Built around a reusable "glow" affordance — a soft pulsing highlight attachable to any HUD element — designed explicitly for low-vision players who can miss small, sleek buttons.',
+  { id:'p8b', num:'8b', title:'Tutorial Missions & Glow-Lead System', status:'DONE', color:'--phase-8',
+    desc:'A mission-driven tutorial that unlocks step by step as the player hits real milestones (first tower, first wave triggered, first Core visit, first room built) instead of a wall of text up front. Built around a reusable "glow" affordance — a soft pulsing highlight attachable to any HUD element — designed explicitly for low-vision players who can miss small, sleek buttons.',
     items:[
-      'Mission list gated on live game-state conditions (first Command Core room built, first Tower placed, first wave triggered, ...), same shape as the ROADMAP/FLOWS data arrays already driving this doc',
-      'Generic glow/pulse highlight mechanism, attachable to any HUD target (a build button, the B-key Core toggle, a specific grid cell) rather than one-off CSS per mission',
-      'In-mission help/"?" affordance re-triggers the same glow on demand, for a player who loses track of where the next step is',
-      'Reusable beyond the opening minutes — Hero recruitment (8c) re-triggers this same system rather than being a special case'
+      'Mission list gated on live game-state conditions (`js/missions.js`, `MISSIONS`) — 4 missions: place a Tower, trigger a wave, open the Command Core, build a second Core room. Same {id,text,check(state)} data shape as the ROADMAP/FLOWS arrays already driving this doc, checked once per frame — no fixpoint loop needed since missions don\'t unlock each other',
+      'Generic `.mission-glow` pulse highlight (CSS keyframes + `UI#setGlowTarget`), attachable to any HUD element via a plain CSS selector — reused as-is for all 4 missions (build-bar slot, Trigger Wave button, the B-key mode hint, the Core panel), no one-off CSS per mission',
+      'The "?" help button re-triggers a brief stronger `.mission-glow-flash` on top of the steady pulse — for a player who loses track of where the next step is',
+      'Sticky completion (once earned, stays earned for the session) and session-scoped on purpose: `MissionTracker` lives on `Game`, not `Profile` — not rebuilt on restart/prestige, but not persisted to localStorage either. Reusability beyond onboarding (Hero recruitment re-triggering this in 8c) is deferred until 8c actually needs it — the glow/banner plumbing is generic enough already, no rework anticipated'
     ],
     depends:'Phase 8a',
-    note:'Accessibility was the explicit driver, not a nice-to-have: the user flagged difficulty seeing small sleek upgrade buttons, so the lead-in affordance is a first-class animated highlight, not a tooltip or color change.' },
+    note:'Accessibility was the explicit driver, not a nice-to-have: the user flagged difficulty seeing small sleek upgrade buttons, so the lead-in affordance is a first-class animated highlight, not a tooltip or color change. Verified live in-browser by the user rather than an automated click-through — see changelog v2.5.' },
   { id:'p8c', num:'8c', title:'Hero — Recruitment & Persistent Leveling', status:'LATER', color:'--phase-8',
     desc:'A persistent, leveling hero unit recruited through the existing Hangar room (Phase 3 — currently passive interceptor drones) once the player\'s profile level crosses a threshold, timed to land around when waves start outpacing the player\'s current firepower.',
     items:[
@@ -1746,27 +1746,33 @@ const STATS = {
       "date": "07-19",
       "cum": 8545,
       "subject": "Add .gitignore, commit package-lock.json for Playwright devDependency"
+    },
+    {
+      "hash": "02f4730",
+      "date": "07-19",
+      "cum": 8926,
+      "subject": "Phase 8a: Idle Wave Loop & Salvage Rewards"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2446,
+      "value": 2604,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2492,
+      "value": 2558,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2171,
+      "value": 2265,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 1436,
+      "value": 1499,
       "tone": "ok"
     }
   ]

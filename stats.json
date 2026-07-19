@@ -186,27 +186,33 @@
       "date": "07-19",
       "cum": 8545,
       "subject": "Add .gitignore, commit package-lock.json for Playwright devDependency"
+    },
+    {
+      "hash": "02f4730",
+      "date": "07-19",
+      "cum": 8926,
+      "subject": "Phase 8a: Idle Wave Loop & Salvage Rewards"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2446,
+      "value": 2604,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2492,
+      "value": 2558,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2171,
+      "value": 2265,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 1436,
+      "value": 1499,
       "tone": "ok"
     }
   ]
