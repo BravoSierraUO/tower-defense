@@ -257,7 +257,7 @@
   <div class="chips">
     <span class="chip">Vanilla JS · Canvas 2D</span>
     <span class="chip">Solo build · zero deps</span>
-    <span class="chip">116 tests · node --test</span>
+    <span class="chip">125 tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
@@ -338,8 +338,9 @@
   <h2>One recipe, five screens</h2>
   <p class="lede">The HUD, the build bar, the tower card, the Command Core panel, the profile
     panel, the About/Analytics panel, the win/lose banner, the settings panel, the avatar menu,
-    the confirm modal — ten different surfaces in <code style="font-family:var(--mono)">css/style.css</code>,
-    all built from one glass recipe and one accent color instead of seven bespoke looks. This page
+    the confirm modal, the tutorial mission banner — eleven different surfaces in
+    <code style="font-family:var(--mono)">css/style.css</code>, all built from one glass recipe
+    and one accent color instead of seven bespoke looks. This page
     is built from the same recipe — the cards below are the actual CSS values, not a mockup.</p>
 
   <div class="pgrid">
@@ -348,7 +349,7 @@
       <div class="gv">blur(18px)</div>
       <div class="usedin">backdrop-filter blur(18px) · the same two-stop dark gradient ·
         1px rgba(255,255,255,.06) border · the same inset+drop shadow · 18px radius.
-        One selector list in style.css draws all ten surfaces — and every card on this page.</div>
+        One selector list in style.css draws all eleven surfaces — and every card on this page.</div>
     </div>
     <div class="vcard">
       <h4>One accent color</h4>
@@ -406,7 +407,7 @@
     <div class="stat"><b id="statFlows">·</b><span>system flows</span></div>
     <div class="stat"><b id="statNodes">·</b><span>documented steps</span></div>
     <div class="stat"><b id="statRefs">·</b><span>code references</span></div>
-    <div class="stat"><b>116</b><span>passing tests, zero deps</span></div>
+    <div class="stat"><b>125</b><span>passing tests, zero deps</span></div>
   </div>
 </section>
 
@@ -542,7 +543,7 @@ const ROADMAP = [
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 116 tests across 6 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. 125 tests across 7 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
@@ -662,6 +663,37 @@ function renderRoadmap(){
 renderRoadmap();
 
 const FLOWS = [
+  // =============================== GETTING STARTED ===============================
+  {
+    id: 'missionglow', group: 'Getting started',
+    title: 'A tutorial mission points the way',
+    summary: 'A 4-step onboarding chain (place a Tower, trigger a wave, open the Core, build a second room) checked live off real game state, with a reusable pulsing highlight pointing at whatever the next step needs.',
+    lanes: ['State', 'Check', 'Current mission', 'Glow'],
+    nodes: [
+      { id: 'state', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Live snapshot every frame\ntowersPlaced / waveNumber / view / roomsBuilt',
+        code_ref: 'game.js (update → missions.update)',
+        detail: "Read straight off World/CommandCore/Game — no separate mission-only counters invented. Only runs while state==='playing'." },
+      { id: 'check', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: "Each unmet mission's\ncheck(state) tested",
+        code_ref: 'js/missions.js (MissionTracker#update)',
+        detail: "Missions don't gate each other — a later mission's check can pass before an earlier one's does (e.g. roomsBuilt already ≥2 before a tower's ever been placed). Once a check returns true it joins a Set and is never re-tested; sticky, same as achievements.js — selling your only tower after placing it doesn't un-complete that mission." },
+      { id: 'current', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'current() = earliest\nstill-unmet mission',
+        code_ref: 'js/missions.js (MissionTracker#current)',
+        detail: "Always the first mission in list order that hasn't completed yet, regardless of which ones completed out of order — the banner never shows step 3 while step 1 is still open." },
+      { id: 'glow', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Banner + .mission-glow\non mission.target',
+        code_ref: 'ui.js (update → setGlowTarget)',
+        detail: "target is a plain CSS selector (#field-slot-tower, #trigger-wave-btn, #ui-mode-hint, #core-panel) — every target is DOM-addressable HUD chrome, nothing on the canvas-drawn Core grid. setGlowTarget only touches the DOM when the target element actually changes, not every frame." },
+      { id: 'help', col: 3, row: 1.75, kind: 'process', tone: 'idle', label: '"?" button re-flashes\n.mission-glow-flash',
+        code_ref: 'ui.js (mission-help-btn handler)',
+        detail: "Removes then re-adds the class (forcing a reflow in between) so the CSS animation restarts on demand, layered on top of the steady glow that was already pulsing underneath." }
+    ],
+    edges: [
+      { from: 'state', to: 'check' },
+      { from: 'check', to: 'current', tone: 'ok' },
+      { from: 'current', to: 'glow', tone: 'sig' },
+      { from: 'glow', to: 'help', dashed: true, tone: 'idle' }
+    ]
+  },
+
   // ============================= BUILDING YOUR BASE =============================
   {
     id: 'roombuild', group: 'Building your base',
@@ -1362,13 +1394,13 @@ const FLOWS = [
   {
     id: 'balanceguards', group: 'Proving it',
     title: "A tuning pass can't silently break the economy",
-    summary: '116 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
+    summary: '125 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
     lanes: ['Change', 'Run', 'Stress', 'Checks', 'Verdict'],
     nodes: [
       { id: 'tune', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'A constant changes in config.js\ne.g. a tier-3 buff' },
-      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n116 tests, 6 files, zero deps',
+      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n125 tests, 7 files, zero deps',
         code_ref: 'package.json · tests/*.test.mjs',
-        detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
+        detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile/missions cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
       { id: 'maxed', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'maxOutRoom() helper\nfull tech chain, max tier, every module slot',
         code_ref: 'tests/balance.test.mjs',
         detail: 'Unlocks every tech prereq (bypassing the research cost — only the gate matters for this test), forces a room to its final tier, and fills every module slot: the theoretical ceiling of investment in one room.' },
@@ -1752,27 +1784,33 @@ const STATS = {
       "date": "07-19",
       "cum": 8926,
       "subject": "Phase 8a: Idle Wave Loop & Salvage Rewards"
+    },
+    {
+      "hash": "ac52741",
+      "date": "07-19",
+      "cum": 9196,
+      "subject": "v2.5 - Phase 8b: Tutorial Missions & Glow-Lead System"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2604,
+      "value": 2687,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2558,
+      "value": 2571,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2265,
+      "value": 2389,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 1499,
+      "value": 1549,
       "tone": "ok"
     }
   ]

@@ -281,8 +281,16 @@ export class Game {
     const dt = (timestamp - this.lastTime) / 1000 || 0;
     this.lastTime = timestamp;
     if (dt > 0) this.fps += (1 / dt - this.fps) * 0.1; // smoothed
-    this.update(dt);
-    this.render();
+    // A thrown error inside update()/render() used to kill the rAF chain outright,
+    // freezing the canvas and DOM mid-frame in whatever half-updated state they were
+    // in — silently, with nothing in the console pointing at why. Logging and
+    // continuing keeps the loop alive and puts the real error on screen instead.
+    try {
+      this.update(dt);
+      this.render();
+    } catch (err) {
+      console.error('Game loop error (frame skipped):', err);
+    }
     requestAnimationFrame(t => this.loop(t));
   }
 
