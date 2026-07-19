@@ -210,22 +210,28 @@
       "date": "07-19",
       "cum": 9278,
       "subject": "v2.7 - Fix stuck build-bar/avatar-menu: global [hidden] CSS cascade bug + day-one metal gate"
+    },
+    {
+      "hash": "8463a52",
+      "date": "07-19",
+      "cum": 8777,
+      "subject": "Code-quality pass: split ui.js into js/ui/ panel modules, reformat style.css"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2699,
+      "value": 2814,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2630,
+      "value": 2653,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2400,
+      "value": 1761,
       "tone": "info"
     },
     {

@@ -5,8 +5,10 @@
 import { CONFIG } from '../config.js';
 
 export class SettingsPanel {
-  constructor({ onOpenResetConfirm } = {}) {
+  constructor({ onOpenResetConfirm, onClose } = {}) {
     this.el = document.getElementById('settings-panel');
+    document.getElementById('settings-close-btn').addEventListener('click', () => onClose?.());
+    document.getElementById('settings-footer-close-btn').addEventListener('click', () => onClose?.());
     this.storageSize = document.getElementById('settings-storage-size');
     this.latestProfile = null; // updated every frame in update(); read on demand by the JSON viewer
     document.getElementById('settings-storage-key').textContent = CONFIG.PROFILE.STORAGE_KEY;

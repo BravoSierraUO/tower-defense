@@ -371,6 +371,15 @@
         cursor not-allowed. Maxed: green border, no further spend. Every interactive button in
         the Core screen, the profile panel and the build bar reads this way.</div>
     </div>
+    <div class="vcard">
+      <h4>One panel-close pattern</h4>
+      <div class="usedin"><code style="font-family:var(--mono)">.panel-close-btn</code> (a
+        top-right ✕, reusing the mission banner's round-icon look) and
+        <code style="font-family:var(--mono)">.panel-footer-close-btn</code> (reusing the
+        settings-button look) bracket a <code style="font-family:var(--mono)">.panel-scroll</code>
+        middle — so the profile, About, and Settings panels each get two fixed exits regardless of
+        scroll position, from two existing button looks instead of a new one.</div>
+    </div>
   </div>
 
   <div class="found-note">
@@ -381,6 +390,13 @@
     it invented its own pink/rounded-font palette instead of the game's real one. Re-themed here to
     match. That's what this section is actually for: not just claiming consistency, but somewhere
     to catch it when it slips, including in the doc page auditing it.
+  </div>
+
+  <div class="found-note">
+    <b>Found during the v2.8 code-quality pass:</b> the profile, About, and Settings panels had
+    <i>no</i> close affordance at all — only the same hotkey (P/O/S) that opened them, which isn't
+    discoverable, so a player could get stuck looking at one. Fixed by adding the pattern above as
+    a shared primitive rather than patching the one panel that got reported.
   </div>
 </section>
 
@@ -1802,22 +1818,28 @@ const STATS = {
       "date": "07-19",
       "cum": 9278,
       "subject": "v2.7 - Fix stuck build-bar/avatar-menu: global [hidden] CSS cascade bug + day-one metal gate"
+    },
+    {
+      "hash": "8463a52",
+      "date": "07-19",
+      "cum": 8777,
+      "subject": "Code-quality pass: split ui.js into js/ui/ panel modules, reformat style.css"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2699,
+      "value": 2814,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2630,
+      "value": 2653,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2400,
+      "value": 1761,
       "tone": "info"
     },
     {

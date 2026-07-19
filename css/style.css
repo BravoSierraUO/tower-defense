@@ -97,6 +97,40 @@ html,body{
 }
 
 /* ===========================
+   PANEL FRAME (scrollable body + persistent close controls)
+   Shared by profile-panel/about-panel/settings-panel: each is a flex column
+   so a top-right ✕ (quick dismiss, reuses .mission-help-btn's round-icon
+   look) and a footer Close button (reuses .settings-btn) stay pinned outside
+   the scrolling middle. Without this a long panel (achievement grid, commit
+   list) could bury its only way out below the fold — no panel had ANY close
+   affordance before this (hotkey-toggle only), so this is also the fix for
+   that, not just a scroll-framing nicety.
+=========================== */
+
+.panel-scroll{
+    flex:1;
+    overflow-y:auto;
+    padding:24px;
+}
+
+.panel-close-btn{
+    position:absolute;
+    top:16px;
+    right:16px;
+    z-index:1;
+}
+
+.panel-footer{
+    flex-shrink:0;
+    padding:14px 24px;
+    border-top:1px solid var(--hairline);
+}
+
+.panel-footer-close-btn{
+    width:100%;
+}
+
+/* ===========================
    TOP BAR
 =========================== */
 
@@ -502,8 +536,9 @@ html,body{
     transform:translateX(-50%);
     width:600px;
     max-width:calc(100% - 48px);
-    padding:24px;
-    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
     pointer-events:auto;
 }
 
@@ -735,8 +770,9 @@ html,body{
     transform:translateX(-50%);
     width:520px;
     max-width:calc(100% - 48px);
-    padding:24px;
-    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
     pointer-events:auto;
 }
 
@@ -977,8 +1013,9 @@ html,body{
     transform:translateX(-50%);
     width:460px;
     max-width:calc(100% - 48px);
-    padding:24px;
-    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
     pointer-events:auto;
 }
 

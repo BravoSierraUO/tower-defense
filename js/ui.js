@@ -29,7 +29,7 @@ export class UI {
     this.hud = new HudPanel({ onRestart, onRepairBase, onTriggerWave });
     this.core = new CorePanel({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold });
     this.field = new FieldPanel();
-    this.profile = new ProfilePanel({ onPrestige, onBuySkill });
+    this.profile = new ProfilePanel({ onPrestige, onBuySkill, onClose: onToggleProfile });
     this.about = new AboutPanel({ onToggleAbout });
     this.mission = new MissionBanner();
 
@@ -38,7 +38,7 @@ export class UI {
     // closure only runs later (on click), by which point it is.
     this.confirmModal = new ConfirmModal({ afterConfirm: () => this.settings.hideJsonViewer() });
     const onOpenResetConfirm = () => this.confirmModal.open(onResetProgress);
-    this.settings = new SettingsPanel({ onOpenResetConfirm });
+    this.settings = new SettingsPanel({ onOpenResetConfirm, onClose: onToggleSettings });
     this.avatarMenu = new AvatarMenu({ onToggleProfile, onToggleAbout, onToggleSettings, onReportBug, onOpenResetConfirm });
   }
 

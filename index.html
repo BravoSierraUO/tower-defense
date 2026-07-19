@@ -260,46 +260,56 @@
 
     <aside class="profile-panel" id="profile-panel" hidden>
 
-        <div class="profile-header">
+        <button id="profile-close-btn" class="mission-help-btn panel-close-btn" title="Close">✕</button>
 
-            <div class="profile-level-badge">
-                LV <span id="profile-level">1</span>
-            </div>
+        <div class="panel-scroll">
 
-            <div class="profile-header-info">
-                <div id="profile-cp" class="profile-cp">0 CP (0 → 40)</div>
-                <div class="ui-bar-track">
-                    <div id="profile-xp-fill" class="ui-bar-fill"></div>
+            <div class="profile-header">
+
+                <div class="profile-level-badge">
+                    LV <span id="profile-level">1</span>
                 </div>
+
+                <div class="profile-header-info">
+                    <div id="profile-cp" class="profile-cp">0 CP (0 → 40)</div>
+                    <div class="ui-bar-track">
+                        <div id="profile-xp-fill" class="ui-bar-fill"></div>
+                    </div>
+                </div>
+
             </div>
+
+            <div class="profile-stats-row">
+
+                <div class="profile-stat">
+                    Prestige
+                    <span id="profile-prestige">0</span>
+                </div>
+
+                <div class="profile-stat">
+                    Skill Points
+                    <span id="profile-points">0</span>
+                </div>
+
+            </div>
+
+            <button id="prestige-btn" class="prestige-btn"></button>
+
+            <div id="profile-stats" class="profile-lifetime-stats"></div>
+
+            <div class="profile-panel-title">Prestige Skills</div>
+
+            <div id="skill-list" class="skill-list"></div>
+
+            <div class="profile-panel-title">Achievements</div>
+
+            <div id="achievement-list" class="achievement-list"></div>
 
         </div>
 
-        <div class="profile-stats-row">
-
-            <div class="profile-stat">
-                Prestige
-                <span id="profile-prestige">0</span>
-            </div>
-
-            <div class="profile-stat">
-                Skill Points
-                <span id="profile-points">0</span>
-            </div>
-
+        <div class="panel-footer">
+            <button id="profile-footer-close-btn" class="settings-btn panel-footer-close-btn">Close</button>
         </div>
-
-        <button id="prestige-btn" class="prestige-btn"></button>
-
-        <div id="profile-stats" class="profile-lifetime-stats"></div>
-
-        <div class="profile-panel-title">Prestige Skills</div>
-
-        <div id="skill-list" class="skill-list"></div>
-
-        <div class="profile-panel-title">Achievements</div>
-
-        <div id="achievement-list" class="achievement-list"></div>
 
     </aside>
 
@@ -313,23 +323,33 @@
 
     <aside class="about-panel" id="about-panel" hidden>
 
-        <div class="about-header">
-            <div class="about-title">Build Log</div>
-            <div class="about-generated" id="about-generated">Loading stats.json…</div>
+        <button id="about-close-btn" class="mission-help-btn panel-close-btn" title="Close">✕</button>
+
+        <div class="panel-scroll">
+
+            <div class="about-header">
+                <div class="about-title">Build Log</div>
+                <div class="about-generated" id="about-generated">Loading stats.json…</div>
+            </div>
+
+            <div class="about-total-row">
+                <div class="about-total-label">Total lines</div>
+                <div class="about-total-value" id="about-total-lines">—</div>
+            </div>
+
+            <div id="about-categories" class="about-category-list"></div>
+
+            <div class="about-panel-title">Recent commits</div>
+
+            <div id="about-commit-list" class="about-commit-list"></div>
+
+            <a href="whatever.html" target="_blank" class="about-link">Full velocity docs →</a>
+
         </div>
 
-        <div class="about-total-row">
-            <div class="about-total-label">Total lines</div>
-            <div class="about-total-value" id="about-total-lines">—</div>
+        <div class="panel-footer">
+            <button id="about-footer-close-btn" class="settings-btn panel-footer-close-btn">Close</button>
         </div>
-
-        <div id="about-categories" class="about-category-list"></div>
-
-        <div class="about-panel-title">Recent commits</div>
-
-        <div id="about-commit-list" class="about-commit-list"></div>
-
-        <a href="whatever.html" target="_blank" class="about-link">Full velocity docs →</a>
 
     </aside>
 
@@ -339,46 +359,56 @@
 
     <aside class="settings-panel" id="settings-panel" hidden>
 
-        <div class="settings-header">
-            <div class="settings-title">Settings</div>
-        </div>
+        <button id="settings-close-btn" class="mission-help-btn panel-close-btn" title="Close">✕</button>
 
-        <div class="settings-panel-title">Appearance</div>
+        <div class="panel-scroll">
 
-        <div class="settings-row">
-            <span>Theme</span>
-            <button id="theme-toggle" class="theme-toggle" role="switch" aria-checked="false">
-                <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
-                <span id="theme-toggle-label">Dark</span>
-            </button>
-        </div>
-
-        <div class="settings-panel-title" style="margin-top:20px;">Save Data</div>
-
-        <div class="settings-row">
-            <span>Storage key</span>
-            <span id="settings-storage-key" class="settings-mono">td.profile.v1</span>
-        </div>
-
-        <div class="settings-row">
-            <span>Size on disk</span>
-            <span id="settings-storage-size" class="settings-mono">0 B</span>
-        </div>
-
-        <div class="settings-btn-row">
-            <button id="view-json-btn" class="settings-btn">View Raw JSON</button>
-            <button id="menu-reset-progress" class="settings-btn settings-btn-danger">Delete Save Data</button>
-        </div>
-
-        <div id="json-viewer" class="json-viewer" hidden>
-            <div class="json-viewer-header">
-                <span id="json-viewer-key">td.profile.v1</span>
-                <div>
-                    <button id="json-copy-btn" class="settings-btn-sm">Copy</button>
-                    <button id="json-close-btn" class="settings-btn-sm">Close</button>
-                </div>
+            <div class="settings-header">
+                <div class="settings-title">Settings</div>
             </div>
-            <pre id="json-viewer-content" class="json-viewer-content"></pre>
+
+            <div class="settings-panel-title">Appearance</div>
+
+            <div class="settings-row">
+                <span>Theme</span>
+                <button id="theme-toggle" class="theme-toggle" role="switch" aria-checked="false">
+                    <span class="theme-toggle-track"><span class="theme-toggle-thumb"></span></span>
+                    <span id="theme-toggle-label">Dark</span>
+                </button>
+            </div>
+
+            <div class="settings-panel-title" style="margin-top:20px;">Save Data</div>
+
+            <div class="settings-row">
+                <span>Storage key</span>
+                <span id="settings-storage-key" class="settings-mono">td.profile.v1</span>
+            </div>
+
+            <div class="settings-row">
+                <span>Size on disk</span>
+                <span id="settings-storage-size" class="settings-mono">0 B</span>
+            </div>
+
+            <div class="settings-btn-row">
+                <button id="view-json-btn" class="settings-btn">View Raw JSON</button>
+                <button id="menu-reset-progress" class="settings-btn settings-btn-danger">Delete Save Data</button>
+            </div>
+
+            <div id="json-viewer" class="json-viewer" hidden>
+                <div class="json-viewer-header">
+                    <span id="json-viewer-key">td.profile.v1</span>
+                    <div>
+                        <button id="json-copy-btn" class="settings-btn-sm">Copy</button>
+                        <button id="json-close-btn" class="settings-btn-sm">Close</button>
+                    </div>
+                </div>
+                <pre id="json-viewer-content" class="json-viewer-content"></pre>
+            </div>
+
+        </div>
+
+        <div class="panel-footer">
+            <button id="settings-footer-close-btn" class="settings-btn panel-footer-close-btn">Close</button>
         </div>
 
     </aside>
