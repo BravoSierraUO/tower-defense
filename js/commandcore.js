@@ -103,9 +103,18 @@ export class CommandCore {
     for (const room of this.rooms) room.update(dt);
   }
 
+  // Phase 4c: gate-bypassing placement for the free onboarding-guarantee starter
+  // Reactor — used only by Game at world init/restart, never the normal build flow.
+  placeStarterRoom(type, gx, gy) {
+    const room = new Room(type, gx, gy);
+    room.buildTimeRemaining = 0;
+    this.rooms.push(room);
+    return room;
+  }
+
   totals() {
     const out = {
-      power: 0, compute: 0, storageCap: 0,
+      power: 0, cyclesPerMin: 0, storageCap: 0, metalPerCycle: 0,
       researchRate: 0, buildTimeReduction: 0, dronePower: 0, shieldPct: 0, tradeBonus: 0
     };
     for (const room of this.rooms) {

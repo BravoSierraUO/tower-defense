@@ -67,9 +67,12 @@ export const CONFIG = {
       label: 'Reactor', color: '#F3C969', output: 'power',
       tiers: [{ power: 10 }, { power: 22 }, { power: 40 }]
     },
+    // Phase 4c: reframed from a flat gold-reward booster into the AI Cycle
+    // Budget engine — cyclesPerMin is AI bandwidth, split across active metal
+    // producers (Scavenger Turret, Mine) by World.metalPerSecond().
     aiCore: {
-      label: 'AI Core', color: '#62D0FF', output: 'compute',
-      tiers: [{ compute: 5 }, { compute: 12 }, { compute: 24 }]
+      label: 'AI Core', color: '#62D0FF', output: 'cyclesPerMin',
+      tiers: [{ cyclesPerMin: 2 }, { cyclesPerMin: 4 }, { cyclesPerMin: 8 }]
     },
     storage: {
       label: 'Storage', color: '#9B59B6', output: 'storageCap',
@@ -78,6 +81,14 @@ export const CONFIG = {
     lab: {
       label: 'Lab', color: '#6EF2A3', output: 'researchRate',
       tiers: [{ researchRate: 2 }, { researchRate: 5 }, { researchRate: 10 }]
+    },
+    // Phase 4c: second metal source alongside Scavenger Turret, parallel to
+    // how Reactor/Lab already work (free root, no requiresTech). Its
+    // metalPerCycle only pays out through the same AI Cycle Budget scheduler
+    // Scavenger Turret competes in — see World.activeMetalProducers().
+    mine: {
+      label: 'Mine', color: '#B08968', output: 'metalPerCycle',
+      tiers: [{ metalPerCycle: 3 }, { metalPerCycle: 8 }, { metalPerCycle: 18 }]
     },
     factory: {
       label: 'Factory', color: '#FF9F5B', output: 'buildTimeReduction',
@@ -144,8 +155,9 @@ export const CONFIG = {
   GOLD_PER_ENEMY_HEALTH: 0.4,
   WAVE_CLEAR_BONUS_BASE: 20,
   WAVE_CLEAR_BONUS_GROWTH: 5,
-  CORE_POWER_COST_DISCOUNT_PER_POINT: 0.005, // Reactor: 0.5% cheaper towers per power
-  CORE_COMPUTE_REWARD_BONUS_PER_POINT: 0.01, // AI Core: 1% more gold per compute
+  CORE_POWER_COST_DISCOUNT_PER_POINT: 0.005, // Reactor: 0.5% cheaper Tower/Scavenger cost per power
+  // Phase 2b's CORE_COMPUTE_REWARD_BONUS_PER_POINT (AI Core boosted gold reward) is gone as of
+  // Phase 4c — AI Core's whole identity became the Cycle Budget scheduler below, one job not two.
 
   // Phase 4b: Economy Depth. Combo streak rewards uninterrupted kill chains;
   // base passive income scales with player level; Fast-Build lets a Command
@@ -165,6 +177,26 @@ export const CONFIG = {
   TOWER_UPGRADE_COST_GROWTH: 1.8,
   BASE_REPAIR_GOLD_PER_HP: 2,
   BASE_REPAIR_AMOUNT: 20,
+
+  // Phase 4c: Day-One Power & Metal. Gold stays the Command-Core-room currency;
+  // metal funds everything on the exterior world grid (Tower AND Scavenger
+  // Turret, migrated off gold this phase). Scavenger Turret is a passive
+  // exterior placeable that mines metal through the AI Cycle Budget scheduler
+  // (World.metalPerSecond()) rather than a flat rate — see aiCore/mine above.
+  STARTING_METAL: 0,
+  METAL_CAP_BASE: 300,
+  BASE_CYCLES_PER_MIN: 3, // always-on AI bandwidth floor, even with zero AI Core built — keeps
+                          // the starter Scavenger Turret "already producing" true from minute one
+  SCAVENGER_COST: 25,
+  SCAVENGER_MAX_COUNT: 20,
+  SCAVENGER_TIERS: [
+    { metalPerCycle: 3 },
+    { metalPerCycle: 8 },
+    { metalPerCycle: 18 }
+  ],
+  SCAVENGER_UPGRADE_COST_BASE: 20,
+  SCAVENGER_UPGRADE_COST_GROWTH: 1.8,
+  SCAVENGER_COLOR: '#D9A441',
 
   // Phase 4: player profile (persistent across runs — level/achievements/prestige).
   // Cascade-style CP economy ported from a sister project (RMUV): a single CP spine

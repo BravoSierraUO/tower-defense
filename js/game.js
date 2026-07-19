@@ -19,6 +19,7 @@ export class Game {
     this.profile = new Profile();
     this.commandCore = new CommandCore();
     this.world = new World(this.commandCore, this.profile);
+    this.placeStarters();
     this.ui = new UI({
       onUnlockTech: id => this.commandCore.unlockTech(id),
       onDockTrade: () => this.world.tradeAtDock(),
@@ -33,17 +34,30 @@ export class Game {
     this.view = 'field'; // 'field' | 'core' | 'profile'
     this.selectedRoomType = null;
     this.selectedTower = null; // Phase 4b: tower the tower-card is showing
+    this.selectedScavenger = null; // Phase 4c: scavenger the tower-card is showing
+    this.fieldBuildType = 'tower'; // Phase 4c: 'tower' | 'scavenger' — field-view placement mode
     this.resetRunTrackers();
   }
 
+  // Phase 4c: onboarding guarantee — a free, already-active starter Reactor and
+  // Scavenger Turret so the base produces power/metal from minute one, no
+  // build-a-throwaway-then-rebuild-it step. Gate-bypassing placement only —
+  // never routed through the normal buildRoom/placeTower gold/metal gates.
+  placeStarters() {
+    this.commandCore.placeStarterRoom('reactor', 0, 0);
+    this.world.placeStarterScavenger(CONFIG.BASE_X + CONFIG.TOWER_MIN_BASE_DISTANCE + CONFIG.GRID_SIZE, CONFIG.BASE_Y);
+  }
+
   // Diff-watch markers for the profile-event observer in update() — reset
-  // whenever a fresh World/CommandCore replaces the old one (restart()).
+  // whenever a fresh World/CommandCore replaces the old one (restart()). Reads
+  // live counts rather than hardcoding 0 so the pre-placed starter Reactor
+  // doesn't award a free "room built" CP tick on every restart/prestige.
   resetRunTrackers() {
-    this.lastKills = 0;
-    this.lastWavesCleared = 0;
-    this.lastTowersPlaced = 0;
-    this.lastRoomsBuilt = 0;
-    this.lastTechUnlocked = 0;
+    this.lastKills = this.world.kills;
+    this.lastWavesCleared = this.world.spawner.wavesCleared;
+    this.lastTowersPlaced = this.world.towersPlaced;
+    this.lastRoomsBuilt = this.commandCore.rooms.length;
+    this.lastTechUnlocked = this.commandCore.unlockedTech.size;
   }
 
   // Starts a fresh run (new World/CommandCore) without touching the persistent
@@ -51,10 +65,13 @@ export class Game {
   restart() {
     this.commandCore = new CommandCore();
     this.world = new World(this.commandCore, this.profile);
+    this.placeStarters();
     this.state = 'playing';
     this.view = 'field';
     this.selectedRoomType = null;
     this.selectedTower = null;
+    this.selectedScavenger = null;
+    this.fieldBuildType = 'tower';
     this.resetRunTrackers();
   }
 
@@ -75,6 +92,10 @@ export class Game {
         if (type && this.commandCore.isRoomUnlocked(type)) {
           this.selectedRoomType = this.commandCore.isBuilt(type) ? null : type;
         }
+      } else if (this.view === 'field' && (key === '1' || key === '2')) {
+        // Phase 4c: same number-key-selects-buildable-type convention the Core
+        // view already uses for its 8 room slots.
+        this.fieldBuildType = key === '1' ? 'tower' : 'scavenger';
       }
     }
     this.input.keyPresses.length = 0;
@@ -82,14 +103,24 @@ export class Game {
     for (const click of this.input.clicks) {
       if (this.view === 'field') {
         const worldPos = this.camera.screenToWorld(click.x, click.y);
-        const existing = this.world.towerAt(worldPos.x, worldPos.y);
-        if (existing) {
+        const existingTower = this.world.towerAt(worldPos.x, worldPos.y);
+        const existingScavenger = this.world.scavengerAt(worldPos.x, worldPos.y);
+        if (existingTower) {
           // Phase 4b: click your own tower to attempt an upgrade — same
           // silent-no-op-if-you-can't-afford-it convention as upgradeRoom below.
-          this.world.upgradeTower(existing);
-          this.selectedTower = existing;
+          this.world.upgradeTower(existingTower);
+          this.selectedTower = existingTower;
+          this.selectedScavenger = null;
+        } else if (existingScavenger) {
+          this.world.upgradeScavenger(existingScavenger);
+          this.selectedScavenger = existingScavenger;
+          this.selectedTower = null;
+        } else if (this.fieldBuildType === 'scavenger') {
+          this.selectedScavenger = this.world.placeScavenger(worldPos.x, worldPos.y);
+          this.selectedTower = null;
         } else {
           this.selectedTower = this.world.placeTower(worldPos.x, worldPos.y);
+          this.selectedScavenger = null;
         }
       } else {
         const cell = this.renderer.screenToCoreCell(click.x, click.y);
@@ -107,7 +138,8 @@ export class Game {
     for (const click of this.input.rightClicks) {
       if (this.view === 'field') {
         const worldPos = this.camera.screenToWorld(click.x, click.y);
-        this.world.sellTowerAt(worldPos.x, worldPos.y);
+        // Phase 4c: try Tower first, fall back to Scavenger Turret — whichever's actually there.
+        if (!this.world.sellTowerAt(worldPos.x, worldPos.y)) this.world.sellScavengerAt(worldPos.x, worldPos.y);
       } else {
         const cell = this.renderer.screenToCoreCell(click.x, click.y);
         if (cell) {
@@ -135,6 +167,7 @@ export class Game {
       this.world.updateEnemies(dt);
       this.commandCore.update(dt);
       this.world.updatePassiveIncome(dt, this.profile.level());
+      this.world.updateCycleBudget(dt);
       this.watchProfileEvents();
 
       if (this.world.base.isDestroyed()) {
@@ -180,7 +213,7 @@ export class Game {
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.fieldBuildType);
   }
 
   loop(timestamp) {

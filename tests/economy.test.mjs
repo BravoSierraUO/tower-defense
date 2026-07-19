@@ -7,39 +7,36 @@ import { freshGame, finishBuild } from './helpers.mjs';
 const AWAY_FROM_BASE = 200; // > TOWER_MIN_BASE_DISTANCE, inside world bounds
 
 describe('World: tower economy', () => {
-  test('placeTower charges exactly towerCost() and refuses when gold is short', () => {
+  test('placeTower charges exactly towerCost() (metal) and refuses when metal is short', () => {
     const { world } = freshGame(CONFIG.TOWER_COST - 1);
-    assert.equal(world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE), null, 'refused: not enough gold');
-    assert.equal(world.gold, CONFIG.TOWER_COST - 1, 'gold untouched on refusal');
+    assert.equal(world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE), null, 'refused: not enough metal');
+    assert.equal(world.metal, CONFIG.TOWER_COST - 1, 'metal untouched on refusal');
 
-    world.gold = CONFIG.TOWER_COST;
+    world.metal = CONFIG.TOWER_COST;
     const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
-    assert.ok(tower, 'placement succeeds with exact gold');
-    assert.equal(world.gold, 0);
+    assert.ok(tower, 'placement succeeds with exact metal');
+    assert.equal(world.metal, 0);
     assert.equal(tower.cost, CONFIG.TOWER_COST);
   });
 
-  test('sellTowerAt refunds TOWER_SELL_REFUND_PCT of what was actually paid', () => {
+  test('sellTowerAt refunds TOWER_SELL_REFUND_PCT of what was actually paid, in metal', () => {
     const { world } = freshGame(CONFIG.TOWER_COST);
     world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
-    assert.equal(world.gold, 0);
+    assert.equal(world.metal, 0);
     assert.equal(world.sellTowerAt(AWAY_FROM_BASE, AWAY_FROM_BASE), true);
-    assert.equal(world.gold, Math.round(CONFIG.TOWER_COST * CONFIG.TOWER_SELL_REFUND_PCT));
+    assert.equal(world.metal, Math.round(CONFIG.TOWER_COST * CONFIG.TOWER_SELL_REFUND_PCT));
     assert.equal(world.towers.length, 0);
   });
 
-  test('Reactor power discounts towerCost(); AI Core compute boosts rewardMultiplier()', () => {
-    const { world, commandCore } = freshGame(100000);
-    const baseCost = world.towerCost();
-    const baseMult = world.rewardMultiplier();
+  test('Reactor power discounts towerCost() and scavengerCost() (both metal-denominated)', () => {
+    const { world } = freshGame(100000);
+    const baseTowerCost = world.towerCost();
+    const baseScavengerCost = world.scavengerCost();
 
     const reactor = world.buildRoom('reactor', 0, 0);
     finishBuild(reactor);
-    assert.ok(world.towerCost() < baseCost, 'active reactor cheapens towers');
-
-    const aiCore = world.buildRoom('aiCore', 1, 0);
-    finishBuild(aiCore);
-    assert.ok(world.rewardMultiplier() > baseMult, 'active AI Core boosts reward multiplier');
+    assert.ok(world.towerCost() < baseTowerCost, 'active reactor cheapens towers');
+    assert.ok(world.scavengerCost() < baseScavengerCost, 'active reactor cheapens scavenger turrets too');
   });
 
   test('Storage raises goldCap() and addGold() clamps to it', () => {
@@ -208,23 +205,23 @@ describe('World: tower upgrades (Phase 4b)', () => {
     assert.equal(world.towerUpgradeCost(tower), Math.round(CONFIG.TOWER_UPGRADE_COST_BASE * CONFIG.TOWER_UPGRADE_COST_GROWTH));
   });
 
-  test('upgradeTower charges gold, raises damage, and refuses past the max tier or when gold is short', () => {
+  test('upgradeTower charges metal, raises damage, and refuses past the max tier or when metal is short', () => {
     const { world } = freshGame(100000);
     const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
     const baseDamage = tower.damage;
     while (tower.canUpgrade()) {
       const cost = world.towerUpgradeCost(tower);
-      const goldBefore = world.gold;
+      const metalBefore = world.metal;
       assert.ok(world.upgradeTower(tower));
-      assert.equal(goldBefore - world.gold, cost);
+      assert.equal(metalBefore - world.metal, cost);
     }
     assert.ok(tower.damage > baseDamage, 'fully upgraded tower deals more damage than tier 1');
     assert.equal(world.upgradeTower(tower), false, 'refused: already at max tier');
 
     const { world: poorWorld } = freshGame(CONFIG.TOWER_COST);
     const poorTower = poorWorld.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
-    assert.equal(poorWorld.gold, 0);
-    assert.equal(poorWorld.upgradeTower(poorTower), false, 'refused: not enough gold');
+    assert.equal(poorWorld.metal, 0);
+    assert.equal(poorWorld.upgradeTower(poorTower), false, 'refused: not enough metal');
   });
 
   test('towerAt() finds a placed tower from any point inside its snapped grid cell', () => {
@@ -234,6 +231,130 @@ describe('World: tower upgrades (Phase 4b)', () => {
     // to stay inside the same snapped cell as the tower instead of straddling it.
     assert.equal(world.towerAt(AWAY_FROM_BASE + 3, AWAY_FROM_BASE + 12), tower);
     assert.equal(world.towerAt(AWAY_FROM_BASE + 1000, AWAY_FROM_BASE), null);
+  });
+});
+
+describe('World: Scavenger Turret economy (Phase 4c)', () => {
+  test('placeScavenger charges exactly scavengerCost() (metal) and refuses when metal is short', () => {
+    const { world } = freshGame(CONFIG.SCAVENGER_COST - 1);
+    assert.equal(world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE), null, 'refused: not enough metal');
+
+    world.metal = CONFIG.SCAVENGER_COST;
+    const scavenger = world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    assert.ok(scavenger, 'placement succeeds with exact metal');
+    assert.equal(world.metal, 0);
+    assert.equal(scavenger.cost, CONFIG.SCAVENGER_COST);
+  });
+
+  test('sellScavengerAt refunds TOWER_SELL_REFUND_PCT of what was actually paid', () => {
+    const { world } = freshGame(CONFIG.SCAVENGER_COST);
+    world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    assert.equal(world.sellScavengerAt(AWAY_FROM_BASE, AWAY_FROM_BASE), true);
+    assert.equal(world.metal, Math.round(CONFIG.SCAVENGER_COST * CONFIG.TOWER_SELL_REFUND_PCT));
+    assert.equal(world.scavengers.length, 0);
+  });
+
+  test('upgradeScavenger charges metal, raises metalPerCycle, and refuses past the max tier', () => {
+    const { world } = freshGame(100000);
+    const scavenger = world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    const baseOutput = scavenger.metalPerCycle;
+    while (scavenger.canUpgrade()) {
+      const cost = world.scavengerUpgradeCost(scavenger);
+      const metalBefore = world.metal;
+      assert.ok(world.upgradeScavenger(scavenger));
+      assert.equal(metalBefore - world.metal, cost);
+    }
+    assert.ok(scavenger.metalPerCycle > baseOutput);
+    assert.equal(world.upgradeScavenger(scavenger), false, 'refused: already at max tier');
+  });
+
+  test('Tower and Scavenger Turret share the exterior grid — neither can occupy the other\'s cell', () => {
+    const { world } = freshGame(100000);
+    world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    assert.equal(world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE), null, 'refused: cell has a tower');
+
+    world.placeScavenger(AWAY_FROM_BASE + 200, AWAY_FROM_BASE);
+    assert.equal(world.placeTower(AWAY_FROM_BASE + 200, AWAY_FROM_BASE), null, 'refused: cell has a scavenger');
+  });
+});
+
+describe('World: Mine room and the AI Cycle Budget scheduler (Phase 4c)', () => {
+  test('metalPerSecond() is 0 with no metal producers built', () => {
+    const { world } = freshGame(0);
+    assert.equal(world.metalPerSecond(), 0);
+  });
+
+  test('BASE_CYCLES_PER_MIN gives a lone Scavenger Turret nonzero output with zero AI Core built', () => {
+    const { world } = freshGame(CONFIG.SCAVENGER_COST);
+    world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    assert.ok(world.metalPerSecond() > 0, 'the always-on cycle floor should feed a lone producer');
+  });
+
+  test('more active producers dilutes each one\'s share (fixed cycle budget, split evenly)', () => {
+    const { world } = freshGame(100000);
+    world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    const oneProducerTotal = world.metalPerSecond(); // one producer -> total IS its share
+
+    world.placeScavenger(AWAY_FROM_BASE + 200, AWAY_FROM_BASE);
+    const twoProducerTotal = world.metalPerSecond();
+    const twoProducerShare = twoProducerTotal / 2; // same-tier scavengers split the budget evenly
+
+    assert.ok(twoProducerShare < oneProducerTotal, 'a second producer dilutes each one\'s individual share');
+    assert.ok(Math.abs(twoProducerTotal - oneProducerTotal) < 1e-9,
+      'a fixed cycle budget split across equal-tier producers keeps TOTAL throughput flat, not additive — ' +
+      'this is the "turret count and AI clock speed have to scale together" dilution the roadmap describes');
+  });
+
+  test('an active Mine room contributes to activeMetalProducers() and metalPerSecond()', () => {
+    const { world } = freshGame(100000);
+    const before = world.metalPerSecond();
+    const mine = world.buildRoom('mine', 0, 0);
+    finishBuild(mine);
+    assert.ok(world.metalPerSecond() > before, 'an active Mine adds to the shared cycle budget throughput');
+  });
+
+  test('AI Core cyclesPerMin raises cyclesPerSecond() and therefore metalPerSecond()', () => {
+    const { world } = freshGame(100000);
+    world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    const baseRate = world.metalPerSecond();
+
+    const aiCore = world.buildRoom('aiCore', 1, 0);
+    finishBuild(aiCore);
+    assert.ok(world.metalPerSecond() > baseRate, 'an active AI Core raises the shared cycle budget');
+  });
+
+  test('rewardMultiplier() no longer includes any AI Core contribution (Phase 4c reframe)', () => {
+    const { world } = freshGame(100000);
+    const before = world.rewardMultiplier();
+    const aiCore = world.buildRoom('aiCore', 0, 0);
+    finishBuild(aiCore);
+    assert.equal(world.rewardMultiplier(), before, 'AI Core now feeds the Cycle Budget, not gold rewards');
+  });
+});
+
+describe('World/CommandCore: onboarding-guarantee starters (Phase 4c)', () => {
+  test('placeStarterRoom force-places an already-active room, bypassing cost/tech gates', () => {
+    const { commandCore } = freshGame(0);
+    const reactor = commandCore.placeStarterRoom('reactor', 0, 0);
+    assert.ok(reactor.isActive(), 'starter room is active immediately, no build timer');
+    assert.equal(commandCore.isBuilt('reactor'), true);
+    assert.ok(commandCore.totals().power > 0);
+  });
+
+  test('placeStarterScavenger force-places a working, already-producing Scavenger Turret at zero cost', () => {
+    const { world } = freshGame(0);
+    const scavenger = world.placeStarterScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    assert.equal(scavenger.cost, 0);
+    assert.equal(world.scavengers.length, 1);
+    assert.ok(world.metalPerSecond() > 0, 'day-one guarantee: metal accrues before anything else is built');
+  });
+
+  test('day-one guarantee: a Game-shaped commandCore+world produces metal immediately, no player action needed', () => {
+    const { commandCore, world } = freshGame(0);
+    commandCore.placeStarterRoom('reactor', 0, 0);
+    world.placeStarterScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    assert.ok(world.metalPerSecond() > 0);
+    assert.ok(world.towerCost() < CONFIG.TOWER_COST, 'the starter Reactor\'s power discount is already live too');
   });
 });
 

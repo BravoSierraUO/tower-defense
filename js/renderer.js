@@ -148,6 +148,21 @@ export class Renderer {
     }
   }
 
+  // Phase 4c: passive metal-mining exterior placeables — smaller and a
+  // different color than combat towers to read as visually secondary.
+  drawScavengers(world, camera) {
+    const ctx = this.ctx;
+    for (const scavenger of world.scavengers) {
+      const p = camera.worldToScreen(scavenger.x, scavenger.y);
+      const r = CONFIG.TOWER_RADIUS * camera.zoom * 0.8;
+
+      ctx.fillStyle = CONFIG.SCAVENGER_COLOR;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
   drawProjectiles(world, camera) {
     const ctx = this.ctx;
     for (const projectile of world.projectiles) {
@@ -179,6 +194,7 @@ export class Renderer {
     drawGrid(this.ctx, camera);
     this.drawBase(world, camera);
     this.drawTowers(world, camera);
+    this.drawScavengers(world, camera);
     this.drawProjectiles(world, camera);
     this.drawEnemies(world, camera);
     // future layers: terrain, effects

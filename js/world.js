@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { Tower } from './tower.js';
+import { ScavengerTurret } from './scavenger.js';
 import { Enemy } from './enemy.js';
 import { Base } from './base.js';
 import { Spawner } from './spawner.js';
@@ -13,12 +14,14 @@ export class World {
     this.width = CONFIG.WORLD_WIDTH;
     this.height = CONFIG.WORLD_HEIGHT;
     this.towers = [];
+    this.scavengers = []; // Phase 4c: passive metal-mining exterior placeables
     this.enemies = [];
     this.projectiles = [];
     this.score = 0;
     this.kills = 0;
     this.towersPlaced = 0;
     this.gold = CONFIG.STARTING_GOLD;
+    this.metal = CONFIG.STARTING_METAL; // Phase 4c: funds Tower/Scavenger Turret cost, not gold
     this.commandCore = commandCore;
     this.profile = profile;
     this.base = new Base();
@@ -28,26 +31,73 @@ export class World {
     this.comboTimer = 0;
   }
 
-  // Command Core output feeds the economy: Reactor(power) cheapens towers,
-  // AI Core(compute) boosts gold rewards, Storage(storageCap) raises the cap.
+  // Command Core output feeds the economy: Reactor(power) cheapens Tower/Scavenger
+  // cost, AI Core(cyclesPerMin) drives the metal Cycle Budget, Storage(storageCap)
+  // raises the gold cap.
   goldCap() {
     return CONFIG.GOLD_CAP_BASE + this.commandCore.totals().storageCap;
   }
 
+  // Phase 4c: Reactor's power discount now cheapens both exterior-grid
+  // entities (Tower and Scavenger Turret), since both moved off gold onto metal.
   towerCost() {
     const discount = this.commandCore.totals().power * CONFIG.CORE_POWER_COST_DISCOUNT_PER_POINT;
     return Math.round(CONFIG.TOWER_COST * (1 - discount));
   }
 
-  // Phase 4: the prestige skill tree's Gold Mastery node stacks on top of AI Core's bonus.
-  // Phase 4b: combo streak stacks on top of both.
+  scavengerCost() {
+    const discount = this.commandCore.totals().power * CONFIG.CORE_POWER_COST_DISCOUNT_PER_POINT;
+    return Math.round(CONFIG.SCAVENGER_COST * (1 - discount));
+  }
+
+  // Phase 4: the prestige skill tree's Gold Mastery node stacks on top of the combo bonus.
+  // Phase 4c: AI Core's compute bonus is gone — it's the Cycle Budget engine now, see below.
   rewardMultiplier() {
     const combo = 1 + Math.min(this.comboStreak, CONFIG.COMBO_MAX_STACKS) * CONFIG.COMBO_BONUS_PER_STACK;
-    return (1 + this.commandCore.totals().compute * CONFIG.CORE_COMPUTE_REWARD_BONUS_PER_POINT) * this.profile.goldMult() * combo;
+    return this.profile.goldMult() * combo;
   }
 
   addGold(amount) {
     this.gold = Math.min(this.goldCap(), this.gold + amount);
+  }
+
+  // Phase 4c: metal is a separate pool from gold — funds Tower/Scavenger cost only.
+  metalCap() {
+    return CONFIG.METAL_CAP_BASE;
+  }
+
+  addMetal(amount) {
+    this.metal = Math.min(this.metalCap(), this.metal + amount);
+  }
+
+  // AI Cycle Budget scheduler (Phase 4c): a continuous fair-share rate, not
+  // literal discrete cycles — mathematically the same long-run average, but
+  // deterministic and dt-driven like every other rate in this game
+  // (researchRate, dronePower, passive income). BASE_CYCLES_PER_MIN is an
+  // always-on floor so metal production doesn't depend on AI Core existing.
+  activeMetalProducers() {
+    const producers = this.scavengers.map(s => s.metalPerCycle);
+    const mine = this.commandCore.rooms.find(r => r.type === 'mine' && r.isActive());
+    if (mine) producers.push(mine.stats.metalPerCycle);
+    return producers;
+  }
+
+  cyclesPerSecond() {
+    return (CONFIG.BASE_CYCLES_PER_MIN + this.commandCore.totals().cyclesPerMin) / 60;
+  }
+
+  // Total metal/sec the Cycle Budget scheduler is currently paying out —
+  // exposed as its own method so the HUD can show live throughput, not just
+  // World's internal accrual.
+  metalPerSecond() {
+    const producers = this.activeMetalProducers();
+    if (producers.length === 0) return 0;
+    const share = this.cyclesPerSecond() / producers.length;
+    return producers.reduce((sum, perCycle) => sum + share * perCycle, 0);
+  }
+
+  updateCycleBudget(dt) {
+    this.addMetal(this.metalPerSecond() * dt);
   }
 
   // Phase 4b: base passive income, scaled by the player's persistent profile level.
@@ -107,6 +157,12 @@ export class World {
     return x >= -halfW && x <= halfW && y >= -halfH && y <= halfH;
   }
 
+  // Phase 4c: Tower and Scavenger Turret share the same exterior grid — neither
+  // can be placed on a cell the other already occupies.
+  exteriorOccupiedAt(x, y) {
+    return this.towers.some(t => t.x === x && t.y === y) || this.scavengers.some(s => s.x === x && s.y === y);
+  }
+
   placeTower(x, y) {
 	if (this.towers.length >= CONFIG.TOWER_MAX_COUNT) return null;
 
@@ -116,12 +172,11 @@ export class World {
 	const distToBase = Math.hypot(snapped.x - this.base.x, snapped.y - this.base.y);
 	if (distToBase < CONFIG.TOWER_MIN_BASE_DISTANCE) return null;
 
-	const occupied = this.towers.some(t => t.x === snapped.x && t.y === snapped.y);
-	if (occupied) return null;
+	if (this.exteriorOccupiedAt(snapped.x, snapped.y)) return null;
 
 	const cost = this.towerCost();
-	if (this.gold < cost) return null;
-	this.gold -= cost;
+	if (this.metal < cost) return null;
+	this.metal -= cost;
 
 	const tower = new Tower(snapped.x, snapped.y, cost);
 	this.towers.push(tower);
@@ -129,19 +184,75 @@ export class World {
 	return tower;
   }
 
-  // Right-click a placed tower to sell it back for a % refund of what was paid.
+  // Right-click a placed tower to sell it back for a % refund of what was paid (metal).
   sellTowerAt(x, y) {
     const snapped = this.snapToGrid(x, y);
     const idx = this.towers.findIndex(t => t.x === snapped.x && t.y === snapped.y);
     if (idx === -1) return false;
     const [tower] = this.towers.splice(idx, 1);
-    this.addGold(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));
+    this.addMetal(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));
     return true;
   }
 
   towerAt(x, y) {
     const snapped = this.snapToGrid(x, y);
     return this.towers.find(t => t.x === snapped.x && t.y === snapped.y) || null;
+  }
+
+  // Phase 4c: gate-bypassing placement for the free onboarding-guarantee starter
+  // Scavenger Turret — used only by Game at world init/restart.
+  placeStarterScavenger(x, y) {
+    const snapped = this.snapToGrid(x, y);
+    const scavenger = new ScavengerTurret(snapped.x, snapped.y, 0);
+    this.scavengers.push(scavenger);
+    return scavenger;
+  }
+
+  placeScavenger(x, y) {
+    if (this.scavengers.length >= CONFIG.SCAVENGER_MAX_COUNT) return null;
+
+    const snapped = this.snapToGrid(x, y);
+    if (!this.isInsideWorld(snapped.x, snapped.y)) return null;
+
+    const distToBase = Math.hypot(snapped.x - this.base.x, snapped.y - this.base.y);
+    if (distToBase < CONFIG.TOWER_MIN_BASE_DISTANCE) return null;
+
+    if (this.exteriorOccupiedAt(snapped.x, snapped.y)) return null;
+
+    const cost = this.scavengerCost();
+    if (this.metal < cost) return null;
+    this.metal -= cost;
+
+    const scavenger = new ScavengerTurret(snapped.x, snapped.y, cost);
+    this.scavengers.push(scavenger);
+    return scavenger;
+  }
+
+  sellScavengerAt(x, y) {
+    const snapped = this.snapToGrid(x, y);
+    const idx = this.scavengers.findIndex(s => s.x === snapped.x && s.y === snapped.y);
+    if (idx === -1) return false;
+    const [scavenger] = this.scavengers.splice(idx, 1);
+    this.addMetal(Math.round(scavenger.cost * CONFIG.TOWER_SELL_REFUND_PCT));
+    return true;
+  }
+
+  scavengerAt(x, y) {
+    const snapped = this.snapToGrid(x, y);
+    return this.scavengers.find(s => s.x === snapped.x && s.y === snapped.y) || null;
+  }
+
+  scavengerUpgradeCost(scavenger) {
+    return Math.round(CONFIG.SCAVENGER_UPGRADE_COST_BASE * Math.pow(CONFIG.SCAVENGER_UPGRADE_COST_GROWTH, scavenger.tier - 1));
+  }
+
+  upgradeScavenger(scavenger) {
+    if (!scavenger || !scavenger.canUpgrade()) return false;
+    const cost = this.scavengerUpgradeCost(scavenger);
+    if (this.metal < cost) return false;
+    this.metal -= cost;
+    scavenger.upgrade();
+    return true;
   }
 
   // Phase 4b: same cost-growth shape as CommandCore.upgradeCost().
@@ -152,8 +263,8 @@ export class World {
   upgradeTower(tower) {
     if (!tower || !tower.canUpgrade()) return false;
     const cost = this.towerUpgradeCost(tower);
-    if (this.gold < cost) return false;
-    this.gold -= cost;
+    if (this.metal < cost) return false;
+    this.metal -= cost;
     tower.upgrade();
     return true;
   }

@@ -374,6 +374,17 @@ html,body{
     border-bottom:1px solid rgba(255,255,255,.05);
 }
 
+/* .tower-stat sets display:flex, and both it and #tower-combat-stats now get
+   toggled via the `hidden` property, since the card shows either a Tower's or
+   a Scavenger Turret's stats. Without this, author CSS's `display` beats the
+   browser's default `[hidden]{display:none}` rule — bit Phase 4b's Repair
+   button the same way (see changelog v1.3), fixing it up front this time. */
+.tower-stat[hidden],
+#tower-combat-stats[hidden]{
+
+    display:none;
+}
+
 .tower-hint{
 
     margin-top:12px;
@@ -558,6 +569,23 @@ html,body{
     filter:grayscale(1);
 
     cursor:not-allowed;
+}
+
+/* Phase 4c: which field-view placement mode (Tower/Scavenger) is active. */
+.build-slot.selected{
+
+    border-color:#7ED9FF;
+
+    background:rgba(126,217,255,.12);
+}
+
+.build-slot-cost{
+
+    margin-top:4px;
+
+    font-size:11px;
+
+    opacity:.6;
 }
 
 /* ===========================

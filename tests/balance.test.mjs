@@ -164,6 +164,38 @@ describe('balance: Phase 4b costs never get cheaper the more you buy', () => {
   });
 });
 
+describe('balance: Phase 4c metal economy stays structurally sane', () => {
+  test('World.scavengerUpgradeCost() strictly increases with tier', () => {
+    const { world } = freshGame(100000);
+    const scavenger = world.placeScavenger(200, 200);
+    let prevCost = -Infinity;
+    while (scavenger.canUpgrade()) {
+      const cost = world.scavengerUpgradeCost(scavenger);
+      assert.ok(cost > prevCost, `scavengerUpgradeCost() did not increase at tier ${scavenger.tier}: ${prevCost} -> ${cost}`);
+      prevCost = cost;
+      scavenger.upgrade();
+    }
+  });
+
+  test('metalPerSecond() is never negative at any producer count or Command Core investment', () => {
+    const { world } = freshGame(100000);
+    assert.ok(world.metalPerSecond() >= 0, 'no producers');
+    for (let i = 0; i < 5; i++) world.placeScavenger(200 + i * 60, 200);
+    assert.ok(world.metalPerSecond() >= 0, 'several scavengers');
+    const mine = world.buildRoom('mine', 0, 0);
+    finishBuild(mine);
+    assert.ok(world.metalPerSecond() >= 0, 'plus an active mine');
+  });
+
+  test('a day-one starter Scavenger Turret earns enough metal for a second Scavenger Turret within a reasonable time', () => {
+    const { world } = freshGame(0);
+    world.placeStarterScavenger(200, 200);
+    const secondsNeeded = CONFIG.SCAVENGER_COST / world.metalPerSecond();
+    assert.ok(secondsNeeded < 300,
+      `the starter Scavenger Turret alone needs ${Math.round(secondsNeeded)}s to afford a second one — that's a long stall this early`);
+  });
+});
+
 describe('balance: combo streak bonus stays bounded no matter how long a run goes', () => {
   test("rewardMultiplier()'s combo contribution never exceeds 1 + COMBO_MAX_STACKS * COMBO_BONUS_PER_STACK", () => {
     const { world } = freshGame(0);

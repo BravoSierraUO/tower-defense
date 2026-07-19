@@ -11,6 +11,7 @@ export class UI {
   constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase } = {}) {
     this.scoreEl = document.getElementById('ui-score');
     this.goldEl = document.getElementById('ui-gold');
+    this.metalEl = document.getElementById('ui-metal');
     this.comboEl = document.getElementById('ui-combo');
     this.waveEl = document.getElementById('ui-wave');
     this.tierEl = document.getElementById('ui-tier');
@@ -25,12 +26,16 @@ export class UI {
     this.repairBtn = document.getElementById('repair-btn');
     this.repairBtn.addEventListener('click', () => onRepairBase?.());
 
-    // ---- Phase 4b: tower inspector/upgrade card ----
+    // ---- Phase 4b/4c: tower/scavenger inspector & upgrade card ----
     this.towerCard = document.getElementById('tower-card');
+    this.towerNameEl = document.getElementById('tower-name');
     this.towerTierEl = document.getElementById('tower-tier');
+    this.towerCombatStatsEl = document.getElementById('tower-combat-stats');
     this.towerDamageEl = document.getElementById('tower-damage');
     this.towerRangeEl = document.getElementById('tower-range');
     this.towerSpeedEl = document.getElementById('tower-speed');
+    this.towerMetalStatEl = document.getElementById('tower-metal-stat');
+    this.towerMetalPerCycleEl = document.getElementById('tower-metal-per-cycle');
     this.towerUpgradeCostEl = document.getElementById('tower-upgrade-cost');
 
     this.modeHint = document.getElementById('ui-mode-hint');
@@ -40,9 +45,16 @@ export class UI {
     this.coreStorage = document.getElementById('core-storage');
     this.coreResearch = document.getElementById('core-research');
     this.coreTowerCost = document.getElementById('core-tower-cost');
-    this.coreRewardBonus = document.getElementById('core-reward-bonus');
+    this.coreScavengerCost = document.getElementById('core-scavenger-cost');
+    this.coreMetalRate = document.getElementById('core-metal-rate');
     this.towerBuildBar = document.getElementById('tower-build-bar');
     this.coreBuildBar = document.getElementById('core-build-bar');
+
+    // Phase 4c: field-view Tower/Scavenger placement-mode slots.
+    this.fieldSlotTower = document.getElementById('field-slot-tower');
+    this.fieldSlotScavenger = document.getElementById('field-slot-scavenger');
+    this.fieldSlotTowerCost = document.getElementById('field-slot-tower-cost');
+    this.fieldSlotScavengerCost = document.getElementById('field-slot-scavenger-cost');
 
     this.lockedSlotEls = {
       factory: document.getElementById('core-slot-factory'),
@@ -112,7 +124,7 @@ export class UI {
     return entries.length ? entries[0][0] : '-';
   }
 
-  update(world, fps, state, view, commandCore, profile, selectedTower) {
+  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, fieldBuildType) {
     const spawner = world.spawner;
     const base = world.base;
 
@@ -126,11 +138,12 @@ export class UI {
     if (inCore) {
       const totals = commandCore.totals();
       this.corePower.textContent = totals.power;
-      this.coreCompute.textContent = totals.compute;
+      this.coreCompute.textContent = `${totals.cyclesPerMin}/min`;
       this.coreStorage.textContent = totals.storageCap;
       this.coreResearch.textContent = `${Math.floor(commandCore.research)} (+${totals.researchRate.toFixed(1)}/s)`;
-      this.coreTowerCost.textContent = world.towerCost();
-      this.coreRewardBonus.textContent = `+${Math.round((world.rewardMultiplier() - 1) * 100)}%`;
+      this.coreTowerCost.textContent = `${world.towerCost()}m`;
+      this.coreScavengerCost.textContent = `${world.scavengerCost()}m`;
+      this.coreMetalRate.textContent = `${world.metalPerSecond().toFixed(1)}/s`;
 
       for (const [type, el] of Object.entries(this.lockedSlotEls)) {
         if (el) el.classList.toggle('locked', !commandCore.isRoomUnlocked(type));
@@ -199,6 +212,7 @@ export class UI {
 
     this.scoreEl.textContent = world.score;
     this.goldEl.textContent = `${Math.floor(world.gold)} / ${world.goldCap()}`;
+    this.metalEl.textContent = `${Math.floor(world.metal)} / ${world.metalCap()}`;
     this.comboEl.hidden = world.comboStreak < 2;
     if (!this.comboEl.hidden) this.comboEl.textContent = `🔥 x${world.comboStreak}`;
     this.waveEl.textContent = `${spawner.waveNumber} / ${CONFIG.MAX_WAVES}`;
@@ -219,17 +233,37 @@ export class UI {
       this.repairBtn.disabled = world.gold < cost;
     }
 
-    // Phase 4b: tower inspector — shown for whatever tower was last clicked,
-    // hidden once it's no longer live (sold, or a restart wiped the World).
+    // Phase 4c: field-view build-mode slots — live cost + which one's selected.
+    if (view === 'field') {
+      this.fieldSlotTower.classList.toggle('selected', fieldBuildType === 'tower');
+      this.fieldSlotScavenger.classList.toggle('selected', fieldBuildType === 'scavenger');
+      this.fieldSlotTowerCost.textContent = `${world.towerCost()}m`;
+      this.fieldSlotScavengerCost.textContent = `${world.scavengerCost()}m`;
+    }
+
+    // Phase 4b/4c: tower/scavenger inspector — shown for whichever entity was
+    // last clicked, hidden once it's no longer live (sold, or a restart wiped
+    // the World).
     const showTowerCard = view === 'field' && selectedTower && world.towers.includes(selectedTower);
-    this.towerCard.hidden = !showTowerCard;
+    const showScavengerCard = view === 'field' && selectedScavenger && world.scavengers.includes(selectedScavenger);
+    this.towerCard.hidden = !(showTowerCard || showScavengerCard);
+    this.towerCombatStatsEl.hidden = !showTowerCard;
+    this.towerMetalStatEl.hidden = !showScavengerCard;
     if (showTowerCard) {
+      this.towerNameEl.textContent = 'Tower';
       this.towerTierEl.textContent = `Tier ${['I', 'II', 'III'][selectedTower.tier - 1]}`;
       this.towerDamageEl.textContent = Math.round(selectedTower.damage * profile.damageMult());
       this.towerRangeEl.textContent = Math.round(selectedTower.range);
       this.towerSpeedEl.textContent = selectedTower.fireRate.toFixed(2);
       this.towerUpgradeCostEl.textContent = selectedTower.canUpgrade()
-        ? `${world.towerUpgradeCost(selectedTower)}g`
+        ? `${world.towerUpgradeCost(selectedTower)}m`
+        : 'MAX';
+    } else if (showScavengerCard) {
+      this.towerNameEl.textContent = 'Scavenger Turret';
+      this.towerTierEl.textContent = `Tier ${['I', 'II', 'III'][selectedScavenger.tier - 1]}`;
+      this.towerMetalPerCycleEl.textContent = selectedScavenger.metalPerCycle;
+      this.towerUpgradeCostEl.textContent = selectedScavenger.canUpgrade()
+        ? `${world.scavengerUpgradeCost(selectedScavenger)}m`
         : 'MAX';
     }
 
