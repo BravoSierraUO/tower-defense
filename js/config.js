@@ -147,6 +147,25 @@ export const CONFIG = {
   CORE_POWER_COST_DISCOUNT_PER_POINT: 0.005, // Reactor: 0.5% cheaper towers per power
   CORE_COMPUTE_REWARD_BONUS_PER_POINT: 0.01, // AI Core: 1% more gold per compute
 
+  // Phase 4b: Economy Depth. Combo streak rewards uninterrupted kill chains;
+  // base passive income scales with player level; Fast-Build lets a Command
+  // Core room's build timer be rushed for gold; towers get the same tiered
+  // upgrade-cost gate rooms already have; base damage can be repaired for gold.
+  COMBO_WINDOW: 2.5,             // seconds since the last kill before the streak resets
+  COMBO_BONUS_PER_STACK: 0.02,   // +2% gold per streak stack
+  COMBO_MAX_STACKS: 25,          // caps the combo bonus at +50%
+  BASE_PASSIVE_INCOME_PER_LEVEL: 0.05, // gold/sec per profile level
+  FAST_BUILD_GOLD_PER_SECOND: 4, // cost to rush-finish a room's remaining build timer
+  TOWER_TIERS: [
+    { damageMult: 1,   rangeMult: 1,    fireRateMult: 1 },
+    { damageMult: 1.8, rangeMult: 1.15, fireRateMult: 1.15 },
+    { damageMult: 3,   rangeMult: 1.3,  fireRateMult: 1.3 }
+  ],
+  TOWER_UPGRADE_COST_BASE: 30,
+  TOWER_UPGRADE_COST_GROWTH: 1.8,
+  BASE_REPAIR_GOLD_PER_HP: 2,
+  BASE_REPAIR_AMOUNT: 20,
+
   // Phase 4: player profile (persistent across runs — level/achievements/prestige).
   // Cascade-style CP economy ported from a sister project (RMUV): a single CP spine
   // fed by run events, a gentle sqrt level curve, and a prestige loop that resets the

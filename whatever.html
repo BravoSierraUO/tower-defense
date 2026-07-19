@@ -13,7 +13,8 @@
     --sig:#7ec8ff; --ok:#7dd8a2; --warn:#e8c66d; --alert:#e88a7d;
     --info:#9aa8e8; --idle:#8a93a3; --special:#c79ae8;
     --phase-1:#4A90E2; --phase-2a:#2ECC71; --phase-2b:#F39C12; --phase-3:#9B59B6;
-    --phase-4:#E74C3C; --phase-4b:#C0392B; --phase-5:#8B9AB2;
+    --phase-4:#E74C3C; --phase-4b:#C0392B; --phase-4c:#C97B3C; --phase-4d:#D9A441; --phase-5:#8B9AB2;
+    --phase-6:#3FA7A0; --phase-7:#6C63FF;
     --body:Inter,system-ui,"Segoe UI",sans-serif;
     --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
     color-scheme:dark;
@@ -476,17 +477,37 @@ const ROADMAP = [
       'Profile view (P key): level/XP, prestige, skill tree, achievement grid, unlock toast — done'
     ],
     note:'Renumbered ahead of the original "Economy Depth" Phase 4 (now Phase 4b below). Deliberate scope cut vs. RMUV: prestige here only resets CP, not lifetime stats/badges (RMUV\'s mastery-star re-earn-across-lifetimes mechanic was skipped — see changelog.md v1.0). 21 new tests in tests/profile.test.mjs.' },
-  { id:'p4b', num:'4b', title:'Economy Depth', status:'LATER', color:'--phase-4b',
-    desc:'Combo streaks, passive income, base levels, a fast-build upgrade modifier, and the tower-side cost gate room upgrades already have.',
+  { id:'p4b', num:'4b', title:'Economy Depth', status:'DONE', color:'--phase-4b',
+    desc:'Combo streaks, passive income, a Fast-Build rush for Command Core rooms, and the tower-side upgrade-cost gate rooms already had.',
     items:[
-      'Combo streak multiplier',
-      'Base passive income (per level)',
-      'Fast-Build upgrade modifier',
-      'Tower upgrade cost gate (rooms already have this — towers don\'t yet)',
-      'Base repair cost',
-      'Tower health / tower-vs-tower or enemy-vs-tower damage — not scoped into any phase yet; Tower (tower.js) has no health field or takeDamage() at all today, so this would be new ground, not a lookup'
+      'Combo streak multiplier — consecutive kills stack a gold-reward bonus (world.comboStreak), decaying COMBO_WINDOW seconds after the last kill',
+      'Base passive income — gold/sec scaled by the player\'s persistent profile level (world.updatePassiveIncome)',
+      'Fast-Build rush — right-click a still-building Command Core room to pay gold and zero out its remaining timer (world.rushBuildRoom)',
+      'Tower upgrade cost gate — towers now have a 3-tier upgrade path (damage/range/fire-rate via CONFIG.TOWER_TIERS); click a placed tower to upgrade it, same silent-no-op-if-you-can\'t-afford-it convention as room upgrades. Wired the previously dead .tower-card HUD stub (index.html) up as the live inspector',
+      'Base repair cost — a HUD button heals base HP for gold (world.repairBase), clamped to missing HP'
     ],
-    note:'Depends on Phase 2b economy shell. Pure additions after that. Renumbered from "Phase 4" to "Phase 4b" when the Progression system claimed the Phase 4 slot.' },
+    note:'Depends on Phase 2b economy shell — pure additions after that, none of this touches targeting/combat math. The 6th item originally scoped here, Tower health / tower-vs-tower or enemy-vs-tower damage, was deliberately cut from this pass: Tower still has no health field or takeDamage(), and enemies still walk straight through towers to the base untouched. It needs real design first (does it replace the walk-to-base behavior? splash vs. single-target? can towers be destroyed?) — filed as an unscoped backlog item rather than forced into this card, same caution Phase 7 already carries for satellite classes.' },
+  { id:'p4c', num:'4c', title:'Day-One Power & Metal — Onboarding Guarantee + AI Bandwidth', status:'LATER', color:'--phase-4c',
+    desc:'Kill the "build a starter, then immediately rebuild the real thing" onboarding trap. The world spawns with a free, already-active Reactor and a free, already-active Scavenger Turret — the player never places a throwaway. Introduces `metal` as a second build-material resource alongside gold, and reframes AI Core\'s `compute` output as a literal AI Cycle Budget — a scheduler that splits evenly across every built producer and pays out per-cycle at each producer\'s own upgrade tier. No transport paths, no routing — production is collected wirelessly.',
+    items:[
+      'Free starter Reactor + free starter Scavenger Turret, pre-placed and already producing at world init — no tutorial flow ever has the player build one just to build a permanent replacement right after',
+      'New `metal` resource — trickles in from Scavenger Turret(s); spends on turret builds/upgrades and (later) components/hangar bays/batteries. Gold stays the Core-room/upgrade currency; metal becomes the turret-side currency — needs a coordinated pass through world.js/combat.js, tower cost is gold-only today',
+      'Scavenger Turret is an exterior world-grid placeable, like a combat tower but passive (no target/damage) — mines a small flat metal/sec, more can be placed and upgraded same as any tower',
+      'AI Cycle Budget scheduler — compute becomes cycles/period (e.g. 2/min, upgradeable to 4/min, 8/min...). Every period splits dead-even across whatever\'s built (turret, lab, mine, ...) — no manual weighting, no priority UI. Each cycle pays out at that producer\'s own per-cycle value (tier-scaled, e.g. 1 vs 15 metal/cycle), so turret count and AI clock speed have to scale together or you\'re just diluting yourself',
+      '"Active" = built, full stop — a placed turret always competes for a cycle share, no idle/has-work check (matters most for Lab: it draws a share even with nothing queued)',
+      'In-base Mine room (Command Core) — a second, upgradeable metal source parallel to how Reactor/Lab already work'
+    ],
+    depends:'Phase 2b, Phase 3',
+    note:'Split-fairness and activation rules are settled (even split, built-not-busy). Still open at implementation time: does compute keep its existing kill-gold-reward-multiplier job (CORE_COMPUTE_REWARD_BONUS_PER_POINT) alongside the new Cycle Budget scheduler, or does the scheduler fully replace that wiring — needs a look when this gets built, not a design fork. Backlog stretch beyond this phase, not scoped: drones that fly out to asteroid fields for bonus metal hauls (revisit only once the core metal loop above is live and tested).' },
+  { id:'p4d', num:'4d', title:'Energy System — Power Becomes a Constraint', status:'LATER', color:'--phase-4d',
+    desc:'From the original lore doc\'s Energy System (`structures.md`): Reactor Output minus Current Consumption equals Available Energy, and towers draw power continuously rather than spending it once. Today `power` is a one-time permanent discount on tower cost (`CORE_POWER_COST_DISCOUNT_PER_POINT`, v0.8) — this replaces/extends that with a running supply that can actually run out.',
+    items:[
+      'Reactor output becomes a live supply pool, not a one-time cost discount — towers/rooms draw from it continuously (some only while actively firing/working, per the lore doc)',
+      'Brownout state — when consumption exceeds supply: reduced fire rate, lower accuracy, disabled abilities (exact formula TBD, needs a numbers pass same as everything untested)',
+      'Same scheduler shape as Phase 4c\'s AI Cycle Budget — fixed supply, split across active consumers, more consumers dilutes everyone. Build the underlying mechanism once and drive both Reactor/power and AI Core/compute off it rather than writing the contention logic twice'
+    ],
+    depends:'Phase 4c',
+    note:'From dreams/2026-07-19-fiction-vs-implementation-gaps.md — surfaced by re-reading structures.md against the shipped code, not a fresh idea. Highest-leverage of the four gaps that dream found, specifically because it reuses Phase 4c\'s scheduler shape instead of inventing a second one.' },
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'BACKLOG · PARALLEL (non-blocking)', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocks the gameplay phases.',
     items:[
@@ -497,7 +518,25 @@ const ROADMAP = [
       'Script to auto-sync this page\'s Roadmap section from changelog.md so it can\'t go stale',
       '/docs folder: architecture notes + contribution guide'
     ],
-    note:'Interview-portfolio motivated — "built a working game AND the tooling to prove how it was built." Interleave in slow moments between gameplay phases, don\'t block on it.' }
+    note:'Interview-portfolio motivated — "built a working game AND the tooling to prove how it was built." Interleave in slow moments between gameplay phases, don\'t block on it.' },
+  { id:'p6', num:'6', title:'Comms & Station Identity', status:'LATER', color:'--phase-6',
+    desc:'From `structures.md`/`lore.md`: a Communications room unlocking active, player-triggered orbital abilities (the game\'s current loop is 100% passive/economic once a wave starts — this is the first thing that gives the player something to *do* mid-wave), plus a station skin that visibly grows from Orbital Platform to Dyson Node as the player prestiges.',
+    items:[
+      'Communications room (Command Core, same build/tier framework as Lab/Factory/Shield/etc. from Phase 3)',
+      '5 orbital abilities from the lore doc, cooldown-gated: EMP, Orbital Laser, Supply Drop, Drone Repair, Satellite Recall — needs targeting/cooldown UI, currently nothing in the game is player-triggered mid-wave',
+      'Station-tier visual reskin (Orbital Platform → Defense Station → Citadel → Orbital City → Mega Station → Planetary Ring → Dyson Node) — reuses profile.js\'s existing escalating prestige-level gate as the trigger, no new persistent state needed, just a render-layer lookup off a number that already exists'
+    ],
+    depends:'Phase 3 (room framework), Phase 4 (prestige-level gate)',
+    note:'From dreams/2026-07-19-fiction-vs-implementation-gaps.md. The station-tier piece is the cheapest item on the whole roadmap — pure render, zero new state — worth doing any time as filler; the abilities piece is real scope (targeting/cooldown UI) and should be scheduled deliberately, not squeezed in as filler alongside the reskin.' },
+  { id:'p7', num:'7', title:'Satellite Identity — Classes, XP, Evolution & Modules', status:'BACKLOG · NOT SCOPED', color:'--phase-7',
+    desc:'From `satellites.md`: rename Tower → Satellite, split the single generic tower type into 9 classes (Laser/Missile/Railgun/Drone Carrier/Support/EMP/Shield/Mining/Repair), and give each placed satellite its own XP/evolution and module loadout (Weapon/Power/Cooling/AI Chip/Targeting/Armor) — independent of the Command Core\'s room-level module system from Phase 3.',
+    items:[
+      'Today: exactly one tower type, flat stats, no XP, no modules, no health (config.js TOWER_RANGE/DAMAGE/FIRE_RATE are singular values, tower.js has one undifferentiated Tower class) — this is a full redesign, not an extension',
+      '9 satellite classes with distinct combat roles',
+      'Per-satellite XP + evolution curve',
+      'Per-satellite module slots (Weapon/Power/Cooling/AI Chip/Targeting/Armor) — a second, parallel module system to the Core\'s room modules from Phase 3'
+    ],
+    note:'Deliberately filed unscoped, not as a designed phase card like the others. This is the biggest lift and biggest payoff in either doc — turns one tower type + gold upgrade into an actual build-crafting layer — but it touches combat.js/tower.js/renderer.js/ui.js/tests/balance.test.mjs all at once, on top of a difficulty/balance curve nobody has playtested yet (see the "Later" section below — still blocking). Hard pre-condition: do not start this until the existing single-satellite-type loop has had at least one real playtest pass. Full reasoning in dreams/2026-07-19-fiction-vs-implementation-gaps.md.' }
 ];
 
 function renderRoadmap(){
@@ -599,7 +638,7 @@ const FLOWS = [
   {
     id: 'towerfires', group: 'Defending',
     title: 'A tower fires',
-    summary: 'Runs every frame inside updateCombat — the Phase 1 targeting-and-firing loop, now with the Damage Mastery skill multiplying every shot at the moment it leaves the barrel. (Towers themselves have no health — nothing in the game can damage a tower yet; see Phase 4b on the Roadmap.)',
+    summary: 'Runs every frame inside updateCombat — the Phase 1 targeting-and-firing loop, now with the Damage Mastery skill multiplying every shot at the moment it leaves the barrel. (Towers themselves have no health — nothing in the game can damage a tower yet; deliberately deferred out of Phase 4b as an unscoped backlog item, see the Roadmap.)',
     lanes: ['Tower', 'Target', 'Range', 'Shot', 'Impact'],
     nodes: [
       { id: 'cooldown', col: 0, row: 0.5, kind: 'decision', tone: 'warn', label: 'cooldown <= 0 ?',

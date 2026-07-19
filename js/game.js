@@ -24,13 +24,15 @@ export class Game {
       onDockTrade: () => this.world.tradeAtDock(),
       onPrestige: () => this.doPrestige(),
       onBuySkill: id => this.profile.buySkill(id),
-      onRestart: () => this.restart()
+      onRestart: () => this.restart(),
+      onRepairBase: () => this.world.repairBase(CONFIG.BASE_REPAIR_AMOUNT)
     });
     this.lastTime = 0;
     this.fps = 0;
     this.state = 'playing'; // 'playing' | 'won' | 'lost'
     this.view = 'field'; // 'field' | 'core' | 'profile'
     this.selectedRoomType = null;
+    this.selectedTower = null; // Phase 4b: tower the tower-card is showing
     this.resetRunTrackers();
   }
 
@@ -52,6 +54,7 @@ export class Game {
     this.state = 'playing';
     this.view = 'field';
     this.selectedRoomType = null;
+    this.selectedTower = null;
     this.resetRunTrackers();
   }
 
@@ -79,7 +82,15 @@ export class Game {
     for (const click of this.input.clicks) {
       if (this.view === 'field') {
         const worldPos = this.camera.screenToWorld(click.x, click.y);
-        this.world.placeTower(worldPos.x, worldPos.y);
+        const existing = this.world.towerAt(worldPos.x, worldPos.y);
+        if (existing) {
+          // Phase 4b: click your own tower to attempt an upgrade — same
+          // silent-no-op-if-you-can't-afford-it convention as upgradeRoom below.
+          this.world.upgradeTower(existing);
+          this.selectedTower = existing;
+        } else {
+          this.selectedTower = this.world.placeTower(worldPos.x, worldPos.y);
+        }
       } else {
         const cell = this.renderer.screenToCoreCell(click.x, click.y);
         if (cell && this.selectedRoomType) {
@@ -99,7 +110,13 @@ export class Game {
         this.world.sellTowerAt(worldPos.x, worldPos.y);
       } else {
         const cell = this.renderer.screenToCoreCell(click.x, click.y);
-        if (cell) this.world.installModuleAt(cell.gx, cell.gy);
+        if (cell) {
+          // Phase 4b: right-click an unfinished room to rush its build timer
+          // for gold; right-click a finished one keeps installing a module.
+          const room = this.commandCore.getRoomAt(cell.gx, cell.gy);
+          if (room && !room.isActive()) this.world.rushBuildRoom(cell.gx, cell.gy);
+          else this.world.installModuleAt(cell.gx, cell.gy);
+        }
       }
     }
     this.input.rightClicks.length = 0;
@@ -117,6 +134,7 @@ export class Game {
       updateCombat(this.world, dt);
       this.world.updateEnemies(dt);
       this.commandCore.update(dt);
+      this.world.updatePassiveIncome(dt, this.profile.level());
       this.watchProfileEvents();
 
       if (this.world.base.isDestroyed()) {
@@ -162,7 +180,7 @@ export class Game {
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower);
   }
 
   loop(timestamp) {

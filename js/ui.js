@@ -6,11 +6,12 @@ import { ACHIEVEMENTS } from './achievements.js';
 // sits above the canvas via CSS).
 export class UI {
   // callbacks: { onUnlockTech(id), onDockTrade(), onPrestige(), onBuySkill(id),
-  // onRestart() } — UI only translates DOM clicks into these; it never mutates
-  // gameplay state directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart } = {}) {
+  // onRestart(), onRepairBase() } — UI only translates DOM clicks into these;
+  // it never mutates gameplay state directly (Game/World/Profile do).
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase } = {}) {
     this.scoreEl = document.getElementById('ui-score');
     this.goldEl = document.getElementById('ui-gold');
+    this.comboEl = document.getElementById('ui-combo');
     this.waveEl = document.getElementById('ui-wave');
     this.tierEl = document.getElementById('ui-tier');
     this.levelEl = document.getElementById('ui-level');
@@ -20,6 +21,17 @@ export class UI {
     this.banner = document.getElementById('ui-banner');
     this.restartBtn = document.getElementById('restart-btn');
     this.restartBtn.addEventListener('click', () => onRestart?.());
+
+    this.repairBtn = document.getElementById('repair-btn');
+    this.repairBtn.addEventListener('click', () => onRepairBase?.());
+
+    // ---- Phase 4b: tower inspector/upgrade card ----
+    this.towerCard = document.getElementById('tower-card');
+    this.towerTierEl = document.getElementById('tower-tier');
+    this.towerDamageEl = document.getElementById('tower-damage');
+    this.towerRangeEl = document.getElementById('tower-range');
+    this.towerSpeedEl = document.getElementById('tower-speed');
+    this.towerUpgradeCostEl = document.getElementById('tower-upgrade-cost');
 
     this.modeHint = document.getElementById('ui-mode-hint');
     this.corePanel = document.getElementById('core-panel');
@@ -100,7 +112,7 @@ export class UI {
     return entries.length ? entries[0][0] : '-';
   }
 
-  update(world, fps, state, view, commandCore, profile) {
+  update(world, fps, state, view, commandCore, profile, selectedTower) {
     const spawner = world.spawner;
     const base = world.base;
 
@@ -187,6 +199,8 @@ export class UI {
 
     this.scoreEl.textContent = world.score;
     this.goldEl.textContent = `${Math.floor(world.gold)} / ${world.goldCap()}`;
+    this.comboEl.hidden = world.comboStreak < 2;
+    if (!this.comboEl.hidden) this.comboEl.textContent = `🔥 x${world.comboStreak}`;
     this.waveEl.textContent = `${spawner.waveNumber} / ${CONFIG.MAX_WAVES}`;
     this.tierEl.textContent = this.currentTierName(spawner.waveNumber);
     this.fpsEl.textContent = Math.round(fps);
@@ -195,6 +209,29 @@ export class UI {
     this.baseFill.style.width = `${pct}%`;
     this.baseFill.style.background = pct <= 30 ? CONFIG.BASE_DAMAGE_COLOR : CONFIG.BASE_COLOR;
     this.baseText.textContent = `${Math.ceil(base.health)} / ${base.maxHealth}`;
+
+    const missingHealth = base.maxHealth - base.health;
+    this.repairBtn.hidden = state !== 'playing' || missingHealth <= 0;
+    if (!this.repairBtn.hidden) {
+      const heal = Math.min(CONFIG.BASE_REPAIR_AMOUNT, missingHealth);
+      const cost = world.repairBaseCost(heal);
+      this.repairBtn.textContent = `Repair ${Math.round(heal)} (${cost}g)`;
+      this.repairBtn.disabled = world.gold < cost;
+    }
+
+    // Phase 4b: tower inspector — shown for whatever tower was last clicked,
+    // hidden once it's no longer live (sold, or a restart wiped the World).
+    const showTowerCard = view === 'field' && selectedTower && world.towers.includes(selectedTower);
+    this.towerCard.hidden = !showTowerCard;
+    if (showTowerCard) {
+      this.towerTierEl.textContent = `Tier ${['I', 'II', 'III'][selectedTower.tier - 1]}`;
+      this.towerDamageEl.textContent = Math.round(selectedTower.damage * profile.damageMult());
+      this.towerRangeEl.textContent = Math.round(selectedTower.range);
+      this.towerSpeedEl.textContent = selectedTower.fireRate.toFixed(2);
+      this.towerUpgradeCostEl.textContent = selectedTower.canUpgrade()
+        ? `${world.towerUpgradeCost(selectedTower)}g`
+        : 'MAX';
+    }
 
     if (state === 'won') {
       this.banner.textContent = 'VICTORY';

@@ -68,6 +68,11 @@ export class Renderer {
       if (!room.isActive()) {
         const pct = Math.round((1 - room.buildTimeRemaining / room.buildTimeTotal) * 100);
         ctx.fillText(`building ${pct}%`, x + cell / 2, y + cell / 2 + 12);
+        // Phase 4b: Fast-Build — right-click rushes the remaining timer for gold.
+        const rushCost = Math.ceil(room.buildTimeRemaining * CONFIG.FAST_BUILD_GOLD_PER_SECOND);
+        ctx.font = '9px monospace';
+        ctx.fillText(`right-click: rush ${rushCost}g`, x + cell / 2, y + cell / 2 + 24);
+        ctx.font = '11px monospace';
       } else {
         ctx.fillText('T' + room.tier, x + cell / 2, y + cell / 2 + 12);
         this.drawModuleSlots(room, x, y, cell, def.color);

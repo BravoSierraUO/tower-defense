@@ -24,6 +24,8 @@ export class World {
     this.base = new Base();
     this.spawner = new Spawner();
     this.spawnRadius = Math.hypot(this.width / 2, this.height / 2) + CONFIG.SPAWN_MARGIN;
+    this.comboStreak = 0; // Phase 4b: consecutive kills within COMBO_WINDOW of each other
+    this.comboTimer = 0;
   }
 
   // Command Core output feeds the economy: Reactor(power) cheapens towers,
@@ -38,12 +40,19 @@ export class World {
   }
 
   // Phase 4: the prestige skill tree's Gold Mastery node stacks on top of AI Core's bonus.
+  // Phase 4b: combo streak stacks on top of both.
   rewardMultiplier() {
-    return (1 + this.commandCore.totals().compute * CONFIG.CORE_COMPUTE_REWARD_BONUS_PER_POINT) * this.profile.goldMult();
+    const combo = 1 + Math.min(this.comboStreak, CONFIG.COMBO_MAX_STACKS) * CONFIG.COMBO_BONUS_PER_STACK;
+    return (1 + this.commandCore.totals().compute * CONFIG.CORE_COMPUTE_REWARD_BONUS_PER_POINT) * this.profile.goldMult() * combo;
   }
 
   addGold(amount) {
     this.gold = Math.min(this.goldCap(), this.gold + amount);
+  }
+
+  // Phase 4b: base passive income, scaled by the player's persistent profile level.
+  updatePassiveIncome(dt, level) {
+    this.addGold(level * CONFIG.BASE_PASSIVE_INCOME_PER_LEVEL * dt);
   }
 
   // Spawns an enemy at a random angle on a ring outside the world, aimed at the base.
@@ -58,10 +67,24 @@ export class World {
     this.spawner.update(dt, this);
   }
 
+  // Phase 4b: streak decays on its own clock, independent of enemy count, so
+  // it also winds down between waves rather than only on the next kill.
+  updateCombo(dt) {
+    if (this.comboTimer <= 0) return;
+    this.comboTimer -= dt;
+    if (this.comboTimer <= 0) {
+      this.comboTimer = 0;
+      this.comboStreak = 0;
+    }
+  }
+
   updateEnemies(dt) {
+    this.updateCombo(dt);
     for (const enemy of this.enemies) {
       enemy.update(dt);
       if (enemy.isDead()) {
+        this.comboStreak++;
+        this.comboTimer = CONFIG.COMBO_WINDOW;
         this.score += Math.round(enemy.maxHealth);
         this.kills++;
         this.addGold(Math.round(enemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * this.rewardMultiplier()));
@@ -113,6 +136,56 @@ export class World {
     if (idx === -1) return false;
     const [tower] = this.towers.splice(idx, 1);
     this.addGold(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));
+    return true;
+  }
+
+  towerAt(x, y) {
+    const snapped = this.snapToGrid(x, y);
+    return this.towers.find(t => t.x === snapped.x && t.y === snapped.y) || null;
+  }
+
+  // Phase 4b: same cost-growth shape as CommandCore.upgradeCost().
+  towerUpgradeCost(tower) {
+    return Math.round(CONFIG.TOWER_UPGRADE_COST_BASE * Math.pow(CONFIG.TOWER_UPGRADE_COST_GROWTH, tower.tier - 1));
+  }
+
+  upgradeTower(tower) {
+    if (!tower || !tower.canUpgrade()) return false;
+    const cost = this.towerUpgradeCost(tower);
+    if (this.gold < cost) return false;
+    this.gold -= cost;
+    tower.upgrade();
+    return true;
+  }
+
+  // Phase 4b: pay gold to zero out a room's remaining build timer early.
+  rushBuildCost(room) {
+    return Math.ceil(room.buildTimeRemaining * CONFIG.FAST_BUILD_GOLD_PER_SECOND);
+  }
+
+  rushBuildRoom(gx, gy) {
+    const room = this.commandCore.getRoomAt(gx, gy);
+    if (!room || room.isActive()) return null;
+    const cost = this.rushBuildCost(room);
+    if (this.gold < cost) return null;
+    this.gold -= cost;
+    room.buildTimeRemaining = 0;
+    return room;
+  }
+
+  // Phase 4b: heal the base for gold, clamped to missing HP.
+  repairBaseCost(amount) {
+    return Math.ceil(amount * CONFIG.BASE_REPAIR_GOLD_PER_HP);
+  }
+
+  repairBase(amount) {
+    const missing = this.base.maxHealth - this.base.health;
+    if (missing <= 0) return false;
+    const heal = Math.min(amount, missing);
+    const cost = this.repairBaseCost(heal);
+    if (this.gold < cost) return false;
+    this.gold -= cost;
+    this.base.health += heal;
     return true;
   }
 

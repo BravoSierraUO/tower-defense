@@ -140,6 +140,45 @@ describe('balance: the tech tree is reachable in a bounded amount of playtime', 
   });
 });
 
+describe('balance: Phase 4b costs never get cheaper the more you buy', () => {
+  test('World.towerUpgradeCost() strictly increases with tower tier', () => {
+    const { world } = freshGame(100000);
+    const tower = world.placeTower(200, 200);
+    let prevCost = -Infinity;
+    while (tower.canUpgrade()) {
+      const cost = world.towerUpgradeCost(tower);
+      assert.ok(cost > prevCost, `towerUpgradeCost() did not increase at tier ${tower.tier}: ${prevCost} -> ${cost}`);
+      prevCost = cost;
+      tower.upgrade();
+    }
+  });
+
+  test('World.rushBuildCost() is always positive for any remaining build time > 0 (never a free rush)', () => {
+    const { commandCore } = freshGame(0);
+    const room = commandCore.placeRoom('reactor', 0, 0);
+    for (const remaining of [0.01, 1, room.buildTimeTotal]) {
+      room.buildTimeRemaining = remaining;
+      const cost = Math.ceil(remaining * CONFIG.FAST_BUILD_GOLD_PER_SECOND);
+      assert.ok(cost > 0, `rush cost for ${remaining}s remaining was ${cost}`);
+    }
+  });
+});
+
+describe('balance: combo streak bonus stays bounded no matter how long a run goes', () => {
+  test("rewardMultiplier()'s combo contribution never exceeds 1 + COMBO_MAX_STACKS * COMBO_BONUS_PER_STACK", () => {
+    const { world } = freshGame(0);
+    const baseMult = world.rewardMultiplier(); // streak 0
+    const maxComboFactor = 1 + CONFIG.COMBO_MAX_STACKS * CONFIG.COMBO_BONUS_PER_STACK;
+
+    world.comboStreak = CONFIG.COMBO_MAX_STACKS;
+    const cappedMult = world.rewardMultiplier();
+    assert.ok(Math.abs(cappedMult - baseMult * maxComboFactor) < 1e-9);
+
+    world.comboStreak = CONFIG.COMBO_MAX_STACKS * 100; // a run that never stops killing
+    assert.equal(world.rewardMultiplier(), cappedMult, 'an unbounded streak must not unbound the multiplier');
+  });
+});
+
 describe('balance: difficulty tiers stay internally consistent', () => {
   test('unlockWave is non-decreasing from easy -> medium -> hard, and multipliers actually get harder', () => {
     const { easy, medium, hard } = CONFIG.DIFFICULTY_TIERS;
