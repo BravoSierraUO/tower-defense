@@ -304,12 +304,13 @@
   <div class="eyebrow">Velocity</div>
   <h2>What shipped, and how fast</h2>
   <p class="lede">Pulled straight from <code style="font-family:var(--mono)">git log</code>, not
-    estimated — 24 commits, one solo dev, a ~58-hour span across 4 days, from an empty canvas to
-    a base-building economy with a real tech tree, a persistent progression system, and this page.</p>
+    estimated — <b id="ledeCommitCount">·</b> commits, one solo dev, a ~58-hour span across 4 days
+    (hours are hand-refreshed — see the Maintenance comment by STATS below), from an empty canvas
+    to a base-building economy with a real tech tree, a persistent progression system, and this page.</p>
 
   <div class="stats" style="margin-top:22px">
     <div class="stat"><b id="statTotalLines">·</b><span>lines across the repo</span></div>
-    <div class="stat"><b>24</b><span>commits</span></div>
+    <div class="stat"><b id="statCommitCount">·</b><span>commits</span></div>
     <div class="stat"><b>~58h</b><span>across 4 days</span></div>
     <div class="stat"><b>61%</b><span>test lines per engine line</span></div>
   </div>
@@ -327,7 +328,7 @@
   </div>
 
   <div class="vcard" style="margin-top:16px">
-    <h4>The 24 commits</h4>
+    <h4>The <span id="commitLogCount">·</span> commits</h4>
     <div class="commitlog" id="commitLog"></div>
   </div>
 </section>
@@ -1504,6 +1505,11 @@ renderAll();
 // One inherent lag, unchanged from the old hand-authored version: the growth array's last point is
 // always the commit BEFORE the one currently being made, since a commit's own hash doesn't exist
 // yet when its pre-commit hook runs — known, accepted limitation, not a bug.
+// The commit COUNT below (lede + stat tile + commit-log heading) is computed from STATS.growth at
+// render time, not hand-typed — it can't go stale independently again. The "~58h across 4 days"
+// span still IS hand-typed prose: stats.json only stores a short display date ("07-19") per commit,
+// not a real timestamp, so the span can't be derived in-browser yet. Re-check it by hand
+// periodically (`git log --format=%at | ...`) until gen-stats.mjs captures real timestamps.
 // STATS_GENERATED_START
 const STATS = {
   "growth": [
@@ -1656,6 +1662,12 @@ const STATS = {
       "date": "07-19",
       "cum": 7995,
       "subject": "Phase 5b (scoped slice): avatar dropdown + real Settings tab (theme, save-data viewer, reset)"
+    },
+    {
+      "hash": "336a82c",
+      "date": "07-19",
+      "cum": 8363,
+      "subject": "whatever.html: tab nav, roadmap accordion, 10 new WhatHow flows; fix stuck reset-confirm modal"
     }
   ],
   "categories": [
@@ -1666,12 +1678,12 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 1982,
+      "value": 2340,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2160,
+      "value": 2170,
       "tone": "info"
     },
     {
@@ -1753,6 +1765,11 @@ function renderCommitLog() {
 
 document.getElementById('statTotalLines').textContent =
   STATS.categories.reduce((s,c)=>s+c.value,0).toLocaleString();
+// Commit count is derived from STATS.growth (same auto-generated data the chart plots) instead of
+// hand-typed, so it can't drift the way the hour-span prose above did — see the 2026-07-19 fix.
+document.getElementById('ledeCommitCount').textContent = STATS.growth.length;
+document.getElementById('statCommitCount').textContent = STATS.growth.length;
+document.getElementById('commitLogCount').textContent = STATS.growth.length;
 renderGrowthChart();
 renderPieChart();
 renderCommitLog();

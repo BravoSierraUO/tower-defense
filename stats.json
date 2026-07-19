@@ -150,6 +150,12 @@
       "date": "07-19",
       "cum": 7995,
       "subject": "Phase 5b (scoped slice): avatar dropdown + real Settings tab (theme, save-data viewer, reset)"
+    },
+    {
+      "hash": "336a82c",
+      "date": "07-19",
+      "cum": 8363,
+      "subject": "whatever.html: tab nav, roadmap accordion, 10 new WhatHow flows; fix stuck reset-confirm modal"
     }
   ],
   "categories": [
@@ -160,12 +166,12 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 1982,
+      "value": 2340,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2160,
+      "value": 2170,
       "tone": "info"
     },
     {
