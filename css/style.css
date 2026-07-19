@@ -31,7 +31,8 @@ html,body{
 .build-bar,
 .tower-card,
 .core-panel,
-.ui-banner{
+.ui-banner,
+.profile-panel{
 
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
@@ -502,23 +503,6 @@ html,body{
 =========================== */
 
 .profile-panel{
-
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
-
-    background:
-    linear-gradient(
-        rgba(32,42,58,.82),
-        rgba(14,18,28,.90)
-    );
-
-    border:1px solid rgba(255,255,255,.06);
-
-    box-shadow:
-        inset 0 1px rgba(255,255,255,.05),
-        0 18px 40px rgba(0,0,0,.35);
-
-    border-radius:18px;
 
     position:absolute;
 
