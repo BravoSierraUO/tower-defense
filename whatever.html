@@ -326,8 +326,8 @@
   <div class="eyebrow">Primitives</div>
   <h2>One recipe, five screens</h2>
   <p class="lede">The HUD, the build bar, the tower card, the Command Core panel, the profile
-    panel, the win/lose banner — six different surfaces in <code style="font-family:var(--mono)">css/style.css</code>,
-    all built from one glass recipe and one accent color instead of six bespoke looks. This page
+    panel, the About/Analytics panel, the win/lose banner — seven different surfaces in <code style="font-family:var(--mono)">css/style.css</code>,
+    all built from one glass recipe and one accent color instead of seven bespoke looks. This page
     is built from the same recipe — the cards below are the actual CSS values, not a mockup.</p>
 
   <div class="pgrid">
@@ -342,10 +342,11 @@
       <h4>One accent color</h4>
       <div class="swatchrow"><span class="swatch" style="background:#7ED9FF"></span>
         <span style="font-family:var(--mono);font-size:13px;color:var(--ink)">#7ED9FF</span></div>
-      <div class="usedin">HUD stat values · the in-game HUD's DOCS link · tower/room panel titles ·
+      <div class="usedin">HUD stat values · the in-game HUD's DOCS/ABOUT links · tower/room panel titles ·
         every hover border on a build/tech/skill button · the achievement wall's "special" tier ·
-        the restart button — and now this page's own accent, replacing an earlier draft that used
-        an unrelated pink. Ten-plus call sites, one hex value.</div>
+        the restart button · the About panel's category bars (four opacity steps of this one hex,
+        not four new hues) — and this page's own accent, replacing an earlier draft that used
+        an unrelated pink. A dozen-plus call sites, one hex value.</div>
     </div>
     <div class="vcard">
       <h4>One button-state pattern</h4>
@@ -513,12 +514,22 @@ const ROADMAP = [
     items:[
       'Test harness — done. 76 tests across 7 files via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
-      'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot',
-      'In-game About/Analytics screen reading stats.json (separate from this out-of-game page)',
+      'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
+      'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
       'Script to auto-sync this page\'s Roadmap section from changelog.md so it can\'t go stale',
       '/docs folder: architecture notes + contribution guide'
     ],
     note:'Interview-portfolio motivated — "built a working game AND the tooling to prove how it was built." Interleave in slow moments between gameplay phases, don\'t block on it.' },
+  { id:'p5b', num:'5b', title:'Player Menu Shell — Avatar Dropdown & Account/Settings/Inventory/Base Modal', status:'BACKLOG · NOT SCOPED', color:'--phase-5',
+    desc:'Today the game has three separate full-screen views toggled by raw hotkeys (B — Command Core, P — Profile, O — About), each its own top-level `aside`. The typical pattern instead: a small avatar + level badge in a HUD corner, click opens a dropdown/menu, which opens a modal with tabbed sections — Account (today\'s Profile panel), Settings (doesn\'t exist yet), Inventory (doesn\'t exist yet — no item/loadout system in the game at all right now), Base (today\'s Command Core panel). About/Analytics would fold in as one more tab.',
+    items:[
+      'Avatar/level badge as a single clickable HUD element (today profile-level-badge only exists inside the Profile panel itself, not as a HUD-corner trigger)',
+      'Dropdown → modal shell that hosts Account/Settings/Inventory/Base/About as tabbed sections instead of four independent hotkey-toggled asides',
+      'Settings tab: no settings currently exist anywhere in the game (no volume, no keybind remap, nothing) — needs actual content, not just a shell',
+      'Inventory tab: no item/equipment system exists yet at all — this tab has nothing to show until some form of loadout/item system is designed (possibly overlaps Phase 7\'s per-satellite module slots, possibly its own thing)',
+      'Migrating existing Profile (P) and Command Core (B) panels into the new shell without breaking their current hotkey muscle-memory'
+    ],
+    note:'Floated during the Phase 5 About-screen build (2026-07-19), explicitly filed rather than built — "a big bite," per the user. Settings and Inventory in particular have zero existing content to migrate; this is closer to a from-scratch IA redesign of the whole panel system than an extension of it. Do not start until it\'s deliberately scoped — same caution Phase 7 already carries.' },
   { id:'p6', num:'6', title:'Comms & Station Identity', status:'LATER', color:'--phase-6',
     desc:'From `structures.md`/`lore.md`: a Communications room unlocking active, player-triggered orbital abilities (the game\'s current loop is 100% passive/economic once a wave starts — this is the first thing that gives the player something to *do* mid-wave), plus a station skin that visibly grows from Orbital Platform to Dyson Node as the player prestiges.',
     items:[
@@ -986,6 +997,41 @@ const FLOWS = [
       { from: 'monotonic', to: 'reachable' },
       { from: 'reachable', to: 'verdict', tone: 'ok' }
     ]
+  },
+  {
+    id: 'statspipeline', group: 'Proving it',
+    title: 'One git history, two places it shows up',
+    summary: 'A pre-commit hook turns real git log data into stats.json, which this very page inlines and the in-game HUD fetches live — same numbers, zero hand-authoring either place.',
+    lanes: ['Commit', 'Hook', 'stats.json', 'Consume', 'Surface'],
+    nodes: [
+      { id: 'commit', col: 0, row: 1, kind: 'input', tone: 'sig', label: 'git commit',
+        detail: 'Any commit on this repo, not a special one — the hook runs every time.' },
+      { id: 'hook', col: 1, row: 1, kind: 'process', tone: 'ok', label: 'pre-commit hook fires\nnode scripts/gen-stats.mjs',
+        code_ref: 'scripts/hooks/pre-commit',
+        detail: "Installed into .git/hooks/pre-commit via `npm run hooks:install` (git doesn't version .git/hooks — this tracked copy is the source of truth)." },
+      { id: 'generate', col: 2, row: 1, kind: 'process', tone: 'special', label: 'Walks full git log\ngit ls-tree + cat-file, cached by blob SHA',
+        code_ref: 'scripts/gen-stats.mjs',
+        detail: 'Every commit\'s real line count, not an estimate — same method the old hand-authored version used (git ls-tree | git show <hash>:<file> | wc -l), just automated and run against every commit instead of a curated 14 of 20.' },
+      { id: 'write', col: 2, row: 2.25, kind: 'process', tone: 'special', label: 'Writes stats.json,\nre-inlines this page\'s STATS block',
+        code_ref: 'stats.json · whatever.html (STATS_GENERATED markers)' },
+      { id: 'doc', col: 3, row: 0.5, kind: 'process', tone: 'info', label: 'This page\'s Velocity tab\nreads the inlined STATS const',
+        code_ref: 'whatever.html' },
+      { id: 'fetch', col: 3, row: 2, kind: 'process', tone: 'info', label: "js/stats.js: fetch('stats.json')\ncached after first load",
+        code_ref: 'js/stats.js' },
+      { id: 'velocity', col: 4, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Velocity charts\n(out-of-game, this page)' },
+      { id: 'about', col: 4, row: 2, kind: 'terminal', tone: 'sig', label: 'In-game About panel\nO / ABOUT button',
+        code_ref: 'js/ui.js (renderAbout)',
+        detail: 'Same numbers as the Velocity tab, rendered once when the fetch resolves — the panel is a static snapshot for the session, not a live poll.' }
+    ],
+    edges: [
+      { from: 'commit', to: 'hook' },
+      { from: 'hook', to: 'generate' },
+      { from: 'generate', to: 'write' },
+      { from: 'write', to: 'doc' },
+      { from: 'write', to: 'fetch' },
+      { from: 'doc', to: 'velocity' },
+      { from: 'fetch', to: 'about' }
+    ]
   }
 ];
 
@@ -1234,6 +1280,12 @@ const STATS = {
       "date": "07-19",
       "cum": 6238,
       "subject": "Phase 4d: Energy System (power becomes a live supply/consumption constraint)"
+    },
+    {
+      "hash": "20f00c8",
+      "date": "07-19",
+      "cum": 6603,
+      "subject": "Phase 5: automate Velocity stats via pre-commit hook"
     }
   ],
   "categories": [
@@ -1244,7 +1296,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 1273,
+      "value": 1638,
       "tone": "special"
     },
     {

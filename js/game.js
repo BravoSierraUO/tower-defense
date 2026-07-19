@@ -28,12 +28,13 @@ export class Game {
       onRestart: () => this.restart(),
       onRepairBase: () => this.world.repairBase(CONFIG.BASE_REPAIR_AMOUNT),
       onMarketBuyMetal: () => this.world.tradeGoldForMetal(),
-      onMarketBuyGold: () => this.world.tradeMetalForGold()
+      onMarketBuyGold: () => this.world.tradeMetalForGold(),
+      onToggleAbout: () => { this.view = this.view === 'about' ? 'field' : 'about'; this.selectedRoomType = null; }
     });
     this.lastTime = 0;
     this.fps = 0;
     this.state = 'playing'; // 'playing' | 'won' | 'lost'
-    this.view = 'field'; // 'field' | 'core' | 'profile'
+    this.view = 'field'; // 'field' | 'core' | 'profile' | 'about'
     this.selectedRoomType = null;
     this.selectedTower = null; // Phase 4b: tower the tower-card is showing
     this.selectedScavenger = null; // Phase 4c: scavenger the tower-card is showing
@@ -88,6 +89,9 @@ export class Game {
         this.selectedRoomType = null;
       } else if (key === 'p') {
         this.view = this.view === 'profile' ? 'field' : 'profile';
+        this.selectedRoomType = null;
+      } else if (key === 'o') {
+        this.view = this.view === 'about' ? 'field' : 'about';
         this.selectedRoomType = null;
       } else if (this.view === 'core') {
         // Still positional (index into Object.keys(CONFIG.ROOM_TYPES)) — index.html's

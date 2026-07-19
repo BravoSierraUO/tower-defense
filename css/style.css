@@ -32,7 +32,8 @@ html,body{
 .tower-card,
 .core-panel,
 .ui-banner,
-.profile-panel{
+.profile-panel,
+.about-panel{
 
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
@@ -264,6 +265,12 @@ html,body{
     border-radius:8px;
 
     padding:4px 10px;
+
+    background:transparent;
+
+    font-family:inherit;
+
+    cursor:pointer;
 }
 
 .hud-docs-link:hover{
@@ -928,6 +935,233 @@ html,body{
 
 .achievement-toast.tier-epic{ border-color:rgba(155,89,182,.6); }
 .achievement-toast.tier-legendary{ border-color:rgba(255,210,63,.7); color:#FFD23F; }
+
+/* ===========================
+   PHASE 5: ABOUT / ANALYTICS PANEL (reads stats.json — see scripts/gen-stats.mjs)
+=========================== */
+
+.about-panel{
+
+    position:absolute;
+
+    left:50%;
+
+    top:132px;
+
+    bottom:28px;
+
+    transform:translateX(-50%);
+
+    width:520px;
+
+    max-width:calc(100% - 48px);
+
+    padding:24px;
+
+    overflow-y:auto;
+
+    pointer-events:auto;
+}
+
+.about-header{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:baseline;
+
+    margin-bottom:16px;
+}
+
+.about-title{
+
+    font-size:16px;
+
+    font-weight:700;
+
+    color:#7ED9FF;
+}
+
+.about-generated{
+
+    font-size:11px;
+
+    opacity:.55;
+}
+
+.about-total-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:baseline;
+
+    padding-bottom:16px;
+
+    margin-bottom:16px;
+
+    border-bottom:1px solid rgba(255,255,255,.06);
+}
+
+.about-total-label{
+
+    font-size:12px;
+
+    opacity:.7;
+}
+
+.about-total-value{
+
+    font-size:28px;
+
+    font-weight:700;
+
+    color:#7ED9FF;
+}
+
+.about-category-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:10px;
+
+    margin-bottom:20px;
+}
+
+.about-category-row{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:4px;
+}
+
+.about-category-label{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    font-size:11px;
+
+    opacity:.75;
+}
+
+.about-category-track{
+
+    height:6px;
+
+    border-radius:3px;
+
+    background:rgba(255,255,255,.06);
+
+    overflow:hidden;
+}
+
+.about-category-fill{
+
+    height:100%;
+
+    border-radius:3px;
+}
+
+.about-panel-title{
+
+    font-size:14px;
+
+    font-weight:700;
+
+    margin-bottom:12px;
+
+    color:#7ED9FF;
+}
+
+.about-commit-list{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+    margin-bottom:20px;
+}
+
+.about-commit-row{
+
+    display:flex;
+
+    align-items:baseline;
+
+    gap:10px;
+
+    font-size:11px;
+
+    padding:6px 0;
+
+    border-bottom:1px solid rgba(255,255,255,.04);
+}
+
+.about-commit-row .h{
+
+    font-family:monospace;
+
+    opacity:.5;
+
+    flex-shrink:0;
+}
+
+.about-commit-row .d{
+
+    opacity:.5;
+
+    flex-shrink:0;
+}
+
+.about-commit-row .s{
+
+    flex:1;
+
+    opacity:.85;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+.about-commit-row .n{
+
+    font-family:monospace;
+
+    color:#6EF2A3;
+
+    flex-shrink:0;
+}
+
+.about-link{
+
+    display:inline-block;
+
+    font-size:11px;
+
+    color:#7ED9FF;
+
+    opacity:.75;
+
+    pointer-events:auto;
+}
+
+.about-link:hover{
+
+    opacity:1;
+}
 
 .restart-btn{
 

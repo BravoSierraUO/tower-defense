@@ -120,6 +120,12 @@
       "date": "07-19",
       "cum": 6238,
       "subject": "Phase 4d: Energy System (power becomes a live supply/consumption constraint)"
+    },
+    {
+      "hash": "20f00c8",
+      "date": "07-19",
+      "cum": 6603,
+      "subject": "Phase 5: automate Velocity stats via pre-commit hook"
     }
   ],
   "categories": [
@@ -130,7 +136,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 1273,
+      "value": 1638,
       "tone": "special"
     },
     {
