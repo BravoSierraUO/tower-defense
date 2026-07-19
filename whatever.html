@@ -336,7 +336,7 @@
 <section class="wrap page-panel" id="primitives">
   <div class="eyebrow">Primitives</div>
   <h2>One recipe, five screens</h2>
-  <p class="lede">The HUD, the build bar, the tower card, the Command Core panel, the profile
+  <p class="lede">The HUD, the radial build menu, the tower card, the Command Core panel, the profile
     panel, the About/Analytics panel, the win/lose banner, the settings panel, the avatar menu,
     the confirm modal, the tutorial mission banner — eleven different surfaces in
     <code style="font-family:var(--mono)">css/style.css</code>, all built from one glass recipe
@@ -649,7 +649,17 @@ const ROADMAP = [
       'Core bar\'s 6 previously id-less slots (Reactor/AI Core/Storage/Lab/Mine/Market) got real ids so they\'re individually addressable, and the whole Core bar gained a `.selected` highlight ring it never had before (only `.locked` dimming existed previously)',
       '`.build-bar` collapsed to a zero-size anchor point; `.build-slot` became a circular button positioned via a computed `translate(x,y)`; a `.radial-hub` center dot labels each bar ("Build" / "Rooms")'
     ],
-    note:'Sparked by a reference screenshot of a radial/pie build menu the user shared during Phase 8b\'s build-bar bug hunt, floated then as a fallback in case that bug resisted debugging — it didn\'t, so the idea sat unbuilt until picked up here as its own real UI pass. Verified live via Playwright: hover, click-to-select, the "Placing: X — click an empty cell" mode hint, and the new selection ring on both bars were all screenshot-confirmed. See changelog.md v2.9.' },
+    note:'Sparked by a reference screenshot of a radial/pie build menu the user shared during Phase 8b\'s build-bar bug hunt, floated then as a fallback in case that bug resisted debugging — it didn\'t, so the idea sat unbuilt until picked up here as its own real UI pass. Verified live via Playwright: hover, click-to-select, the "Placing: X — click an empty cell" mode hint, and the new selection ring on both bars were all screenshot-confirmed. See changelog.md v2.9. Superseded by Phase 9b below — the always-on bar this phase built was never what the user actually wanted.' },
+  { id:'p9b', num:'9b', title:'Radial Menu Rework — Click-to-Open, Not Always-On', status:'DONE', color:'--phase-9',
+    desc:'Phase 9 kept the build bar permanently on screen, just fanned into an arc instead of a flat row. The user\'s actual ask, once the shipped version was in front of them: no bar at all — click empty space to summon a two-level pie menu (utility actions on the first ring, a Build flyout on hover), pick a turret, and the mouse cursor itself becomes the "ghost" that shows you what you\'re about to place.',
+    items:[
+      'The always-on `.build-bar`/`.build-slot` markup is gone entirely — one `#radial-menu` popup (`js/ui/radialMenu.js`, new) opens fresh at the click point with a config built from whatever\'s true right now (room locks, current costs), so it needs no per-frame `update()` the old bars did',
+      'Two-level fan: level 1 is Missions/Inventory/Home/Build, always the same 4 slots; hovering (or clicking, for touch/trackpad) Build fans out a second arc — 2 leaves in the Field view (Tower/Scavenger), 10 in the Core view (same room set Phase 9 had, now hidden until summoned) — centered on Build\'s own angle via a new `centerDeg` param on `radialLayout.js`\'s `layoutRadial()`',
+      'Placement flow changed on the user\'s explicit direction: picking a leaf no longer places immediately — it arms `fieldBuildType`/`selectedRoomType` and closes the menu, then a translucent "ghost" (new `Renderer#drawFieldGhost`, plus a dashed cell outline in `drawCore`) follows the mouse until a click places it, same two-click feel as a real RTS build cursor',
+      'Home is context-aware: recenters the Field camera to `(0,0)`/zoom 1 in Field view (there was previously no way back after WASD-panning away), switches to Field view from Core (there\'s no camera to recenter there). Missions re-triggers the existing mission-glow flash (`MissionBanner.flash()`, promoted from a private button handler to a public method) rather than duplicating it. Inventory is an honest stub — no inventory system exists yet — showing a "coming soon" label and never touching game state, versus inventing a fake screen',
+      'Escape is a new universal cancel (closes an open menu, disarms whatever was armed) — needed once armed mode has no persistent bar reminding you what\'s selected; a canvas click while the menu is open is now always treated as "dismiss," never as a placement underneath it, same convention as any other context menu'
+    ],
+    note:'Direct user correction, same day as Phase 9 shipped: "no bar at the bottom... click the empty space... 1st level radial pops up." Number-key shortcuts (1-2 Field, 1-9/0 Core) are untouched — they arm the same state the menu\'s Build flyout does, so both paths get the ghost cursor for free. Verified live via Playwright (`playwright-core`\'s `chromium.launch()` + `python3 -m http.server`, per the v2.4 note\'s established path): old bar absent on load, click-opens-menu, Build hover fans out 2/10 leaves correctly, locked Core rooms (Factory/Hangar/Shield/Dock) render greyed, picking a leaf arms the ghost and a follow-up click places it, Home/Missions/Inventory/Escape all behave as scoped above, zero console errors. Full `node --test` pass stayed green (125/125 — no gameplay/economy code touched, only input routing and rendering). See changelog.md v2.10.' },
   { id:'p10', num:'10', title:'Mobile Companion — Session Handoff & the "Watching" Illusion', status:'BACKLOG · NOT SCOPED', color:'--phase-5',
     desc:'A user idea (2026-07-19), deliberately later-design and not shaped yet. Explicitly NOT a mobile port of the real-time build/combat loop the web/desktop (and forthcoming PWA) already cover — the companion\'s real job is quieter: carry your session between machines, phone as the go-between, so switching from one PC to another doesn\'t mean losing progress. It presents itself as "watching your base," but underneath it\'s closer to a timer/sync utility that stores settings and timestamps than a live remote dashboard.',
     items:[
@@ -728,30 +738,30 @@ const FLOWS = [
   {
     id: 'radialbuild', group: 'Getting started',
     title: 'A radial menu picks what you build',
-    summary: 'The flat bottom build bar became a mouse-clickable radial fan around a center hub, and gained real click support for the first time — previously both bars were keyboard-only chrome, number keys only, nothing happened if you clicked one.',
-    lanes: ['Input', 'Shared selector', 'Bar state', 'Placement'],
+    summary: 'Phase 9b: click empty space to summon a two-level pie menu instead of a permanently visible bar — a first ring of utility actions (Missions/Inventory/Home/Build), a Build flyout on hover, and a ghost cursor standing in for the old always-on selection ring once something\'s armed.',
+    lanes: ['Input', 'Menu', 'Armed state', 'Placement'],
     nodes: [
-      { id: 'input', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Number key OR click a\nradial build-slot',
-        code_ref: 'js/input.js (keys) + js/ui/fieldPanel.js, corePanel.js (new click listeners)',
-        detail: "Two independent input paths now converge on the same call. The '1'/'2' and '1'-'9'/'0' keyboard shortcuts (game.js handleInput) are unchanged; new this phase is a native click listener on every .build-slot button — they were purely decorative to the mouse before, number-key-only." },
-      { id: 'shared', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'Game#selectFieldBuild()\nGame#selectRoomType()',
+      { id: 'input', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Number key OR click\nempty space',
+        code_ref: 'js/input.js (keys/clicks) + js/game.js (handleInput)',
+        detail: "The '1'/'2' and '1'-'9'/'0' keyboard shortcuts are unchanged from Phase 9 — they still arm directly, no menu involved. New this phase: clicking empty field/grid space with nothing armed and no existing tower/room under the cursor calls Game#openRadialMenu() instead of placing anything." },
+      { id: 'menu', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'RadialMenu.open(x, y, config)\nhover Build → flyout',
+        code_ref: 'js/ui/radialMenu.js (new)',
+        detail: "Opens fresh at the click point — no per-frame update(), the config (room locks, current costs) is computed once by Game#buildRadialConfig() at open time. Missions/Inventory/Home are plain leaves in the same ring; only Build has a flyout, which fans out on hover (or click, for touch) via a new centerDeg param on radialLayout.js's layoutRadial() so it's centered on Build's own angle instead of always straight up." },
+      { id: 'state', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'Game#selectFieldBuild()\nGame#selectRoomType()',
         code_ref: 'js/game.js',
-        detail: "Keyboard handling was refactored to call these instead of mutating fieldBuildType/selectedRoomType inline, so mouse and keyboard share one code path. selectRoomType() still re-checks isRoomUnlocked/isBuilt — a locked or already-built radial slot can't be selected by a stray click any more than by a stray keypress." },
-      { id: 'state', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'fieldBuildType /\nselectedRoomType updates',
-        code_ref: 'js/game.js',
-        detail: "Same state either bar already read every frame — nothing about what gets stored changed, only how it gets set." },
-      { id: 'visual', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: '.selected ring on the\nchosen radial slot',
-        code_ref: 'js/ui/fieldPanel.js, corePanel.js',
-        detail: "The 2-slot field bar already had this ring. The 10-slot Core bar gained a selection ring for the first time this phase — previously it only had the .locked dim state, no way to see which room type (if any) was currently armed." },
-      { id: 'place', col: 3, row: 1.75, kind: 'process', tone: 'idle', label: 'Field/grid click\nplaces the selection',
+        detail: "Same two methods Phase 9 introduced, called the same way — picking a Build flyout leaf calls one of these via Game#handleRadialAction(id), then RadialMenu closes itself. Nothing about the armed-state shape changed, only what triggers it (a flyout leaf, on top of the pre-existing keyboard path)." },
+      { id: 'ghost', col: 3, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Ghost preview follows\nthe mouse',
+        code_ref: 'js/renderer.js (drawFieldGhost, drawCore\'s hover-cell outline)',
+        detail: "Replaces the old bars' persistent .selected ring — there's no bar left to put a ring on. A translucent tower/scavenger circle (Field) or a dashed cell outline in the room's color (Core) tracks input.mouse every frame once fieldBuildType/selectedRoomType is armed, whichever way it got armed." },
+      { id: 'place', col: 3, row: 1.75, kind: 'process', tone: 'idle', label: 'Field/grid click places it;\nEscape cancels',
         code_ref: 'js/game.js (handleInput)',
-        detail: "Unchanged by this phase — the radial menu only changed how the mode gets picked, not what a subsequent click on the field or a Core grid cell does with it." }
+        detail: "Unchanged placement logic from Phase 9 — a click on the ghost's spot builds it and stays armed for repeat placement. New this phase: Escape universally disarms and closes any open menu, and a canvas click while the menu is open is always treated as dismiss-only, never a placement underneath it." }
     ],
     edges: [
-      { from: 'input', to: 'shared' },
-      { from: 'shared', to: 'state', tone: 'ok' },
-      { from: 'state', to: 'visual', tone: 'sig' },
-      { from: 'visual', to: 'place', dashed: true, tone: 'idle' }
+      { from: 'input', to: 'menu' },
+      { from: 'menu', to: 'state', tone: 'ok' },
+      { from: 'state', to: 'ghost', tone: 'sig' },
+      { from: 'ghost', to: 'place', dashed: true, tone: 'idle' }
     ]
   },
 
@@ -762,9 +772,9 @@ const FLOWS = [
     summary: 'Placing a room in the interior 8×8 grid: the validity checks, the gold gate, the build timer, and the moment it starts contributing to the base.',
     lanes: ['Input', 'Guard', 'Gold', 'Timer', 'Output'],
     nodes: [
-      { id: 'pick', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Pick a room type\nnumber key or radial-slot click',
-        code_ref: 'game.js (handleInput) + js/ui/corePanel.js',
-        detail: "Number keys 1–9 then 0 map to CONFIG.ROOM_TYPES in order (10 room types as of the Market room — Mine and Market were both added after this flow was first drawn, growing the list from 8). Clicking the same room's slot in the radial Core build-bar does the same thing (added alongside the radial-menu rework — see 'A radial menu picks what you build' above). Either path only arms selectedRoomType when commandCore.isRoomUnlocked(type) — a locked type (Factory/Hangar/Shield/Dock, gated by the tech tree) just doesn't respond." },
+      { id: 'pick', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Pick a room type\nnumber key or radial-menu leaf',
+        code_ref: 'game.js (handleInput) + js/ui/radialMenu.js',
+        detail: "Number keys 1–9 then 0 map to CONFIG.ROOM_TYPES in order (10 room types as of the Market room — Mine and Market were both added after this flow was first drawn, growing the list from 8). Clicking empty Core grid space and picking the same room from the radial menu's Build flyout does the same thing (Phase 9b — see 'A radial menu picks what you build' above) — as of Phase 9b this arms selectedRoomType rather than placing immediately, so a ghost cell outline follows the mouse until the actual placing click below. Either path only arms selectedRoomType when commandCore.isRoomUnlocked(type) — a locked type (Factory/Hangar/Shield/Dock, gated by the tech tree) just doesn't respond." },
       { id: 'valid', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'placeRoom() validity\ntype, tech, slot, cell',
         code_ref: 'commandcore.js (placeRoom)',
         detail: "Five checks in one function: the type exists, its requiresTech gate is unlocked, no room of that type already exists (one-of-each is deliberate — see the Roadmap above for why), the cell is inside the 8×8 grid, and the cell is empty. Any failure returns null before a single grain of gold is touched." },
@@ -1875,22 +1885,28 @@ const STATS = {
       "date": "07-19",
       "cum": 8879,
       "subject": "Add panel close affordance (X + footer Close) to profile/about/settings panels"
+    },
+    {
+      "hash": "a059c5d",
+      "date": "07-19",
+      "cum": 9029,
+      "subject": "Phase 9: Radial Build Menu — Field & Command Core"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2820,
+      "value": 2877,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2682,
+      "value": 2741,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1828,
+      "value": 1862,
       "tone": "info"
     },
     {

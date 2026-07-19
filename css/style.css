@@ -76,7 +76,6 @@ html,body{
 =========================== */
 
 .hud-top,
-.build-bar,
 .tower-card,
 .core-panel,
 .ui-banner,
@@ -85,7 +84,8 @@ html,body{
 .settings-panel,
 .hud-avatar-menu,
 .confirm-modal,
-.mission-banner{
+.mission-banner,
+.radial-slot{
     backdrop-filter:blur(18px);
     -webkit-backdrop-filter:blur(18px);
     background:var(--glass-bg);
@@ -308,54 +308,53 @@ html,body{
 }
 
 /* ===========================
-   BUILD BAR
+   RADIAL CONTEXT MENU
 =========================== */
 
-/* Phase 9: radial layout — .build-bar is a zero-size anchor point (still
-   centered bottom, same spot the old flex bar sat) and every .build-slot is
-   absolutely positioned off that same origin. Actual per-slot placement
-   (the translate(x,y) below) is computed once at startup by
-   js/ui/radialLayout.js — slot count is fixed per bar (2 field, 10 core) so
-   there's nothing to recompute per frame. */
-.build-bar{
+/* Phase 9b: replaces the old always-on build bar (Phase 9's persistent radial
+   fan) with a click-to-open popup. .radial-menu is a zero-size anchor point
+   that game.js repositions to wherever the player clicked empty space —
+   .radial-level1/.radial-flyout are absolutely-positioned arc containers off
+   that same origin, populated fresh on every open() by js/ui/radialMenu.js
+   (see that file for why there's no per-frame update() here). */
+.radial-menu{
     position:absolute;
-    left:50%;
-    bottom:36px;
+    left:0;
+    top:0;
     width:0;
     height:0;
-    pointer-events:none;
+    z-index:20;
 }
 
 .radial-hub{
     position:absolute;
     left:0;
     top:0;
-    width:64px;
-    height:64px;
-    margin-left:-32px;
-    margin-top:-32px;
+    width:16px;
+    height:16px;
+    margin-left:-8px;
+    margin-top:-8px;
     border-radius:50%;
-    background:var(--control-bg);
-    border:1px solid var(--control-border);
-    color:var(--text-primary);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:12px;
-    opacity:.8;
+    background:var(--accent);
+    opacity:.7;
     pointer-events:none;
 }
 
-.build-slot{
+.radial-level1,
+.radial-flyout{
     position:absolute;
     left:0;
     top:0;
-    width:74px;
-    height:74px;
-    margin-left:-37px;
-    margin-top:-37px;
-    background:var(--control-bg);
-    border:1px solid var(--control-border);
+}
+
+/* Joins the Shared Glass selector above for backdrop-filter/background/border/
+   shadow — this block only overrides what a circular popup button needs on
+   top of that (the shared rule's 18px border-radius, meant for rectangular
+   panels, gets overridden to a circle here). */
+.radial-slot{
+    position:absolute;
+    left:0;
+    top:0;
     border-radius:50%;
     color:var(--text-primary);
     cursor:pointer;
@@ -364,13 +363,34 @@ html,body{
     pointer-events:auto;
 }
 
-.build-slot:hover{
+.radial-slot:hover{
     border-color:var(--accent);
-    background:rgba(126,217,255,.08);
-    filter:brightness(1.1);
+    filter:brightness(1.15);
 }
 
-.build-slot span{
+.radial-slot-l1{
+    width:64px;
+    height:64px;
+    margin-left:-32px;
+    margin-top:-32px;
+}
+
+.radial-icon{
+    display:block;
+    font-size:16px;
+    margin-bottom:2px;
+}
+
+.radial-slot-leaf{
+    width:74px;
+    height:74px;
+    margin-left:-37px;
+    margin-top:-37px;
+    border:1px solid var(--control-border);
+    border-top:3px solid var(--leaf-color, var(--accent));
+}
+
+.radial-slot-leaf span{
     display:block;
     margin-bottom:2px;
     font-size:15px;
@@ -378,22 +398,33 @@ html,body{
     font-weight:700;
 }
 
-.build-slot.locked{
+.radial-slot.locked{
     opacity:.35;
     filter:grayscale(1);
     cursor:not-allowed;
 }
 
-/* Phase 4c: which field-view placement mode (Tower/Scavenger) is active. */
-.build-slot.selected{
-    border-color:var(--accent);
-    background:rgba(126,217,255,.12);
-}
-
-.build-slot-cost{
+.radial-leaf-cost{
     margin-top:4px;
     font-size:11px;
     opacity:.6;
+}
+
+/* Transient "coming soon"-style label (Inventory stub) — floats just above
+   the hub, auto-hidden by RadialMenu.showStub()'s timeout. */
+.radial-stub{
+    position:absolute;
+    left:0;
+    bottom:24px;
+    transform:translateX(-50%);
+    white-space:nowrap;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    border-radius:8px;
+    padding:6px 10px;
+    font-size:12px;
+    color:var(--text-primary);
+    pointer-events:none;
 }
 
 /* ===========================
@@ -1316,7 +1347,7 @@ html,body{
     color:var(--accent);
 }
 
-/* Reusable pulsing highlight — attachable to any HUD target (build-bar slot,
+/* Reusable pulsing highlight — attachable to any HUD target (radial menu slot,
    trigger-wave button, mode hint, panel). Same one accent color as everywhere
    else, just animated instead of a new hue. */
 @keyframes mission-glow-pulse{

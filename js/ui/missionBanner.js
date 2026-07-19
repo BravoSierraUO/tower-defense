@@ -6,14 +6,19 @@ export class MissionBanner {
     this.textEl = document.getElementById('mission-text');
     this.hintEl = document.getElementById('mission-hint');
     this.glowTargetEl = null; // the HUD element currently wearing .mission-glow, if any
-    document.getElementById('mission-help-btn').addEventListener('click', () => {
-      // Re-trigger the flash by removing then re-adding the class next frame —
-      // an already-present animation class won't restart just by re-adding it.
-      if (!this.glowTargetEl) return;
-      this.glowTargetEl.classList.remove('mission-glow-flash');
-      void this.glowTargetEl.offsetWidth; // force reflow so the browser sees the removal
-      this.glowTargetEl.classList.add('mission-glow-flash');
-    });
+    document.getElementById('mission-help-btn').addEventListener('click', () => this.flash());
+  }
+
+  // Re-triggers the glow-flash on whatever's currently glowing. Public so the
+  // radial menu's Missions slot (Phase 9b — see game.js handleRadialAction)
+  // can reuse the same "show me" nudge instead of duplicating it.
+  flash() {
+    // Re-trigger the flash by removing then re-adding the class next frame —
+    // an already-present animation class won't restart just by re-adding it.
+    if (!this.glowTargetEl) return;
+    this.glowTargetEl.classList.remove('mission-glow-flash');
+    void this.glowTargetEl.offsetWidth; // force reflow so the browser sees the removal
+    this.glowTargetEl.classList.add('mission-glow-flash');
   }
 
   // Moves the .mission-glow pulse onto `selector`'s element, off whatever wore it

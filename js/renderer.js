@@ -31,7 +31,7 @@ export class Renderer {
     return { gx, gy };
   }
 
-  drawCore(commandCore, selectedType) {
+  drawCore(commandCore, selectedType, mouse) {
     this.clear();
     const ctx = this.ctx;
     const { originX, originY, cell, gridSize } = this.coreLayout();
@@ -76,6 +76,24 @@ export class Renderer {
       } else {
         ctx.fillText('T' + room.tier, x + cell / 2, y + cell / 2 + 12);
         this.drawModuleSlots(room, x, y, cell, def.color);
+      }
+    }
+
+    // Phase 9b: ghost outline on whichever cell the mouse is hovering, once a
+    // room type is armed (via the radial menu's Build flyout or a number
+    // key) — the "click to place" companion to the Field view's ghost tower.
+    if (selectedType && mouse) {
+      const hoverCell = this.screenToCoreCell(mouse.x, mouse.y);
+      if (hoverCell && !commandCore.getRoomAt(hoverCell.gx, hoverCell.gy)) {
+        const gx = originX + hoverCell.gx * cell;
+        const gy = originY + hoverCell.gy * cell;
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = CONFIG.ROOM_TYPES[selectedType].color;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 4]);
+        ctx.strokeRect(gx + 3, gy + 3, cell - 6, cell - 6);
+        ctx.restore();
       }
     }
 
@@ -189,7 +207,26 @@ export class Renderer {
     }
   }
 
-  draw(world, camera) {
+  // Phase 9b: translucent preview of whatever's armed (Tower/Scavenger),
+  // following the mouse — the "turret ghost" that replaces the old always-on
+  // build bar as the visible reminder of what a click will place. Screen-space
+  // already (this.input.mouse is never world-transformed), so no
+  // camera.screenToWorld round trip needed.
+  drawFieldGhost(camera, fieldBuildType, mouse) {
+    if (!fieldBuildType || !mouse) return;
+    const ctx = this.ctx;
+    const isScavenger = fieldBuildType === 'scavenger';
+    const r = CONFIG.TOWER_RADIUS * camera.zoom * (isScavenger ? 0.8 : 1);
+    ctx.save();
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = isScavenger ? CONFIG.SCAVENGER_COLOR : CONFIG.TOWER_COLOR;
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  draw(world, camera, fieldBuildType, mouse) {
     this.clear();
     drawGrid(this.ctx, camera);
     this.drawBase(world, camera);
@@ -197,6 +234,7 @@ export class Renderer {
     this.drawScavengers(world, camera);
     this.drawProjectiles(world, camera);
     this.drawEnemies(world, camera);
+    this.drawFieldGhost(camera, fieldBuildType, mouse);
     // future layers: terrain, effects
   }
 }

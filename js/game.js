@@ -34,8 +34,7 @@ export class Game {
       onMarketBuyMetal: () => this.world.tradeGoldForMetal(),
       onMarketBuyGold: () => this.world.tradeMetalForGold(),
       onTriggerWave: () => this.world.spawner.triggerWave(),
-      onSelectFieldBuild: type => this.selectFieldBuild(type),
-      onSelectRoomType: type => this.selectRoomType(type),
+      onRadialAction: id => this.handleRadialAction(id),
       onToggleAbout: () => { this.view = this.view === 'about' ? 'field' : 'about'; this.selectedRoomType = null; },
       onToggleProfile: () => { this.view = this.view === 'profile' ? 'field' : 'profile'; this.selectedRoomType = null; },
       onToggleSettings: () => { this.view = this.view === 'settings' ? 'field' : 'settings'; this.selectedRoomType = null; },
@@ -49,7 +48,10 @@ export class Game {
     this.selectedRoomType = null;
     this.selectedTower = null; // Phase 4b: tower the tower-card is showing
     this.selectedScavenger = null; // Phase 4c: scavenger the tower-card is showing
-    this.fieldBuildType = 'tower'; // Phase 4c: 'tower' | 'scavenger' — field-view placement mode
+    // Phase 9b: null until armed via the radial menu's Build flyout (or a number
+    // key) — no more "Tower" armed by default now that there's no persistent
+    // build bar reminding you what's selected.
+    this.fieldBuildType = null; // null | 'tower' | 'scavenger' — field-view placement mode
     this.resetRunTrackers();
   }
 
@@ -85,7 +87,7 @@ export class Game {
     this.selectedRoomType = null;
     this.selectedTower = null;
     this.selectedScavenger = null;
-    this.fieldBuildType = 'tower';
+    this.fieldBuildType = null;
     this.resetRunTrackers();
   }
 
@@ -93,18 +95,84 @@ export class Game {
     if (this.profile.prestige()) this.restart();   // banked the payout — start the next climb fresh
   }
 
-  // Shared by the '1'/'2' keyboard shortcut and the radial build-bar's click
-  // handler — one code path for field-view placement mode.
+  // Shared by the '1'/'2' keyboard shortcut and the radial menu's Build
+  // flyout (js/ui/radialMenu.js) — one code path for field-view placement
+  // mode. Armed here, the ghost preview (renderer.drawFieldGhost) follows the
+  // mouse until a click places it or Escape cancels.
   selectFieldBuild(type) {
     this.fieldBuildType = type;
   }
 
-  // Shared by the '1'-'9'/'0' keyboard shortcut and the radial build-bar's
-  // click handler — same toggle-off-if-already-selected-or-built convention
-  // the Core view has used since Phase 4b.
+  // Shared by the '1'-'9'/'0' keyboard shortcut and the radial menu's Build
+  // flyout — same toggle-off-if-already-selected-or-built convention the Core
+  // view has used since Phase 4b.
   selectRoomType(type) {
     if (!type || !this.commandCore.isRoomUnlocked(type)) return;
     this.selectedRoomType = this.commandCore.isBuilt(type) ? null : type;
+  }
+
+  // Phase 9b: click-to-open radial context menu, replacing the old always-on
+  // build bar. Opens fresh at the clicked screen point with a config built
+  // from whatever's true right now (room locks, current costs) — see
+  // js/ui/radialMenu.js for why the menu itself needs no per-frame update().
+  openRadialMenu(screenX, screenY) {
+    this.ui.radialMenu.open(screenX, screenY, this.buildRadialConfig());
+  }
+
+  buildRadialConfig() {
+    const missions = { id: 'missions', icon: '?', label: 'Missions' };
+    // Phase 9b: no inventory system exists yet — a stub leaf flashes a
+    // "coming soon" label instead of calling back into game logic, so the
+    // slot has somewhere to live once inventory is actually built.
+    const inventory = { id: 'inventory', icon: '?', label: 'Inventory', stub: 'Inventory — coming soon' };
+    const home = { id: 'home', icon: '⌂', label: this.view === 'field' ? 'Home' : 'Field' };
+
+    if (this.view === 'field') {
+      const build = {
+        id: 'build', icon: '+', label: 'Build',
+        flyout: [
+          { id: 'tower', digit: '1', label: 'Tower', cost: `${this.world.towerCost()}m` },
+          { id: 'scavenger', digit: '2', label: 'Scavenger', cost: `${this.world.scavengerCost()}m` }
+        ]
+      };
+      return { level1: [missions, inventory, home, build], flyoutRadius: 190, flyoutArc: 70 };
+    }
+
+    // Core view: same keyOrder convention as the '1'-'9'/'0' shortcut above,
+    // so the digit badge in each flyout leaf still matches its keyboard key.
+    const keyOrder = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
+    const roomFlyout = Object.keys(CONFIG.ROOM_TYPES).map((type, i) => ({
+      id: type,
+      digit: keyOrder[i],
+      label: CONFIG.ROOM_TYPES[type].label,
+      color: CONFIG.ROOM_TYPES[type].color,
+      locked: !this.commandCore.isRoomUnlocked(type)
+    }));
+    const build = { id: 'build', icon: '+', label: 'Build', flyout: roomFlyout };
+    return { level1: [missions, inventory, home, build], flyoutRadius: 260, flyoutArc: 170 };
+  }
+
+  // Dispatches a leaf pick from the radial menu (js/ui/radialMenu.js already
+  // closed itself by the time this runs). Room-type ids are checked against
+  // CONFIG.ROOM_TYPES rather than hardcoded, so a future room type needs no
+  // change here.
+  handleRadialAction(id) {
+    if (id === 'home') {
+      if (this.view === 'field') {
+        this.camera.x = 0;
+        this.camera.y = 0;
+        this.camera.zoom = 1;
+      } else {
+        this.view = 'field';
+        this.selectedRoomType = null;
+      }
+    } else if (id === 'missions') {
+      this.ui.mission.flash();
+    } else if (id === 'tower' || id === 'scavenger') {
+      this.selectFieldBuild(id);
+    } else if (CONFIG.ROOM_TYPES[id]) {
+      this.selectRoomType(id);
+    }
   }
 
   // Phase 5c, smallest safe slice: no backend, no embedded token (a static client-side
@@ -147,11 +215,19 @@ export class Game {
       } else if (key === 's') {
         this.view = this.view === 'settings' ? 'field' : 'settings';
         this.selectedRoomType = null;
+      } else if (key === 'escape') {
+        // Phase 9b: universal cancel — closes an open radial menu and disarms
+        // whatever build type was armed, so a fresh click reopens the menu
+        // instead of placing/building immediately.
+        this.ui.radialMenu.close();
+        this.fieldBuildType = null;
+        this.selectedRoomType = null;
       } else if (this.view === 'core') {
-        // Still positional (index into Object.keys(CONFIG.ROOM_TYPES)) — index.html's
-        // core-build-bar labels must be kept in the same order by hand. Explicit
-        // keyOrder (not Number(key)-1) just supports all 10 current room types,
-        // with '0' as the 10th slot instead of computing to -1.
+        // Still positional (index into Object.keys(CONFIG.ROOM_TYPES)) — the
+        // radial menu's Build flyout (buildRadialConfig() above) must be kept
+        // in the same order by hand. Explicit keyOrder (not Number(key)-1)
+        // just supports all 10 current room types, with '0' as the 10th slot
+        // instead of computing to -1.
         const keyOrder = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
         const idx = keyOrder.indexOf(key);
         if (idx !== -1) this.selectRoomType(Object.keys(CONFIG.ROOM_TYPES)[idx]);
@@ -164,6 +240,14 @@ export class Game {
     this.input.keyPresses.length = 0;
 
     for (const click of this.input.clicks) {
+      // Phase 9b: the radial menu's own slots are separate DOM elements above
+      // the canvas, so a click that reaches here while the menu is open is by
+      // definition a click "outside" it — dismiss only, no placement/upgrade
+      // underneath, same convention as any other context menu.
+      if (this.ui.radialMenu.isOpen) {
+        this.ui.radialMenu.close();
+        continue;
+      }
       if (this.view === 'field') {
         const worldPos = this.camera.screenToWorld(click.x, click.y);
         const existingTower = this.world.towerAt(worldPos.x, worldPos.y);
@@ -181,18 +265,25 @@ export class Game {
         } else if (this.fieldBuildType === 'scavenger') {
           this.selectedScavenger = this.world.placeScavenger(worldPos.x, worldPos.y);
           this.selectedTower = null;
-        } else {
+        } else if (this.fieldBuildType === 'tower') {
           this.selectedTower = this.world.placeTower(worldPos.x, worldPos.y);
           this.selectedScavenger = null;
+        } else {
+          // Nothing armed and nothing to interact with — pop the radial menu
+          // open right here instead of the old default-to-Tower placement.
+          this.openRadialMenu(click.x, click.y);
         }
-      } else {
+      } else if (this.view === 'core') {
         const cell = this.renderer.screenToCoreCell(click.x, click.y);
         if (cell && this.selectedRoomType) {
           if (this.world.buildRoom(this.selectedRoomType, cell.gx, cell.gy)) {
             this.selectedRoomType = null;
           }
-        } else if (cell) {
+        } else if (cell && this.commandCore.getRoomAt(cell.gx, cell.gy)) {
           this.world.upgradeRoom(cell.gx, cell.gy);
+        } else {
+          // Empty cell (or missed the grid entirely) and nothing armed.
+          this.openRadialMenu(click.x, click.y);
         }
       }
     }
@@ -281,11 +372,11 @@ export class Game {
 
   render() {
     if (this.view === 'field') {
-      this.renderer.draw(this.world, this.camera);
+      this.renderer.draw(this.world, this.camera, this.fieldBuildType, this.input.mouse);
     } else if (this.view === 'core') {
-      this.renderer.drawCore(this.commandCore, this.selectedRoomType);
+      this.renderer.drawCore(this.commandCore, this.selectedRoomType, this.input.mouse);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.fieldBuildType, this.missions, this.selectedRoomType);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions);
   }
 
   loop(timestamp) {

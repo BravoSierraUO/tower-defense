@@ -431,82 +431,20 @@
     </div>
 
     <!-- =========================
-         BUILD BARS
+         RADIAL CONTEXT MENU
+         Phase 9b: click empty space (Field or Core) to open — replaces the
+         old always-on build bar. All slot content is built dynamically by
+         js/ui/radialMenu.js since Field/Core each get their own level-1 set
+         and Build flyout; only the shell (hub + two arc containers + a
+         transient stub label) is static markup.
     ========================== -->
 
-    <footer class="build-bar" id="tower-build-bar">
-
-        <div class="radial-hub"><span>Build</span></div>
-
-        <button class="build-slot" id="field-slot-tower">
-            <span>1</span>
-            Tower
-            <div class="build-slot-cost" id="field-slot-tower-cost">0m</div>
-        </button>
-
-        <button class="build-slot" id="field-slot-scavenger">
-            <span>2</span>
-            Scavenger
-            <div class="build-slot-cost" id="field-slot-scavenger-cost">0m</div>
-        </button>
-
-    </footer>
-
-    <footer class="build-bar" id="core-build-bar" hidden>
-
-        <div class="radial-hub"><span>Rooms</span></div>
-
-        <button class="build-slot" id="core-slot-reactor">
-            <span>1</span>
-            Reactor
-        </button>
-
-        <button class="build-slot" id="core-slot-aiCore">
-            <span>2</span>
-            AI Core
-        </button>
-
-        <button class="build-slot" id="core-slot-storage">
-            <span>3</span>
-            Storage
-        </button>
-
-        <button class="build-slot" id="core-slot-lab">
-            <span>4</span>
-            Lab
-        </button>
-
-        <button class="build-slot" id="core-slot-mine">
-            <span>5</span>
-            Mine
-        </button>
-
-        <button class="build-slot" id="core-slot-factory">
-            <span>6</span>
-            Factory
-        </button>
-
-        <button class="build-slot" id="core-slot-hangar">
-            <span>7</span>
-            Hangar
-        </button>
-
-        <button class="build-slot" id="core-slot-shield">
-            <span>8</span>
-            Shield
-        </button>
-
-        <button class="build-slot" id="core-slot-dock">
-            <span>9</span>
-            Dock
-        </button>
-
-        <button class="build-slot" id="core-slot-market">
-            <span>0</span>
-            Market
-        </button>
-
-    </footer>
+    <div class="radial-menu" id="radial-menu" hidden>
+        <div class="radial-hub"></div>
+        <div class="radial-level1"></div>
+        <div class="radial-flyout" hidden></div>
+        <div class="radial-stub" hidden></div>
+    </div>
 
     <div id="ui-banner" class="ui-banner" hidden></div>
 

@@ -1,13 +1,13 @@
-// Command Core view: room build slots, tech tree, power/compute/storage/research
-// readouts, and the dock/market trade buttons. update() is only meaningful while
-// view === 'core' — see ui.js for the panel-visibility toggle that gates the call.
+// Command Core view: tech tree, power/compute/storage/research readouts, and
+// the dock/market trade buttons. update() is only meaningful while
+// view === 'core' — see ui.js for the panel-visibility toggle that gates the
+// call. The room build picker moved to the click-to-open radial context menu
+// (js/ui/radialMenu.js, Phase 9b) — this panel no longer owns it.
 import { CONFIG } from '../config.js';
-import { layoutRadial } from './radialLayout.js';
 
 export class CorePanel {
-  constructor({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold, onSelectRoomType } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold } = {}) {
     this.el = document.getElementById('core-panel');
-    this.coreBuildBar = document.getElementById('core-build-bar');
     this.corePower = document.getElementById('core-power');
     this.coreCompute = document.getElementById('core-compute');
     this.coreStorage = document.getElementById('core-storage');
@@ -16,31 +16,6 @@ export class CorePanel {
     this.coreScavengerCost = document.getElementById('core-scavenger-cost');
     this.coreMetalRate = document.getElementById('core-metal-rate');
     this.corePowerDraw = document.getElementById('core-power-draw');
-
-    // Every room-type slot, keyed by the same CONFIG.ROOM_TYPES keys the
-    // keyboard shortcut already indexes into (see game.js selectRoomType).
-    this.slotEls = {
-      reactor: document.getElementById('core-slot-reactor'),
-      aiCore: document.getElementById('core-slot-aiCore'),
-      storage: document.getElementById('core-slot-storage'),
-      lab: document.getElementById('core-slot-lab'),
-      mine: document.getElementById('core-slot-mine'),
-      factory: document.getElementById('core-slot-factory'),
-      hangar: document.getElementById('core-slot-hangar'),
-      shield: document.getElementById('core-slot-shield'),
-      dock: document.getElementById('core-slot-dock'),
-      market: document.getElementById('core-slot-market')
-    };
-    this.lockedSlotEls = {
-      factory: this.slotEls.factory,
-      hangar: this.slotEls.hangar,
-      shield: this.slotEls.shield,
-      dock: this.slotEls.dock
-    };
-    for (const [type, el] of Object.entries(this.slotEls)) {
-      el.addEventListener('click', () => onSelectRoomType?.(type));
-    }
-    layoutRadial(Object.values(this.slotEls), { radius: 210, arcDegrees: 170 });
 
     this.techTreeList = document.getElementById('tech-tree-list');
     this.techNodeButtons = {};
@@ -65,7 +40,7 @@ export class CorePanel {
     this.marketBuyGoldBtn.addEventListener('click', () => onMarketBuyGold?.());
   }
 
-  update(world, commandCore, selectedRoomType) {
+  update(world, commandCore) {
     const totals = commandCore.totals();
     this.corePower.textContent = totals.power;
     this.coreCompute.textContent = `${totals.cyclesPerMin}/min`;
@@ -75,13 +50,6 @@ export class CorePanel {
     this.coreScavengerCost.textContent = `${world.scavengerCost()}m`;
     this.coreMetalRate.textContent = `${world.metalPerSecond().toFixed(1)}/s`;
     this.corePowerDraw.textContent = `${world.powerConsumption()} / ${world.powerSupply()}`;
-
-    for (const [type, el] of Object.entries(this.lockedSlotEls)) {
-      if (el) el.classList.toggle('locked', !commandCore.isRoomUnlocked(type));
-    }
-    for (const [type, el] of Object.entries(this.slotEls)) {
-      el.classList.toggle('selected', selectedRoomType === type);
-    }
 
     for (const node of CONFIG.TECH_TREE) {
       const btn = this.techNodeButtons[node.id];

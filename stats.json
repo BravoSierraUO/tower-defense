@@ -222,22 +222,28 @@
       "date": "07-19",
       "cum": 8879,
       "subject": "Add panel close affordance (X + footer Close) to profile/about/settings panels"
+    },
+    {
+      "hash": "a059c5d",
+      "date": "07-19",
+      "cum": 9029,
+      "subject": "Phase 9: Radial Build Menu — Field & Command Core"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 2820,
+      "value": 2877,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2682,
+      "value": 2741,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1828,
+      "value": 1862,
       "tone": "info"
     },
     {
