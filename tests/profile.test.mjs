@@ -146,6 +146,36 @@ describe('Profile: prestige', () => {
   });
 });
 
+describe('Profile: Phase 6 station-tier reskin', () => {
+  test('a fresh profile (never prestiged) sits at tier 0, "Outpost"', () => {
+    const p = new Profile(memStore());
+    assert.equal(p.stationTier(), 0);
+    assert.equal(p.stationTierName(), 'Outpost');
+  });
+
+  test('stationTier() tracks the prestige count 1:1 while inside CONFIG.STATION_TIERS\' range', () => {
+    const p = new Profile(memStore());
+    p.data.prestige = 3;
+    assert.equal(p.stationTier(), 3);
+    assert.equal(p.stationTierName(), CONFIG.STATION_TIERS[3].name);
+  });
+
+  test('stationTier() clamps at the last tier (Dyson Node) instead of indexing past the array', () => {
+    const p = new Profile(memStore());
+    p.data.prestige = CONFIG.STATION_TIERS.length + 5; // well past the end
+    assert.equal(p.stationTier(), CONFIG.STATION_TIERS.length - 1);
+    assert.equal(p.stationTierName(), 'Dyson Node');
+  });
+
+  test('snapshot() surfaces stationTier/stationTierName for the UI to read', () => {
+    const p = new Profile(memStore());
+    p.data.prestige = 2;
+    const snap = p.snapshot();
+    assert.equal(snap.stationTier, 2);
+    assert.equal(snap.stationTierName, CONFIG.STATION_TIERS[2].name);
+  });
+});
+
 describe('Profile: skill tree', () => {
   test('buySkill fails with insufficient points and does not deduct or level up', () => {
     const p = new Profile(memStore());

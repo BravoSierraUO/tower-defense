@@ -13,6 +13,7 @@ export class ProfilePanel {
     this.prestigeEl = document.getElementById('profile-prestige');
     this.pointsEl = document.getElementById('profile-points');
     this.statsEl = document.getElementById('profile-stats');
+    this.stationTierEl = document.getElementById('profile-station-tier');
 
     this.prestigeBtn = document.getElementById('prestige-btn');
     this.prestigeBtn.addEventListener('click', () => onPrestige?.());
@@ -90,6 +91,7 @@ export class ProfilePanel {
     this.xpFill.style.width = `${Math.round(Math.max(0, Math.min(1, snap.progress)) * 100)}%`;
     this.prestigeEl.textContent = snap.prestige;
     this.pointsEl.textContent = snap.prestigePoints;
+    this.stationTierEl.textContent = snap.stationTierName;
     this.statsEl.textContent =
       `${snap.life.kills} kills · ${snap.life.wavesCleared} waves cleared · ` +
       `${snap.life.towersPlaced} towers · ${snap.life.roomsBuilt} rooms · ` +

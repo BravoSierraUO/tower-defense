@@ -108,6 +108,11 @@ export class Profile {
   prestigeGate() { return CONFIG.PROFILE.PRESTIGE_GATE_BASE + CONFIG.PROFILE.PRESTIGE_GATE_GROWTH * this.data.prestige; }
   canPrestige() { return this.level() >= this.prestigeGate(); }
 
+  // Phase 6: station-tier reskin. Clamped so a run past CONFIG.STATION_TIERS'
+  // length just sits at the last (Dyson Node) tier rather than indexing past it.
+  stationTier() { return Math.min(this.data.prestige, CONFIG.STATION_TIERS.length - 1); }
+  stationTierName() { return CONFIG.STATION_TIERS[this.stationTier()].name; }
+
   // Payout scales with the level reached AND lifetime breadth (kills/waves
   // cleared) — a deep run banks more than a shallow one, and prestiging late
   // isn't a waste of levels you already climbed past the gate.
@@ -192,6 +197,7 @@ export class Profile {
       progress: next > cur ? (this.data.cp - cur) / (next - cur) : 1,
       prestige: this.data.prestige, prestigePoints: this.data.prestigePoints,
       canPrestige: this.canPrestige(), prestigeGate: this.prestigeGate(), prestigePayout: this.prestigePayout(),
+      stationTier: this.stationTier(), stationTierName: this.stationTierName(),
       life: Object.assign({}, this.data.life),
       badges: this.data.badges.slice(),
       skills: Object.assign({}, this.data.skills)

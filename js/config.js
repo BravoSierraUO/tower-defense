@@ -412,6 +412,22 @@ export const CONFIG = {
     PRESTIGE_FLAT_BONUS_PER: 0.1     // +10% CP gain per prestige, always on (before any skill spend)
   },
 
+  // Phase 6, station-tier item: purely cosmetic, no new persistent state — driven off
+  // the prestige count Profile already tracks (Profile.stationTier()). Names straight
+  // from lore.md's growth chain (Small -> Orbital Platform -> ... -> Dyson Node), with
+  // "Small" renamed "Outpost" for a real display label. Index = min(prestige,
+  // length-1), so a maxed-out run settles at Dyson Node instead of running off the end.
+  STATION_TIERS: [
+    { name: 'Outpost' },
+    { name: 'Orbital Platform' },
+    { name: 'Defense Station' },
+    { name: 'Citadel' },
+    { name: 'Orbital City' },
+    { name: 'Mega Station' },
+    { name: 'Planetary Ring' },
+    { name: 'Dyson Node' }
+  ],
+
   // Prestige skill tree: each node is a flat % bonus to one stat, spent with
   // prestigePoints earned on prestige. `stat` keys are read by Profile#bonusFor().
   SKILLS: [

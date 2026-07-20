@@ -153,6 +153,29 @@ export class Renderer {
     ctx.arc(p.x, p.y, r * 0.55 * healthPct, 0, Math.PI * 2);
     ctx.fillStyle = CONFIG.BASE_COLOR;
     ctx.fill();
+
+    this.drawStationRings(p, r, camera, world.profile.stationTier());
+  }
+
+  // Phase 6: the station-tier reskin — "the station expands throughout the
+  // campaign" (lore.md), tracked to Profile.stationTier() (the prestige count).
+  // One extra concentric ring per tier, reusing BASE_COLOR at falling opacity
+  // rather than inventing a new hue, so the Primitives audit's "one accent
+  // color" claim stays true. Tier 0 (Outpost) draws nothing extra — the plain
+  // base every phase before this one already had.
+  drawStationRings(p, r, camera, tier) {
+    if (tier <= 0) return;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.strokeStyle = CONFIG.BASE_COLOR;
+    ctx.lineWidth = 1.5 * camera.zoom;
+    for (let i = 1; i <= tier; i++) {
+      ctx.globalAlpha = 0.35 / i;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r + i * 8 * camera.zoom, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   drawTowers(world, camera) {

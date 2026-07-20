@@ -282,17 +282,23 @@
       "date": "07-20",
       "cum": 11625,
       "subject": "Phase 5b fill: merge avatar icon with the level badge"
+    },
+    {
+      "hash": "7425428",
+      "date": "07-20",
+      "cum": 11992,
+      "subject": "v2.23 - Phase 7d: Invader-vs-Turret Combat — Tower Health & Enemy Aggro"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4375,
+      "value": 4524,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3037,
+      "value": 3087,
       "tone": "special"
     },
     {
@@ -302,12 +308,12 @@
     },
     {
       "label": "Tests",
-      "value": 2022,
+      "value": 2190,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 19.3,
+    "activeHours": 19.7,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5
