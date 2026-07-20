@@ -1483,6 +1483,22 @@ html,body{
 }
 
 /* ===========================
+   INVENTORY MENU (Phase 11 UI layer)
+   Recipe rows reuse .mission-row verbatim; the read-only crafted-items list
+   reuses .wave-row verbatim — this is the only genuinely new rule needed,
+   a divider between the two lists inside one .panel-scroll.
+=========================== */
+
+.inventory-section-heading{
+    font-size:12px;
+    font-weight:700;
+    opacity:.6;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    margin:16px 0 8px;
+}
+
+/* ===========================
    MISSION BANNER (Phase 8b)
 =========================== */
 

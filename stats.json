@@ -246,33 +246,39 @@
       "date": "07-19",
       "cum": 9520,
       "subject": "Fix: Velocity's \"hours\" stat was hand-typed and had gone stale"
+    },
+    {
+      "hash": "b0f8b2c",
+      "date": "07-19",
+      "cum": 10358,
+      "subject": "Phases 8e-8g: Wave Menu, Mission Menu, grid/starfield settings, hotkey rebinding fix"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 3192,
+      "value": 3635,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2873,
+      "value": 2920,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1831,
+      "value": 2084,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 1624,
+      "value": 1719,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 18.1,
-    "sessionCount": 4,
+    "activeHours": 18.3,
+    "sessionCount": 5,
     "activeDays": 4,
     "sessionGapHours": 5
   }

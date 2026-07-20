@@ -492,6 +492,34 @@
         </aside>
     </div>
 
+    <!-- ==========================
+         INVENTORY MENU (Phase 11 UI layer)
+         Ore/refined stacks spent on Factory recipes (top accordion, same shape
+         Missions above uses) and a read-only list of rolled components below
+         (same row shape the Wave Menu's rows use, no button needed).
+    ========================== -->
+
+    <div id="inventory-panel-overlay" class="confirm-modal-overlay" hidden>
+        <aside class="wave-panel">
+            <button id="inventory-panel-close-btn" class="mission-help-btn panel-close-btn" title="Close">✕</button>
+
+            <div class="wave-panel-header">
+                <div class="wave-panel-title">Inventory</div>
+                <div id="inventory-panel-sub" class="wave-panel-sub">Build a Factory (Command Core) to refine ore and craft components.</div>
+            </div>
+
+            <div class="panel-scroll">
+                <div id="inventory-panel-recipes" class="wave-panel-list"></div>
+                <div class="inventory-section-heading">Crafted Items</div>
+                <div id="inventory-panel-items" class="wave-panel-list"></div>
+            </div>
+
+            <div class="panel-footer">
+                <button id="inventory-panel-footer-close-btn" class="settings-btn panel-footer-close-btn">Close</button>
+            </div>
+        </aside>
+    </div>
+
     <!-- =========================
          RADIAL CONTEXT MENU
          Phase 9b: click empty space (Field or Core) to open — replaces the

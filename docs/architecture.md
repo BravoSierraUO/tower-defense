@@ -17,6 +17,7 @@ http.server` (or any static server) from the repo root is enough.
 | `input.js` | Raw DOM listeners → an edge-triggered `keyPresses` array + click/right-click queues, drained once per frame by `game.js`. |
 | `world.js` | The field-view simulation: towers, scavenger turrets, enemies, base, gold/metal economy, power system. The biggest file — see [Economy layers](#economy-layers) below. |
 | `tower.js` / `scavenger.js` / `enemy.js` / `base.js` | Entity classes placed/owned by `World`. |
+| `inventory.js` | Phase 11 skeleton: raw ore/refined-material stacks plus discrete, independently-rolled component items (rarity + affixes). Owned by `World` (`world.inventory`), fed by `orePerSecond()`/`rollKillDrops()`. No UI reads it yet — see Known non-goals. |
 | `combat.js` | Targeting, firing, projectiles, damage resolution — a free function (`updateCombat`) rather than a method, since it needs both `World` and `dt`. |
 | `spawner.js` | Wave state machine (`countdown` → `spawning` → `active`), weighted difficulty-tier picks. |
 | `commandcore.js` / `room.js` | The interior base-building grid: room placement, tiers, build timers, tech tree, module slots. Exposes `totals()` — the one aggregate object `world.js` reads to apply Core bonuses to the field economy. |
@@ -85,6 +86,16 @@ The Cycle Budget and the power system share the same "fixed supply split across 
 consumers" shape by design (Phase 4d reused Phase 4c's pattern) but differ in one way:
 metal accrues over time, power is instantaneous.
 
+- **Rare ore / refined materials / components** (`inventory.js`, Phase 11 skeleton) — a
+  fourth layer, deliberately shaped differently depending on which half of the game produces
+  it. Mining (idle) reuses metal's own continuous-rate shape: `World.orePerSecond()` derives
+  a bonus stream off the same Cycle Budget share, with zero `Math.random()` in the per-frame
+  loop. Combat salvage (tower-defense) is the opposite on purpose — `World.rollKillDrops()`
+  rolls real RNG once per kill, since a kill is already a discrete event, not a rate. Refined
+  materials and components are spent/crafted through `Inventory`, gated on an active Factory
+  room (`World.refineMaterial()`/`craftComponent()`) — no currency check needed beyond the
+  material stacks themselves.
+
 ## Persistence
 
 `profile.js` writes to `localStorage['td.profile.v1']` after every mutating call — no
@@ -146,3 +157,6 @@ commit.
   base (deliberately cut from Phase 4b, filed as an unscoped backlog item).
 - Single base, single player, world-center-fixed — no multiplayer/multi-base yet.
 - No difficulty-curve tuning pass — the balance test suite guards structure, not fun.
+- `inventory.js`'s ore/refined/component system (Phase 11 skeleton) has no UI at all — no
+  Inventory-tab rendering, no way to trigger `refine()`/`craftComponent()` except a direct
+  method call, no HUD display of stacks or rolled items. Data model and tests only.

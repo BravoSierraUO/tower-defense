@@ -40,6 +40,9 @@ export class Game {
       },
       onOpenMissionMenu: () => { this.missionMenuOpen = !this.missionMenuOpen; },
       onTrackMission: id => this.missions.track(id),
+      onOpenInventoryMenu: () => { this.inventoryMenuOpen = !this.inventoryMenuOpen; },
+      onRefine: id => this.world.refineMaterial(id),
+      onCraft: id => this.world.craftComponent(id),
       onRadialAction: id => this.handleRadialAction(id),
       // Phase 8g: the only mouse-driven way into Core now that the B hotkey is
       // gone — same toggle semantics the old key handler had (anywhere else -> field).
@@ -66,6 +69,8 @@ export class Game {
     this.waveMenuOpen = false;
     // Same independent-overlay treatment as waveMenuOpen above.
     this.missionMenuOpen = false;
+    // Phase 11 UI layer: same independent-overlay treatment as the two above.
+    this.inventoryMenuOpen = false;
     this.resetRunTrackers();
   }
 
@@ -104,6 +109,7 @@ export class Game {
     this.fieldBuildType = null;
     this.waveMenuOpen = false;
     this.missionMenuOpen = false;
+    this.inventoryMenuOpen = false;
     this.resetRunTrackers();
   }
 
@@ -137,10 +143,10 @@ export class Game {
 
   buildRadialConfig() {
     const missions = { id: 'missions', icon: '?', label: 'Missions' };
-    // Phase 9b: no inventory system exists yet — a stub leaf flashes a
-    // "coming soon" label instead of calling back into game logic, so the
-    // slot has somewhere to live once inventory is actually built.
-    const inventory = { id: 'inventory', icon: '?', label: 'Inventory', stub: 'Inventory — coming soon' };
+    // Phase 11 UI layer: promoted from Phase 9b's "coming soon" stub now that
+    // a real item/inventory system exists — opens the Inventory Menu exactly
+    // the way the Missions leaf above opens the Mission Menu.
+    const inventory = { id: 'inventory', icon: '?', label: 'Inventory' };
     const home = { id: 'home', icon: '⌂', label: this.view === 'field' ? 'Home' : 'Field' };
 
     if (this.view === 'field') {
@@ -191,6 +197,8 @@ export class Game {
       }
     } else if (id === 'missions') {
       this.missionMenuOpen = true;
+    } else if (id === 'inventory') {
+      this.inventoryMenuOpen = true;
     } else if (id === 'scavenger' || CONFIG.DAMAGE_TYPES[id]) {
       this.selectFieldBuild(id);
     } else if (CONFIG.ROOM_TYPES[id]) {
@@ -241,6 +249,7 @@ export class Game {
         this.selectedRoomType = null;
         this.waveMenuOpen = false;
         this.missionMenuOpen = false;
+        this.inventoryMenuOpen = false;
       } else if (this.view === 'core') {
         // Still positional (index into Object.keys(CONFIG.ROOM_TYPES)) — the
         // radial menu's Build flyout (buildRadialConfig() above) must be kept
@@ -356,6 +365,7 @@ export class Game {
       this.commandCore.update(dt);
       this.world.updatePassiveIncome(dt, this.profile.level());
       this.world.updateCycleBudget(dt);
+      this.world.updateOreAccrual(dt); // Phase 11 skeleton
       this.watchProfileEvents();
       // A mission's `reward` (see missions.js) pays out exactly once, the instant it
       // newly completes — same "diff-watch and translate into a world mutation" shape
@@ -416,7 +426,7 @@ export class Game {
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType, this.input.mouse);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions, this.waveMenuOpen, this.missionMenuOpen);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions, this.waveMenuOpen, this.missionMenuOpen, this.inventoryMenuOpen);
   }
 
   loop(timestamp) {

@@ -124,9 +124,23 @@ export const CONFIG = {
       label: 'Mine', color: '#B08968', output: 'metalPerCycle',
       tiers: [{ metalPerCycle: 3 }, { metalPerCycle: 8 }, { metalPerCycle: 18 }]
     },
+    // Phase 11 skeleton: Factory does double duty as of this phase — its
+    // original buildTimeReduction job, plus rarityBonusPct (shifts crafted-
+    // item odds toward Green/Gold, see rollItemRarity() in inventory.js).
+    // A standalone Foundry room was the original plan here, but ROOM_TYPES
+    // is hard-capped at 10 entries (game.js's number-key selector only has
+    // 10 slots, '1'-'9' then '0' — see tests/balance.test.mjs's regression
+    // guard for the Phase 4c bug this exact mistake already caused once).
+    // Reusing Factory both respects that ceiling and the user's own "can't
+    // have too many rooms" call — it was already the one dependency the
+    // Foundry idea needed anyway.
     factory: {
       label: 'Factory', color: '#FF9F5B', output: 'buildTimeReduction',
-      tiers: [{ buildTimeReduction: 1 }, { buildTimeReduction: 2.5 }, { buildTimeReduction: 4 }],
+      tiers: [
+        { buildTimeReduction: 1,   rarityBonusPct: 0 },
+        { buildTimeReduction: 2.5, rarityBonusPct: 0.05 },
+        { buildTimeReduction: 4,   rarityBonusPct: 0.12 }
+      ],
       requiresTech: 'factoryAccess'
     },
     hangar: {
@@ -267,6 +281,84 @@ export const CONFIG = {
   SCAVENGER_UPGRADE_COST_BASE: 20,
   SCAVENGER_UPGRADE_COST_GROWTH: 1.8,
   SCAVENGER_COLOR: '#D9A441',
+
+  // Phase 11 skeleton: Materials, Crafting & Itemization — "Ultima Online in
+  // space." Two deliberately different acquisition shapes for the same item
+  // pool, matching the game's own idle/tower-defense split: mining (idle) is
+  // a continuous derived rate exactly like Metal already is, no RNG in the
+  // per-frame loop; combat salvage (tower-defense) is a real per-kill dice
+  // roll, since a kill is already a discrete event. World.metal itself is
+  // untouched by any of this — 'metal' rolls below still count for the
+  // stats-screen odds table but never write to Inventory; rarer ore is a
+  // pure bonus stream layered on top of Metal's existing accrual, not carved
+  // out of it, so this can't regress the existing economy. First-pass
+  // numbers throughout, not tuned — same standing caveat every other
+  // constant block in this file already carries.
+  ORE_TYPES: {
+    metal:      { label: 'Metal',       color: '#8FA6B8' },
+    fancyMetal: { label: 'Fancy Metal', color: '#4CD97B' },
+    platinum:   { label: 'Platinum',    color: '#F3C969' },
+    diamonds:   { label: 'Diamonds',    color: '#8FE3FF' }
+  },
+  // Weighted odds a Scavenger's cycle payout rolls, index = tier - 1. Sums to
+  // 100 per tier; better tiers shift weight toward the rarer end, same
+  // "upgrading makes the good stuff more likely, not just more" feel the
+  // rarity-bonus Foundry tiers below go for.
+  ORE_LOOT_TABLE: [
+    { metal: 80, fancyMetal: 15,   platinum: 4.99, diamonds: 0.01 },
+    { metal: 72, fancyMetal: 20,   platinum: 7.97, diamonds: 0.03 },
+    { metal: 65, fancyMetal: 25,   platinum: 9.95, diamonds: 0.05 }
+  ],
+  // Combat's own table — deliberately excludes plain Metal (wreck salvage
+  // reads as a distinct, richer reward than background mining, not a copy of
+  // it) and is checked once per kill, not blended into the continuous rate above.
+  ENEMY_ORE_DROP_TABLE: { fancyMetal: 70, platinum: 27, diamonds: 3 },
+  ENEMY_ORE_DROP_CHANCE: 0.12,       // per kill
+  ENEMY_COMPONENT_DROP_CHANCE: 0.03, // per kill — skips straight to a rolled component, no recipe cost
+
+  // Factory refines raw ore into refined materials, then assembles refined
+  // materials into components — reuses the one room rather than adding a
+  // second (see Factory's own comment above). Every key here is an
+  // Inventory.ore/refined field name.
+  REFINED_RECIPES: {
+    alloy:         { label: 'Alloy',          fancyMetal: 3 },
+    circuitWire:   { label: 'Circuit Wire',   fancyMetal: 2, platinum: 1 },
+    prismaticCoil: { label: 'Prismatic Coil', platinum: 2, diamonds: 1 }
+  },
+  // Every craft (paid, at an active Factory) or drop (free, combat) independently
+  // rolls its own rarity + affixes via inventory.js's rollItemRarity()/rollAffixes()
+  // — two Motors from the same recipe are never identical. overdriveCore is the
+  // aspirational top-end item: expensive enough that crafting one at all is
+  // the flex, not something meant to be spammed.
+  COMPONENT_RECIPES: {
+    motor:         { label: 'Motor',          alloy: 2, circuitWire: 1 },
+    targetingChip: { label: 'Targeting Chip', circuitWire: 2 },
+    armorPlate:    { label: 'Armor Plate',    alloy: 3 },
+    overdriveCore: { label: 'Overdrive Core', prismaticCoil: 2 }
+  },
+  // Grey/Green/Gold, exactly the language the user asked for — weight is the
+  // roll odds, affixCount is how many random affixes (below) a Green/Gold
+  // item gets on top of just filling a recipe slot. Foundry's rarityBonusPct
+  // (ROOM_TYPES.foundry) shifts weight out of grey and into green/gold at
+  // craft time — see rollItemRarity() in inventory.js.
+  RARITY_TIERS: [
+    { id: 'grey',  label: 'Grey',  color: '#9AA5B1', weight: 70, affixCount: 0 },
+    { id: 'green', label: 'Green', color: '#4CD97B', weight: 25, affixCount: 1 },
+    { id: 'gold',  label: 'Gold',  color: '#F3C969', weight: 5,  affixCount: 2 }
+  ],
+  // Deliberately spans multiple stat families ("go crazy") so the same
+  // component name can land wildly different roles — a Gold Motor might be a
+  // fire-rate item, might be a rare-ore-find item. `stat` names are read by
+  // whatever eventually consumes affixes (Phase 7c's parked upgrade modal);
+  // this pass only rolls and stores them.
+  AFFIX_POOL: [
+    { id: 'fireRate',   label: 'Fire Rate',      stat: 'fireRateMult',    min: 0.03,  max: 0.08 },
+    { id: 'range',      label: 'Range',          stat: 'rangeMult',       min: 0.03,  max: 0.08 },
+    { id: 'cooldown',   label: 'Cooldown',       stat: 'cooldownMult',    min: -0.08, max: -0.03 },
+    { id: 'rareFind',   label: 'Rare-Ore Find',  stat: 'rareOreFindMult', min: 0.02,  max: 0.05 },
+    { id: 'metalYield', label: 'Metal Yield',    stat: 'metalYieldMult',  min: 0.03,  max: 0.08 },
+    { id: 'buildSpeed', label: 'Build Speed',    stat: 'buildSpeedMult',  min: 0.03,  max: 0.08 }
+  ],
 
   // Phase 4d: Energy System. Reactor's power is a live supply pool combat Towers
   // draw from continuously (World.powerSupply/powerConsumption/powerFactor) —

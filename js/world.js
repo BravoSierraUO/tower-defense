@@ -5,6 +5,7 @@ import { Enemy } from './enemy.js';
 import { Base } from './base.js';
 import { Spawner } from './spawner.js';
 import { Profile } from './profile.js';
+import { Inventory, rollDroppedOre } from './inventory.js';
 
 export class World {
   // `profile` defaults to a fresh Profile so every existing caller (tests
@@ -24,6 +25,7 @@ export class World {
     this.metal = CONFIG.STARTING_METAL; // Phase 4c: funds Tower/Scavenger Turret cost, not gold
     this.moduleCharges = 0;     // Phase 8a: wave-clear salvage — spends as a free module install
     this.productionParts = 0;  // Phase 8a: wave-clear salvage — spends as a free build-timer rush
+    this.inventory = new Inventory(); // Phase 11 skeleton: ore/refined/components, see js/inventory.js
     this.commandCore = commandCore;
     this.profile = profile;
     this.base = new Base();
@@ -133,6 +135,62 @@ export class World {
     this.addMetal(this.metalPerSecond() * dt);
   }
 
+  // Phase 11 skeleton: rare-ore mining is a bonus stream layered on top of the
+  // metal accrual above, not carved out of it — reuses the same Cycle Budget
+  // share (cyclesPerSecond() split across active Scavengers) metalPerSecond()
+  // already uses, scaled by each Scavenger's own tier odds (CONFIG.ORE_LOOT_TABLE).
+  // Scoped to Scavenger Turret only this pass — Mine stays metal-only, same
+  // "one thing at a time" caution the rest of this system carries.
+  orePerSecond(type) {
+    if (this.scavengers.length === 0) return 0;
+    const share = this.cyclesPerSecond() / this.scavengers.length;
+    return this.scavengers.reduce((sum, s) => {
+      const odds = CONFIG.ORE_LOOT_TABLE[s.tier - 1][type] || 0;
+      return sum + share * s.metalPerCycle * (odds / 100);
+    }, 0);
+  }
+
+  updateOreAccrual(dt) {
+    for (const type of Object.keys(this.inventory.ore)) {
+      this.inventory.addOre(type, this.orePerSecond(type) * dt);
+    }
+  }
+
+  // Combat's own material path (tower-defensish, distinct from mining's
+  // continuous accrual above) — a kill is already a discrete event, so this
+  // rolls real RNG once per kill rather than a derived rate. Called from
+  // updateEnemies() on every kill.
+  rollKillDrops() {
+    if (Math.random() < CONFIG.ENEMY_ORE_DROP_CHANCE) {
+      this.inventory.addSalvagedOre(rollDroppedOre());
+    }
+    if (Math.random() < CONFIG.ENEMY_COMPONENT_DROP_CHANCE) {
+      const recipeIds = Object.keys(CONFIG.COMPONENT_RECIPES);
+      const recipeId = recipeIds[Math.floor(Math.random() * recipeIds.length)];
+      this.inventory.addCraftedItem(recipeId);
+    }
+  }
+
+  // Factory does double duty as of Phase 11 (refine ore -> refined, assemble
+  // refined -> component, on top of its original buildTimeReduction job)
+  // rather than a dedicated Foundry room — both gated on Factory being built,
+  // same "World checks the gating room, then delegates" shape tradeAtDock/
+  // tradeGoldForMetal already use for Dock/Market.
+  craftingRoom() {
+    return this.commandCore.rooms.find(r => r.type === 'factory' && r.isActive()) || null;
+  }
+
+  refineMaterial(recipeId) {
+    if (!this.craftingRoom()) return false;
+    return this.inventory.refine(recipeId);
+  }
+
+  craftComponent(recipeId) {
+    const factory = this.craftingRoom();
+    if (!factory) return null;
+    return this.inventory.craft(recipeId, factory.stats.rarityBonusPct);
+  }
+
   // Phase 4b: base passive income, scaled by the player's persistent profile level.
   updatePassiveIncome(dt, level) {
     this.addGold(level * CONFIG.BASE_PASSIVE_INCOME_PER_LEVEL * dt);
@@ -177,6 +235,7 @@ export class World {
         this.kills++;
         this.addGold(Math.round(enemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * this.rewardMultiplier()));
         this.spawner.waveValueKilled += enemy.maxHealth; // Phase 8a: raw value, feeds finalizeWave()'s chest-tier %
+        this.rollKillDrops(); // Phase 11 skeleton: tower-defensish material path
       }
     }
     // Frame order is spawning -> combat (resolveBaseHits) -> here. An enemy that just

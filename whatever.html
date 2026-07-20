@@ -14,7 +14,7 @@
     --info:#9aa8e8; --idle:#8a93a3; --special:#c79ae8;
     --phase-1:#4A90E2; --phase-2a:#2ECC71; --phase-2b:#F39C12; --phase-3:#9B59B6;
     --phase-4:#E74C3C; --phase-4b:#C0392B; --phase-4c:#C97B3C; --phase-4d:#D9A441; --phase-5:#8B9AB2;
-    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393; --phase-9:#5BC8FF;
+    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393; --phase-9:#5BC8FF; --phase-11:#E0A458;
     --body:Inter,system-ui,"Segoe UI",sans-serif;
     --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
     color-scheme:dark;
@@ -257,7 +257,7 @@
   <div class="chips">
     <span class="chip">Vanilla JS · Canvas 2D</span>
     <span class="chip">Solo build · zero deps</span>
-    <span class="chip">142 tests · node --test</span>
+    <span class="chip">157 tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
@@ -435,7 +435,7 @@
     <div class="stat"><b id="statFlows">·</b><span>system flows</span></div>
     <div class="stat"><b id="statNodes">·</b><span>documented steps</span></div>
     <div class="stat"><b id="statRefs">·</b><span>code references</span></div>
-    <div class="stat"><b>142</b><span>passing tests, zero deps</span></div>
+    <div class="stat"><b>157</b><span>passing tests, zero deps</span></div>
   </div>
 </section>
 
@@ -571,7 +571,7 @@ const ROADMAP = [
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 142 tests across 7 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. 157 tests across 8 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
@@ -627,6 +627,23 @@ const ROADMAP = [
       'Per-satellite module slots (Weapon/Power/Cooling/AI Chip/Targeting/Armor) — a second, parallel module system to the Core\'s room modules from Phase 3'
     ],
     note:'Deliberately filed unscoped, not as a designed phase card like Phase 7a above. This is the biggest lift and biggest payoff in either doc — turns one tower type + gold upgrade into an actual build-crafting layer — but it touches combat.js/tower.js/renderer.js/ui.js/tests/balance.test.mjs all at once, on top of a difficulty/balance curve nobody has playtested yet (see the "Later" section below — still blocking). Hard pre-condition: do not start this until the existing single-satellite-type loop has had at least one real playtest pass. Full reasoning in dreams/2026-07-19-fiction-vs-implementation-gaps.md.' },
+  { id:'p7c', num:'7c', title:'Turret Idle Life — Scavenger Zap & Flavor Fire', status:'BACKLOG', color:'--phase-7',
+    desc:'Visual-only pass giving every placed turret a visible "doing its job" tell between real events, instead of sitting inert on the field. A Scavenger Turret visibly hauls in a passing asteroid on each metal payout; combat turrets get cosmetic potshots at enemies drifting through range. No new state, no combat.js changes — purely render-layer.',
+    items:[
+      'Scavenger metal-cycle animation — an asteroid sprite drifts into the Scavenger\'s radius and gets "zapped"/pulled in, timed to the AI Cycle Budget payout it already receives (World.metalPerSecond, js/scavenger.js) rather than a fixed clock of its own, so the animation always matches the tier-scaled rate a player actually sees on the HUD',
+      'Combat turret flavor shots — cosmetic potshots at any enemy passing through range, rendered separately from the real damage-dealing Projectile in combat.js (no health change, no cooldown interaction) — the point is "this turret is alive," not a second damage source',
+      'Click-to-upgrade modal (raised same conversation) — deliberately NOT part of this card: today clicking your own Tower/Scavenger silently upgrades it if affordable (game.js), and a modal only earns the extra click if it shows something the silent path can\'t (stat deltas, real recipe costs). Parked until the material/crafting system gives it real content — see the inventory design work the same session'
+    ],
+    note:'Surfaced 2026-07-19 alongside Phase 7d below — split into its own card on purpose: pure render/animation, zero new state, safe to build any time as filler, unlike 7d\'s real combat rules.' },
+  { id:'p7d', num:'7d', title:'Invader-vs-Turret Combat — Tower Health & Enemy Aggro', status:'BACKLOG · NOT SCOPED', color:'--phase-7',
+    desc:'Promotes a gap flagged as far back as Phase 4b\'s note ("Tower still has no health field... enemies still walk straight through towers to the base untouched") into its own designed-but-unscoped card. Combat today is strictly one-directional (combat.js: towers shoot enemies, never the reverse) — this closes it: some enemies target a turret directly instead of the Base, the turret can take damage and die, and killing an aggro\'d enemy pays a defender\'s bonus.',
+    items:[
+      'Tower/Scavenger need a health field + takeDamage() — neither exists today; a destroyed turret needs a real removal path, a loss rather than sellTowerAt\'s refund',
+      'Enemy targeting fork — extend the spawner\'s per-enemy roll (same shape as Phase 7a\'s pickArmorType()) to occasionally aggro the nearest in-range turret instead of walking to Base; needs an actual decision rule (distance? turret tier? random weight?), not a coin flip, or it reads as noise rather than a real choice enemies make',
+      'Reward hook — a turret kill needs its own metal+gold payout wired in alongside the existing per-kill reward path in combat.js; user\'s framing was "we get some metal and money," not yet a real formula',
+      'Visual telegraph — an aggro\'d enemy peeling off toward a turret has to read differently on screen than one beelining for Base, or the mechanic is invisible until the turret\'s already gone'
+    ],
+    note:'User\'s own framing, 2026-07-19: "maybe the invader will decide he wants to take on that turret." Real balance/design surface, same caution Phase 6/7b/8d already carry — aggro rate, turret HP, and payout size all need actual numbers before this feels fair rather than punishing, not just a lookup against existing patterns. No dependency on 7c\'s animation pass, but building 7c first is free filler while this gets designed properly.' },
   { id:'p8a', num:'8a', title:'Idle Wave Loop & Salvage Rewards', status:'DONE', color:'--phase-8',
     desc:'Replaces spawner.js\'s fully automatic countdown→spawning→active loop with a player-paced idle phase: gather resources, place a turret or two, then manually trigger each wave instead of it auto-starting on a timer. Wave-clear rewards become itemized salvage (metal, upgrade modules, production parts, gold) instead of one gold lump, and a wipe still pays out a tiered chest scaled to how far you got.',
     items:[
@@ -720,7 +737,18 @@ const ROADMAP = [
       'Not yet scoped: no save-sync transport, no phone-as-relay mechanism, and no cross-device profile format exist today — `profile.js` only persists to one browser\'s localStorage, with zero export/remote path',
       'Deliberately ruled out by the user\'s own framing, so it doesn\'t need re-litigating later: this is not a second full client mirroring the PC build/combat loop — that\'s what the PWA is for'
     ],
-    note:'Filed unscoped on purpose, same caution Phase 7/8d already carry — no transport design, no data format, no UI shape decided. Depends in spirit on the PWA the user mentioned in the same conversation (not yet its own roadmap card) — "carry my session to another PC" only becomes a real need once there\'s a real installable PWA to carry a session between.' }
+    note:'Filed unscoped on purpose, same caution Phase 7/8d already carry — no transport design, no data format, no UI shape decided. Depends in spirit on the PWA the user mentioned in the same conversation (not yet its own roadmap card) — "carry my session to another PC" only becomes a real need once there\'s a real installable PWA to carry a session between.' },
+  { id:'p11', num:'11', title:'Materials, Crafting & Itemization — "Ultima Online in Space"', status:'BACKLOG · PARTIAL', color:'--phase-11',
+    desc:'A real material/crafting depth ladder — raw ore → refined materials → components → upgrades — sitting alongside Metal rather than replacing it. Two deliberately different acquisition paths matching the game\'s own idle/tower-defense split: Scavenger mining is a continuous derived rate with zero RNG in the frame loop (same shape Metal itself already uses); combat kill-drops are real per-kill dice rolls, since a kill is already a discrete event. Every crafted or dropped component independently rolls its own Grey/Green/Gold rarity plus random affixes — two Motors from the same recipe are never identical.',
+    items:[
+      'js/inventory.js (new) — rollOre/rollDroppedOre/rollItemRarity/rollAffixes plus the Inventory class (ore/refined stacks, discrete item instances, permanent lifetimeOreMined/lifetimeOreSalvaged counters for a future stats-screen odds table). 4 ore types (Metal/Fancy Metal/Platinum/Diamonds), 3 refined materials, 4 components including an aspirational Overdrive Core — done',
+      'World.orePerSecond()/updateOreAccrual() — rare-ore mining as a bonus stream layered on top of the existing metalPerSecond() accrual, not carved out of it; World.metal\'s own rate and every existing economy test are untouched. World.rollKillDrops() — the combat-side path, hooked into updateEnemies() on every kill — done',
+      'World.refineMaterial()/craftComponent(), gated on an active Factory room — done, but Factory reuse was a real design reversal mid-build, not the original plan: a standalone Foundry room was built first, then reverted once tests/balance.test.mjs\'s Phase-4c regression guard caught ROOM_TYPES growing to 11 entries, past game.js\'s hard 10-slot number-key ceiling. Factory doing double duty (its original buildTimeReduction job, plus rarityBonusPct) fit both that ceiling and the user\'s own "can\'t have too many rooms" call, and was already the one dependency the Foundry idea needed anyway',
+      '15 new tests (tests/inventory.test.mjs) — weighted-roll distributions (same statistical-loop convention tests/spawner.test.mjs already set for RNG-heavy code), craft/refine\'s afford-or-silently-no-op gate, orePerSecond()\'s formula, and rollKillDrops() landing near its configured chances over 5000 trials. Full node --test suite green at 157/157 (up from 142)',
+      'Update, v2.18: the UI layer landed same session. New js/ui/inventoryPanel.js — structurally lifted from Phase 8f\'s Mission Menu (fixed recipe rows in an accordion, same .mission-row shape) plus a read-only crafted-items list reusing the Wave Menu\'s .wave-row shape. Zero new CSS beyond one divider rule. Opened via the radial menu\'s Inventory leaf, promoted from Phase 9b\'s "coming soon" stub to a real leaf the same way Missions was in Phase 8f',
+      'Still NOT done: no way to spend a crafted component at a Tower/Scavenger upgrade (that\'s Phase 7c\'s parked upgrade-modal, still parked — it now has real content to show, just no UI reads it yet), and no stats-screen odds table surfacing lifetimeOreMined/lifetimeOreSalvaged (the "metal chance 80%, diamonds 0.01%" flex) — the counters exist, nothing displays them yet'
+    ],
+    note:'User\'s own framing: "Ultima Online in space," a two-stage production line (drop a component whole, or build it from refined materials), and explicit "go crazy" on affix variety — grey/green/gold rarity plus stats like fire rate, cooldown, or rare-ore find chance are all first-pass numbers, not tuned. Also feeds Phase 7c\'s parked upgrade-modal idea real content to show (a turret\'s have/need component counts, rolled affixes) once that UI actually gets built. First-pass numbers throughout, same standing caveat every constant block in this system already carries.' }
 ];
 
 function renderRoadmap(){
@@ -1519,13 +1547,13 @@ const FLOWS = [
   {
     id: 'balanceguards', group: 'Proving it',
     title: "A tuning pass can't silently break the economy",
-    summary: '142 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
+    summary: '157 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
     lanes: ['Change', 'Run', 'Stress', 'Checks', 'Verdict'],
     nodes: [
       { id: 'tune', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'A constant changes in config.js\ne.g. a tier-3 buff' },
-      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n142 tests, 7 files, zero deps',
+      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n157 tests, 8 files, zero deps',
         code_ref: 'package.json · tests/*.test.mjs',
-        detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile/missions cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
+        detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile/missions/inventory cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
       { id: 'maxed', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'maxOutRoom() helper\nfull tech chain, max tier, every module slot',
         code_ref: 'tests/balance.test.mjs',
         detail: 'Unlocks every tech prereq (bypassing the research cost — only the gate matters for this test), forces a room to its final tier, and fills every module slot: the theoretical ceiling of investment in one room.' },
@@ -1968,33 +1996,39 @@ const STATS = {
       "date": "07-19",
       "cum": 9520,
       "subject": "Fix: Velocity's \"hours\" stat was hand-typed and had gone stale"
+    },
+    {
+      "hash": "b0f8b2c",
+      "date": "07-19",
+      "cum": 10358,
+      "subject": "Phases 8e-8g: Wave Menu, Mission Menu, grid/starfield settings, hotkey rebinding fix"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 3192,
+      "value": 3635,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2873,
+      "value": 2920,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1831,
+      "value": 2084,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 1624,
+      "value": 1719,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 18.1,
-    "sessionCount": 4,
+    "activeHours": 18.3,
+    "sessionCount": 5,
     "activeDays": 4,
     "sessionGapHours": 5
   }
