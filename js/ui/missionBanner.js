@@ -1,12 +1,19 @@
 // Phase 8b: tutorial mission banner + reusable glow highlight that points at the
 // mission's current target UI element.
 export class MissionBanner {
-  constructor() {
+  // Phase 8f: the banner is a glance-only summary of whichever mission is current —
+  // clicking it (anywhere but the "?" flash button) opens the full Mission Menu
+  // (js/ui/missionPanel.js) to browse/track/see rewards for all of them.
+  constructor({ onOpenMenu } = {}) {
     this.el = document.getElementById('mission-banner');
     this.textEl = document.getElementById('mission-text');
     this.hintEl = document.getElementById('mission-hint');
     this.glowTargetEl = null; // the HUD element currently wearing .mission-glow, if any
-    document.getElementById('mission-help-btn').addEventListener('click', () => this.flash());
+    this.el.addEventListener('click', () => onOpenMenu?.());
+    document.getElementById('mission-help-btn').addEventListener('click', e => {
+      e.stopPropagation(); // stays a dedicated "show me" nudge, doesn't also open the menu
+      this.flash();
+    });
   }
 
   // Re-triggers the glow-flash on whatever's currently glowing. Public so the

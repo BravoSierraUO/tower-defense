@@ -1,7 +1,7 @@
 // Top-right avatar menu: entry point for Profile/About/Settings/Report-bug/Reset-progress.
 // Closes on any outside click via the document-level listener below.
 export class AvatarMenu {
-  constructor({ onToggleProfile, onToggleAbout, onToggleSettings, onReportBug, onOpenResetConfirm } = {}) {
+  constructor({ onToggleCore, onToggleProfile, onToggleAbout, onToggleSettings, onReportBug, onOpenResetConfirm } = {}) {
     this.btn = document.getElementById('avatar-btn');
     this.menu = document.getElementById('avatar-menu');
     this.btn.addEventListener('click', (e) => {
@@ -10,6 +10,9 @@ export class AvatarMenu {
     });
     document.addEventListener('click', () => this.setOpen(false));
 
+    // Phase 8g: the only mouse-driven way into the Command Core now that the B
+    // hotkey (which collided with WASD panning) is gone.
+    document.getElementById('menu-core').addEventListener('click', () => { this.setOpen(false); onToggleCore?.(); });
     document.getElementById('menu-profile').addEventListener('click', () => { this.setOpen(false); onToggleProfile?.(); });
     document.getElementById('menu-about').addEventListener('click', () => { this.setOpen(false); onToggleAbout?.(); });
     document.getElementById('menu-settings').addEventListener('click', () => { this.setOpen(false); onToggleSettings?.(); });

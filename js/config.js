@@ -6,6 +6,16 @@ export const CONFIG = {
   ZOOM_MAX: 3,
   ZOOM_SPEED: 0.001,
   PAN_SPEED: 500,
+  // Rebindable via Settings > Hotkeys (js/keybindings.js) — these are only the
+  // defaults, the actual runtime binding is whatever's in localStorage merged over
+  // this. Single physical keys only, no modifier chords (Ctrl/Shift/Alt) — deliberately
+  // out of scope for an action set this small in a non-RTS.
+  DEFAULT_KEYBINDINGS: {
+    panUp: 'w',
+    panDown: 's',
+    panLeft: 'a',
+    panRight: 'd'
+  },
   BG_COLOR: '#0B1020',
   GRID_COLOR: 'rgba(98,208,255,0.08)',
   GRID_COLOR_MAJOR: 'rgba(98,208,255,0.15)',

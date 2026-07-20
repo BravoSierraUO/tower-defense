@@ -55,14 +55,14 @@ http.server` (or any static server) from the repo root is enough.
 
 ## View state machine
 
-`Game.view` is one of `'field' | 'core' | 'profile' | 'about'`, toggled by hotkeys
-(`B`/`P`/`O`) or, for `about`, also a HUD button. Exactly one top-level `<aside>` in
-`index.html` is un-hidden at a time (`core-panel` / `profile-panel` / `about-panel`); the
-field view has no panel of its own, just the always-visible HUD. Camera panning and
-tower/room placement clicks are both gated on `view === 'field'` — nothing happens
-underneath a panel. There is currently no single click-to-open menu; each view is its own
-hotkey (see the Roadmap's Phase 5b card in `whatever.html` for the "menu shell" idea this
-would consolidate into, deliberately filed and not built).
+`Game.view` is one of `'field' | 'core' | 'profile' | 'about' | 'settings'`, toggled via the
+avatar-menu dropdown (top-right; `js/ui/avatarMenu.js`) — Phase 8g removed the old `B`/`P`/`O`/`S`
+hotkeys after `S` turned out to collide with WASD camera panning (holding S to pan south also
+flipped Settings open, which then stopped `camera.update()` from running at all). Exactly one
+top-level `<aside>` in `index.html` is un-hidden at a time (`core-panel` / `profile-panel` /
+`about-panel` / `settings-panel`); the field view has no panel of its own, just the always-visible
+HUD. Camera panning and tower/room placement clicks are both gated on `view === 'field'` — nothing
+happens underneath a panel.
 
 ## Economy layers
 

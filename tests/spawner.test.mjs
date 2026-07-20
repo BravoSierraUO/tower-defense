@@ -31,16 +31,16 @@ describe('Spawner: idle wave loop (Phase 8a)', () => {
 
   test('enemiesToSpawn grows by WAVE_ENEMY_GROWTH per wave', () => {
     const spawner = new Spawner();
-    spawner.waveNumber = 4;
-    spawner.startNextWave();
+    spawner.startWave(5, false);
     assert.equal(spawner.waveNumber, 5);
+    assert.equal(spawner.maxWave, 5, 'a non-replay startWave() advances the progress frontier');
     assert.equal(spawner.enemiesToSpawn, CONFIG.WAVE_BASE_ENEMIES + 4 * CONFIG.WAVE_ENEMY_GROWTH);
   });
 
   test('spawns exactly enemiesToSpawn enemies, one per ENEMY_SPAWN_INTERVAL, then goes active', () => {
     const spawner = new Spawner();
     const { world } = freshGame(0);
-    spawner.startNextWave();
+    spawner.triggerWave();
     const total = spawner.enemiesToSpawn;
 
     for (let i = 0; i < total; i++) {
@@ -155,5 +155,65 @@ describe('Spawner: idle wave loop (Phase 8a)', () => {
     const seen = new Set();
     for (let i = 0; i < 200; i++) seen.add(spawner.pickTier());
     assert.ok(seen.has(CONFIG.DIFFICULTY_TIERS.hard), 'hard tier turns up once unlocked (weighted random over 200 rolls)');
+  });
+});
+
+describe('Spawner: wave replay (farm an old wave without touching progress)', () => {
+  test('triggerReplay() refuses a wave never reached', () => {
+    const spawner = new Spawner();
+    assert.equal(spawner.triggerReplay(1), false, 'maxWave is still 0 — wave 1 has never been reached');
+    assert.equal(spawner.state, 'idle');
+  });
+
+  test('triggerReplay() re-fights an already-reached wave without advancing maxWave', () => {
+    const spawner = new Spawner();
+    spawner.triggerWave(); // wave 1
+    spawner.startWave(2, false); // simulate having pushed on to wave 2 (maxWave now 2)
+    spawner.state = 'idle'; // back at idle between waves, same as after a real finalizeWave()
+    assert.equal(spawner.maxWave, 2);
+
+    assert.equal(spawner.triggerReplay(1), true);
+    assert.equal(spawner.waveNumber, 1, 'the active wave is the replayed one');
+    assert.equal(spawner.maxWave, 2, 'progress frontier is untouched by a replay');
+    assert.equal(spawner.isReplay, true);
+  });
+
+  test('triggerReplay() refuses a wave beyond maxWave (can\'t skip ahead)', () => {
+    const spawner = new Spawner();
+    spawner.triggerWave(); // maxWave = 1
+    assert.equal(spawner.triggerReplay(2), false, 'wave 2 has not been reached yet');
+  });
+
+  test('a replay clear pays that wave\'s own (lower) reward scale and does not bump wavesCleared', () => {
+    const spawner = new Spawner();
+    const { world } = freshGame(0);
+    spawner.triggerWave(); // wave 1
+    spawner.startWave(5, false); // now at wave 5 (maxWave = 5)
+    spawner.state = 'idle';
+    spawner.triggerReplay(1); // farm the cheaper wave 1 instead
+    spawner.state = 'active';
+    spawner.waveValueTotal = 100;
+    spawner.waveValueKilled = 100;
+
+    spawner.update(0.016, world);
+
+    const expectedGold = Math.round(CONFIG.WAVE_CLEAR_BONUS_BASE * world.rewardMultiplier()); // wave-1 scale, not wave-5
+    assert.equal(world.gold, expectedGold);
+    assert.equal(spawner.wavesCleared, 0, 'a replay clear is reward-only — it never feeds profile/achievement progress');
+    assert.equal(spawner.maxWave, 5, 'progress frontier still untouched after the replay resolves');
+    assert.equal(spawner.state, 'idle');
+  });
+
+  test('a replayed wave can never itself trip MAX_WAVES completion', () => {
+    const spawner = new Spawner();
+    const { world } = freshGame(0);
+    spawner.maxWave = CONFIG.MAX_WAVES;
+    spawner.complete = false; // hasn't been marked complete yet in this scenario
+    spawner.triggerReplay(CONFIG.MAX_WAVES);
+    spawner.state = 'active';
+
+    spawner.update(0.016, world);
+
+    assert.equal(spawner.complete, false, 'only a non-replay finalize can set complete');
   });
 });

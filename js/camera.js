@@ -9,12 +9,14 @@ export class Camera {
     this.zoom = 1;
   }
 
-  update(input, dt) {
+  // `keybindings` is the live { panUp, panDown, panLeft, panRight } map from
+  // Settings > Hotkeys (js/keybindings.js) — defaults to WASD, rebindable.
+  update(input, dt, keybindings) {
     const speed = CONFIG.PAN_SPEED * dt / this.zoom;
-    if (input.keys.has('w')) this.y -= speed;
-    if (input.keys.has('s')) this.y += speed;
-    if (input.keys.has('a')) this.x -= speed;
-    if (input.keys.has('d')) this.x += speed;
+    if (input.keys.has(keybindings.panUp)) this.y -= speed;
+    if (input.keys.has(keybindings.panDown)) this.y += speed;
+    if (input.keys.has(keybindings.panLeft)) this.x -= speed;
+    if (input.keys.has(keybindings.panRight)) this.x += speed;
 
     if (input.wheelDelta !== 0) {
       const zoomFactor = 1 - input.wheelDelta * CONFIG.ZOOM_SPEED;

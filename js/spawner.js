@@ -6,7 +6,9 @@ import { CONFIG } from './config.js';
 // the player idles/builds/spends at their own pace and triggers each wave explicitly.
 export class Spawner {
   constructor() {
-    this.waveNumber = 0;
+    this.waveNumber = 0;   // the wave currently spawning/active/just-concluded — see startWave()
+    this.maxWave = 0;      // real progress frontier: highest wave ever started as a NEW wave (never moved by a replay)
+    this.isReplay = false; // true while waveNumber is an old wave being re-fought rather than progress
     this.state = 'idle';
     this.enemiesToSpawn = 0;
     this.spawnTimer = 0;
@@ -45,16 +47,30 @@ export class Spawner {
     return !this.complete && this.state === 'idle';
   }
 
-  // The HUD's "Trigger Wave" button — the only way a wave starts now.
+  // The Wave Menu's default action — starts the next new wave, advancing maxWave
+  // (real progress). The only way `complete`/MAX_WAVES gets reached.
   triggerWave() {
     if (!this.canTriggerWave()) return false;
-    this.startNextWave();
+    this.startWave(this.maxWave + 1, false);
     return true;
   }
 
-  startNextWave() {
-    this.waveNumber++;
-    this.enemiesToSpawn = CONFIG.WAVE_BASE_ENEMIES + (this.waveNumber - 1) * CONFIG.WAVE_ENEMY_GROWTH;
+  // The Wave Menu's "Replay" action — re-fights any wave already reached (1..maxWave)
+  // at that wave's own difficulty/enemy-count/reward scale, so an easier early wave
+  // stays farmable even after progress has moved past it. Doesn't touch maxWave, so
+  // it can never itself trip MAX_WAVES completion or count as forward progress.
+  triggerReplay(n) {
+    if (!this.canTriggerWave()) return false;
+    if (n < 1 || n > this.maxWave) return false;
+    this.startWave(n, true);
+    return true;
+  }
+
+  startWave(n, isReplay) {
+    this.waveNumber = n;
+    this.isReplay = isReplay;
+    if (!isReplay) this.maxWave = n;
+    this.enemiesToSpawn = CONFIG.WAVE_BASE_ENEMIES + (n - 1) * CONFIG.WAVE_ENEMY_GROWTH;
     this.spawnTimer = 0;
     this.waveValueTotal = 0;
     this.waveValueKilled = 0;
@@ -106,12 +122,15 @@ export class Spawner {
     this.lastWavePct = pct;
     this.lastRewards = rewards;
     this.waveEndSeq++;
-    if (pct >= 1) this.wavesCleared++;
+    // Replays are reward-only farming — they don't feed wavesCleared (which drives
+    // profile CP/lifetime-stat/achievement progress) or MAX_WAVES completion, so
+    // repeatedly re-clearing an easy early wave can't be used to grind real progress.
+    if (pct >= 1 && !this.isReplay) this.wavesCleared++;
 
     world.enemies.length = 0;
     if (world.base.isDestroyed()) world.base.health = world.base.maxHealth;
 
-    if (this.waveNumber >= CONFIG.MAX_WAVES) {
+    if (!this.isReplay && this.waveNumber >= CONFIG.MAX_WAVES) {
       this.complete = true;
     } else {
       this.state = 'idle';

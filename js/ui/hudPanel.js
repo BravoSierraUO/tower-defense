@@ -6,7 +6,7 @@ import { CONFIG } from '../config.js';
 import { Toast } from './toast.js';
 
 export class HudPanel {
-  constructor({ onRestart, onRepairBase, onTriggerWave } = {}) {
+  constructor({ onRestart, onRepairBase, onOpenWaveMenu } = {}) {
     this.scoreEl = document.getElementById('ui-score');
     this.goldEl = document.getElementById('ui-gold');
     this.metalEl = document.getElementById('ui-metal');
@@ -29,9 +29,11 @@ export class HudPanel {
     this.repairBtn = document.getElementById('repair-btn');
     this.repairBtn.addEventListener('click', () => onRepairBase?.());
 
-    // Phase 8a: idle wave loop — the only way a wave starts now.
+    // Opens the Wave Menu (js/ui/wavePanel.js) rather than triggering directly —
+    // lets the player replay an already-reached wave to farm it instead of only
+    // ever pushing forward. See Spawner.triggerWave()/triggerReplay().
     this.triggerWaveBtn = document.getElementById('trigger-wave-btn');
-    this.triggerWaveBtn.addEventListener('click', () => onTriggerWave?.());
+    this.triggerWaveBtn.addEventListener('click', () => onOpenWaveMenu?.());
     this.lastWaveEndSeq = 0;
 
     this.achievementToast = new Toast(document.getElementById('achievement-toast'));
@@ -80,7 +82,9 @@ export class HudPanel {
     this.comboEl.hidden = world.comboStreak < 2;
     if (!this.comboEl.hidden) this.comboEl.textContent = `🔥 x${world.comboStreak}`;
     this.brownoutEl.hidden = world.powerFactor() >= 1;
-    this.waveEl.textContent = `${spawner.waveNumber} / ${CONFIG.MAX_WAVES}`;
+    // maxWave (real progress), not waveNumber (whichever wave is currently active) —
+    // this stat should hold steady at your true frontier even mid-replay.
+    this.waveEl.textContent = `${spawner.maxWave} / ${CONFIG.MAX_WAVES}`;
     this.tierEl.textContent = this.currentTierName(spawner.waveNumber);
     this.fpsEl.textContent = Math.round(fps);
 
@@ -98,10 +102,11 @@ export class HudPanel {
       this.repairBtn.disabled = world.gold < cost;
     }
 
-    // Phase 8a: the only way a wave starts — visible only during the idle phase.
+    // Opens the Wave Menu — visible only during the idle phase, same gating the
+    // old direct-trigger button used.
     this.triggerWaveBtn.hidden = state !== 'playing' || !spawner.canTriggerWave();
     if (!this.triggerWaveBtn.hidden) {
-      this.triggerWaveBtn.textContent = `Trigger Wave ${spawner.waveNumber + 1}`;
+      this.triggerWaveBtn.textContent = `Wave ${spawner.maxWave + 1} ▾`;
     }
 
     // Phase 8a: 'lost' is no longer a reachable Game.state — a base wipe now heals

@@ -8,6 +8,8 @@ import { AvatarMenu } from './ui/avatarMenu.js';
 import { ConfirmModal } from './ui/confirmModal.js';
 import { MissionBanner } from './ui/missionBanner.js';
 import { RadialMenu } from './ui/radialMenu.js';
+import { WavePanel } from './ui/wavePanel.js';
+import { MissionPanel } from './ui/missionPanel.js';
 
 // UI reads world state and writes to the DOM overlay. It never mutates
 // gameplay state and is never zoomed/panned by the camera (plain HTML,
@@ -21,18 +23,21 @@ import { RadialMenu } from './ui/radialMenu.js';
 export class UI {
   // callbacks: { onUnlockTech(id), onDockTrade(), onPrestige(), onBuySkill(id),
   // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold(), onToggleAbout(),
-  // onReportBug(), onRadialAction(id) } — UI only translates DOM clicks into
+  // onToggleCore(), onReportBug(), onRadialAction(id), onOpenWaveMenu(), onSelectWave(n, isReplay),
+  // onOpenMissionMenu(), onTrackMission(id) } — UI only translates DOM clicks into
   // these; it never mutates gameplay state directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onTriggerWave, onRadialAction } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onRadialAction } = {}) {
     this.modeHint = document.getElementById('ui-mode-hint');
 
-    this.hud = new HudPanel({ onRestart, onRepairBase, onTriggerWave });
+    this.hud = new HudPanel({ onRestart, onRepairBase, onOpenWaveMenu });
     this.core = new CorePanel({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold });
     this.field = new FieldPanel();
     this.profile = new ProfilePanel({ onPrestige, onBuySkill, onClose: onToggleProfile });
     this.about = new AboutPanel({ onToggleAbout });
-    this.mission = new MissionBanner();
+    this.mission = new MissionBanner({ onOpenMenu: onOpenMissionMenu });
     this.radialMenu = new RadialMenu({ onAction: onRadialAction });
+    this.waves = new WavePanel({ onSelectWave, onClose: onOpenWaveMenu });
+    this.missionPanel = new MissionPanel({ onTrack: onTrackMission, onClose: onOpenMissionMenu });
 
     // afterConfirm closes the JSON viewer regardless of which reset entry point
     // was used — settingsPanel isn't constructed yet at this point, but the
@@ -40,18 +45,27 @@ export class UI {
     this.confirmModal = new ConfirmModal({ afterConfirm: () => this.settings.hideJsonViewer() });
     const onOpenResetConfirm = () => this.confirmModal.open(onResetProgress);
     this.settings = new SettingsPanel({ onOpenResetConfirm, onClose: onToggleSettings });
-    this.avatarMenu = new AvatarMenu({ onToggleProfile, onToggleAbout, onToggleSettings, onReportBug, onOpenResetConfirm });
+    this.avatarMenu = new AvatarMenu({ onToggleCore, onToggleProfile, onToggleAbout, onToggleSettings, onReportBug, onOpenResetConfirm });
   }
 
-  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, missions) {
+  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, missions, waveMenuOpen, missionMenuOpen) {
     const spawner = world.spawner;
     const base = world.base;
+
+    this.waves.overlay.hidden = !waveMenuOpen;
+    if (waveMenuOpen) this.waves.update(spawner, world);
+
+    this.missionPanel.overlay.hidden = !missionMenuOpen;
+    if (missionMenuOpen) this.missionPanel.update(missions);
 
     const inCore = view === 'core';
     const inProfile = view === 'profile';
     const inAbout = view === 'about';
     const inSettings = view === 'settings';
-    this.modeHint.textContent = (inCore ? 'B — Tower Field' : 'B — Command Core') + ' · P — Profile · O — About · S — Settings';
+    // Phase 8g: B/P/O/S hotkeys are gone (S collided with WASD panning) — Command
+    // Core/Profile/About/Settings are all avatar-menu items now, one path instead
+    // of two redundant ones.
+    this.modeHint.textContent = 'Avatar menu (top right) → Command Core · Profile · About · Settings';
 
     this.core.el.hidden = !inCore;
     this.profile.el.hidden = !inProfile;

@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { drawGrid } from './grid.js';
+import { drawStarfield } from './starfield.js';
 
 export class Renderer {
   constructor(canvas) {
@@ -243,9 +244,10 @@ export class Renderer {
     ctx.restore();
   }
 
-  draw(world, camera, fieldBuildType, mouse) {
+  draw(world, camera, fieldBuildType, mouse, showGrid) {
     this.clear();
-    drawGrid(this.ctx, camera);
+    drawStarfield(this.ctx, camera);
+    if (showGrid) drawGrid(this.ctx, camera);
     this.drawBase(world, camera);
     this.drawTowers(world, camera);
     this.drawScavengers(world, camera);

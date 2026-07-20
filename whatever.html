@@ -257,7 +257,7 @@
   <div class="chips">
     <span class="chip">Vanilla JS · Canvas 2D</span>
     <span class="chip">Solo build · zero deps</span>
-    <span class="chip">125 tests · node --test</span>
+    <span class="chip">142 tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
@@ -350,7 +350,7 @@
   <h2>One recipe, five screens</h2>
   <p class="lede">The HUD, the radial build menu, the tower card, the Command Core panel, the profile
     panel, the About/Analytics panel, the win/lose banner, the settings panel, the avatar menu,
-    the confirm modal, the tutorial mission banner — eleven different surfaces in
+    the confirm modal, the tutorial mission banner, the wave menu — twelve different surfaces in
     <code style="font-family:var(--mono)">css/style.css</code>, all built from one glass recipe
     and one accent color instead of seven bespoke looks. This page
     is built from the same recipe — the cards below are the actual CSS values, not a mockup.</p>
@@ -435,7 +435,7 @@
     <div class="stat"><b id="statFlows">·</b><span>system flows</span></div>
     <div class="stat"><b id="statNodes">·</b><span>documented steps</span></div>
     <div class="stat"><b id="statRefs">·</b><span>code references</span></div>
-    <div class="stat"><b>125</b><span>passing tests, zero deps</span></div>
+    <div class="stat"><b>142</b><span>passing tests, zero deps</span></div>
   </div>
 </section>
 
@@ -571,7 +571,7 @@ const ROADMAP = [
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 125 tests across 7 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. 142 tests across 7 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
@@ -588,7 +588,7 @@ const ROADMAP = [
       'Inventory tab: no item/equipment system exists yet at all — this tab has nothing to show until some form of loadout/item system is designed (possibly overlaps Phase 7\'s per-satellite module slots, possibly its own thing)',
       'Migrating existing Profile (P) and Command Core (B) panels into the new shell without breaking their current hotkey muscle-memory — not attempted; B/P/O/S all still work exactly as before, the avatar menu is a parallel entry point onto the same view-toggle callbacks, not a replacement'
     ],
-    note:'Floated during the Phase 5 About-screen build (2026-07-19), explicitly filed rather than built — "a big bite," per the user. Same day, picked back up as a deliberately scoped slice: the avatar dropdown (new, additive) and real Settings-tab content (previously nonexistent) shipped; the tabbed-modal IA redesign and Inventory tab were deliberately left alone — that\'s still a from-scratch panel-system redesign, not an extension, and stays unscoped until picked up on purpose. Same caution Phase 7 already carries.' },
+    note:'Floated during the Phase 5 About-screen build (2026-07-19), explicitly filed rather than built — "a big bite," per the user. Same day, picked back up as a deliberately scoped slice: the avatar dropdown (new, additive) and real Settings-tab content (previously nonexistent) shipped; the tabbed-modal IA redesign and Inventory tab were deliberately left alone — that\'s still a from-scratch panel-system redesign, not an extension, and stays unscoped until picked up on purpose. Same caution Phase 7 already carries. Update, Phase 8g (same day): the "B/P/O/S all still work exactly as before" line above is now stale on purpose, left unedited as an honest historical record rather than silently rewritten — those hotkeys were removed once S turned out to collide with WASD camera panning. The avatar menu stopped being a parallel path and became the only path; see the Phase 8g card below.' },
   { id:'p5c', num:'5c', title:'In-Game Bug Reporting — GitHub Issues', status:'BACKLOG · PARTIAL', color:'--phase-5',
     desc:'A "Report a Bug" entry point in the game itself, filing a real GitHub issue against this repo instead of the player having to leave the game, screenshot, and write it up by hand.',
     items:[
@@ -664,6 +664,37 @@ const ROADMAP = [
     ],
     depends:'Phase 8c (hero must exist first)',
     note:'Least scoped of the four — geometry and stage-progression math still need real numbers, same standing caution every other phase in this doc gives before a difficulty curve gets invented from nothing. Sequenced last per the user\'s own ordering: loop rework, then missions, then hero, then patrols.' },
+  { id:'p8e', num:'8e', title:'Wave Menu — Replay & Farm Old Waves', status:'DONE', color:'--phase-8',
+    desc:'The HUD\'s "Trigger Wave N" button fired the next wave directly and was the only way to ever start one — waves could only be played forward, once each. Playtesting surfaced the real gap: if wave 3 is too hard to push past, or wave 1 just happens to pay a resource you\'re short on, there was no way back to it. The button now opens a modal instead of firing anything itself, listing every wave already reached plus the next new one, each with a live reward preview.',
+    items:[
+      '`Spawner` splits "which wave is currently active" (`waveNumber`, unchanged everywhere it already governs tier unlocks/enemy count/reward scale) from "real forward progress" (new `maxWave`, only ever moved by a genuine new-wave attempt) — a replay sets `waveNumber` to the target wave and flips a new `isReplay` flag without touching `maxWave`',
+      '`triggerWave()` still starts `maxWave + 1` exactly as before; new `triggerReplay(n)` re-fights any `1..maxWave` at that wave\'s own difficulty tier and reward scale — replaying an easier early wave stays genuinely easier, not scaled up to current progress',
+      'Deliberate design call: a replay clear is reward-only. `finalizeWave()` skips `wavesCleared++` and the `MAX_WAVES` completion check whenever `isReplay` is true, so farming a cheap early wave on repeat can\'t also grind profile CP, lifetime stats, or achievements the way real progress does — same "completion % and payout never share incentives to exploit" caution Phase 8a\'s reward split already set',
+      'New `js/ui/wavePanel.js` modal (reuses `.confirm-modal-overlay`\'s backdrop and `.panel-scroll`/`.panel-footer`\'s scroll+close frame, not a new palette) — rows for every wave up to `CONFIG.MAX_WAVES` built once, descending, so the highest-reachable row (whichever one is "Next") always sits at the top of the list without any DOM reordering as `maxWave` climbs',
+      'The Wave Menu is its own overlay flag on `Game` (`waveMenuOpen`), independent of the `view` state machine the Core/Profile/About/Settings panels use — openable from either Field or Core without disturbing the B/P/O/S hotkeys or pausing the camera'
+    ],
+    depends:'Phase 8a (idle wave loop)',
+    note:'User\'s own framing, mid-playthrough: "what if wave 3 is too hard but I still want to farm — or what if wave 1 gives metal but wave 3 gives capacitors and I have plenty." No asymmetric per-wave resource types exist yet (today every wave pays the same gold+metal shape, just scaled by wave number) — the capacitors example was illustrative, not a literal current mechanic — but the modal\'s reward-preview column already surfaces whatever a wave actually pays, so a future differentiated-resource pass (Phase 7b\'s satellite modules, say) makes farming decisions visible for free rather than needing its own UI later. 5 new tests (`tests/spawner.test.mjs`) cover replay range-gating, reward-scale-uses-the-replayed-wave\'s-own-number, and that a replay can never itself trip `MAX_WAVES` completion. Verified live via Playwright: button reads "Wave 1 ▾" pre-game, opens onto a single "Wave 1 — Next" row, clearing it flips the button to "Wave 2 ▾" and the menu to two rows (Wave 2 — Next on top, Wave 1 as Replay below), clicking Replay closes the menu and a new wave visibly starts — zero console errors; full `node --test` pass stayed green (138/138).' },
+  { id:'p8f', num:'8f', title:'Mission Menu — Browse, Track & See Rewards', status:'DONE', color:'--phase-8',
+    desc:'Phase 8b\'s mission banner only ever shows one mission (the earliest unmet one) with no way to see the others, pick a different one to focus on, or know what completing any of them actually pays. Asked for by the user three times in one session before it got built — the toast-style banner alone was "not good enough" once more than one mission at a time became the real ask ("later when I have 5 missions I can see them").',
+    items:[
+      '`js/ui/missionPanel.js`, new — an accordion of every entry in `MISSIONS` (fixed at import time, so a future 5th/6th mission is just one more array entry, no panel code changes), reusing the exact `.wave-panel`/`.panel-scroll`/`.panel-footer` shell the Wave Menu (Phase 8e) already established rather than a new palette',
+      '`MissionTracker` gained `trackedId`/`track(id)` — a player-chosen override that wins in `current()` over the old earliest-unmet default, so the banner/glow can point at whichever mission the player actually cares about right now; falls back to earliest-unmet automatically once the tracked one completes',
+      'Each `MISSIONS` entry gained a `reward: {gold, metal}` field, and `MissionTracker.update()` now returns the missions that newly completed that call so `game.js` can pay the reward out exactly once — same diff-and-translate shape `watchProfileEvents()` already uses for other run events, not a new pattern',
+      'Three entry points into the modal: the radial menu\'s existing "Missions" leaf (previously just flashed the glow, now opens the real menu), clicking the mission banner itself, or the "?" button on the banner (unchanged — still a dedicated glow-flash, stays separate via `stopPropagation()`)'
+    ],
+    depends:'Phase 8b (mission system), Phase 8e (Wave Menu — reuses its panel shell)',
+    note:'Deliberate design call, made without asking, mirroring Phase 8e\'s: mission rewards are small, one-time onboarding bumps (10-20 gold/metal), not itemized against any particular difficulty curve — missions complete exactly once per session already (sticky, same as achievements), so there was no exploit surface to design around the way wave-replay farming needed. 5 new tests (`tests/missions.test.mjs`) cover `update()`\'s newly-completed return value, `track()` overriding then falling back once the tracked mission completes, `track()` on an unknown id no-oping instead of crashing, and every mission carrying a well-formed reward. Verified statically only this time (`node --check` on every touched file, `node --test` green at 142/142, and a Python id-uniqueness + `getElementById` cross-check against `index.html`) — not a live Playwright click-through, per explicit user feedback earlier this same session that browser-driven self-verification on this project burns tokens on checks the user is about to do anyway mid-playthrough.' },
+  { id:'p8g', num:'8g', title:'Remove B/P/O/S Hotkeys — Rebindable WASD Instead', status:'DONE', color:'--phase-8',
+    desc:'Real bug, user-reported: pressing S to pan south also toggled Settings open (the `S` view-toggle hotkey and WASD panning both read the same physical key), and once Settings was open `camera.update()` stopped running entirely (gated on `view === \'field\'`) — so panning broke outright, not just visually glitched. Root cause was structural, not a one-line fix: any single-letter view-toggle hotkey was always one WASD-overlap away from doing this. Fix was to remove the class of bug, not patch the one instance.',
+    items:[
+      'B/P/O/S view-toggle hotkeys deleted from `game.js`\'s `handleInput()` entirely (Tab, which doubled for B, went with it — it was hijacking standard browser focus-cycling anyway) — Command Core/Profile/About/Settings are avatar-menu items now, one mouse-driven path instead of two redundant ones. New `menu-core` avatar-dropdown entry (previously nothing filled Command Core\'s slot there) closes the gap B\'s removal would otherwise have left with zero way to reach the Core view by mouse',
+      'WASD panning stays the default but is no longer hardcoded — new `js/keybindings.js` (`CONFIG.DEFAULT_KEYBINDINGS`, localStorage-backed, merges saved bindings over defaults so a future new action doesn\'t break old saves) and `Camera.update(input, dt, keybindings)` now reads `input.keys.has(keybindings.panUp)` etc. instead of literal `\'w\'`/`\'a\'`/`\'s\'`/`\'d\'`',
+      'New Settings > Hotkeys section: one row per rebindable action, click a key-button to enter "Press a key…" capture mode, Escape cancels without changing anything, a pressed key already bound to a different action swaps rather than rejects (two actions can never end up sharing one key) — plus a one-click "Reset to WASD" button',
+      'Deliberately did not add modifier-chord support (Ctrl+1-style hotkeys) — floated and self-rejected by the user in the same breath ("though this isn\'t an RTS I think hotkeys like that are overboard"); also did not make the numeric build/room-select hotkeys (1-4, 1-9/0) rebindable this pass — they don\'t conflict with anything and weren\'t asked for, same pattern is easy to extend to them later if wanted',
+      'Follow-up, same session, direct user report: removing B left the base itself unclickable — no way into Core from the field beyond the avatar menu. Fixed: clicking within `world.base.radius` of the base now opens Core, checked before the tower/scavenger click branches so it wins over anything armed'
+    ],
+    note:'`js/keybindings.js` is browser-only by design, same precedent every other `js/ui/*.js` panel already sets (theme, the JSON viewer, the confirm modal) — reads/writes `localStorage` directly, no Node-safe fallback, because it\'s never instantiated outside a real page. No new tests for it specifically for that reason; `node --check` + the existing 142/142 suite (untouched — no gameplay logic changed, only which key names get read) plus an id-uniqueness/`getElementById` cross-check were the verification, not a live click-through, continuing the no-Playwright-on-this-project rule from Phase 8f. Two doc corrections made in passing: `docs/architecture.md`\'s view-state-machine section still said views were "toggled by hotkeys (B/P/O)" — fixed to describe the avatar menu; and this doc\'s own Phase 5b card and `savedatamanage` WhatHow flow both had present-tense claims that the hotkeys still worked alongside the avatar menu — the WhatHow flow was corrected outright (it describes current behavior), Phase 5b\'s roadmap-card item list was left stale on purpose as an honest historical record with an appended "Update, Phase 8g" note rather than silently rewritten, same convention Phase 9\'s "superseded by 9b" one-liner already set.' },
   { id:'p9', num:'9', title:'Radial Build Menu — Field & Command Core', status:'DONE', color:'--phase-9',
     desc:'Replaces the flat bottom build bar in both views with a mouse-clickable radial fan around a center hub. Closes a real interaction gap along the way, not just a reskin: the build slots were keyboard-only before this — number keys worked, but clicking a slot with the mouse did nothing.',
     items:[
@@ -1450,10 +1481,10 @@ const FLOWS = [
     nodes: [
       { id: 'avatar', col: 0, row: 1, kind: 'input', tone: 'sig', label: 'Click the avatar button\ntop-right HUD',
         code_ref: 'js/ui/avatarMenu.js (avatarBtn)',
-        detail: 'Opens a dropdown (Profile/About/Settings/Reset) — a second, parallel entry point onto the same view-toggle callbacks the B/P/O/S hotkeys already use, not a replacement for them (see the Roadmap\'s Phase 5b card).' },
-      { id: 'settings', col: 1, row: 1, kind: 'process', tone: 'ok', label: 'Settings panel opens\ntheme, storage size, raw JSON, reset',
+        detail: 'Opens a dropdown (Command Core/Profile/About/Settings/Reset) — since Phase 8g this is the only way into any of those views. The old B/P/O/S hotkeys are gone (see the Roadmap\'s Phase 8g card); Phase 5b\'s original "parallel entry point" framing below is now stale on that specific point.' },
+      { id: 'settings', col: 1, row: 1, kind: 'process', tone: 'ok', label: 'Settings panel opens\ntheme, hotkeys, grid toggle, storage size, raw JSON, reset',
         code_ref: 'js/ui/settingsPanel.js',
-        detail: "Same panel reachable by the S hotkey directly — the avatar menu doesn't gate anything the hotkey couldn't already reach." },
+        detail: "Also gained a Hotkeys section (Phase 8g, rebindable WASD panning) and a Debug section (Phase 8f-adjacent, a field-grid-lines checkbox) since this flow was first written — same panel, more sections." },
       { id: 'toggleTheme', col: 2, row: 0, kind: 'terminal', tone: 'ok', label: 'Toggle theme\nlight/dark, saved to localStorage',
         code_ref: 'js/ui/settingsPanel.js (applyTheme)',
         detail: "Independent of any gameplay/profile state — just a data-theme attribute plus a 'td.theme' localStorage key read back on next load." },
@@ -1488,11 +1519,11 @@ const FLOWS = [
   {
     id: 'balanceguards', group: 'Proving it',
     title: "A tuning pass can't silently break the economy",
-    summary: '125 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
+    summary: '142 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
     lanes: ['Change', 'Run', 'Stress', 'Checks', 'Verdict'],
     nodes: [
       { id: 'tune', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'A constant changes in config.js\ne.g. a tier-3 buff' },
-      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n125 tests, 7 files, zero deps',
+      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n142 tests, 7 files, zero deps',
         code_ref: 'package.json · tests/*.test.mjs',
         detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile/missions cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
       { id: 'maxed', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'maxOutRoom() helper\nfull tech chain, max tier, every module slot',
@@ -1931,6 +1962,12 @@ const STATS = {
       "date": "07-19",
       "cum": 9439,
       "subject": "Phase 7a: Satellite Identity — Damage Triangle"
+    },
+    {
+      "hash": "ea01648",
+      "date": "07-19",
+      "cum": 9520,
+      "subject": "Fix: Velocity's \"hours\" stat was hand-typed and had gone stale"
     }
   ],
   "categories": [
@@ -1941,7 +1978,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 2792,
+      "value": 2873,
       "tone": "special"
     },
     {
@@ -1956,7 +1993,7 @@ const STATS = {
     }
   ],
   "velocity": {
-    "activeHours": 17.9,
+    "activeHours": 18.1,
     "sessionCount": 4,
     "activeDays": 4,
     "sessionGapHours": 5

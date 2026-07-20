@@ -47,4 +47,39 @@ describe('MissionTracker (Phase 8b)', () => {
     assert.equal(t.completed.has(MISSIONS[0].id), false);
     assert.equal(t.current().id, MISSIONS[0].id);
   });
+
+  test('update() returns exactly the missions that newly completed this call, empty otherwise', () => {
+    const t = new MissionTracker();
+    const first = t.update({ towersPlaced: 1, waveNumber: 0, roomsBuilt: 1, view: 'field' });
+    assert.deepEqual(first.map(m => m.id), [MISSIONS[0].id]);
+
+    const second = t.update({ towersPlaced: 1, waveNumber: 0, roomsBuilt: 1, view: 'field' }); // nothing new
+    assert.deepEqual(second, []);
+  });
+
+  test('track() overrides current() to the picked mission, but only while it stays unmet', () => {
+    const t = new MissionTracker();
+    t.track(MISSIONS[2].id);
+    assert.equal(t.current().id, MISSIONS[2].id, 'tracked pick wins over the earliest-unmet default');
+
+    t.update({ towersPlaced: 0, waveNumber: 0, roomsBuilt: 0, view: 'core' }); // completes MISSIONS[2] (open-core)
+    assert.equal(t.completed.has(MISSIONS[2].id), true);
+    assert.equal(t.current().id, MISSIONS[0].id, 'falls back to earliest-unmet once the tracked one completes');
+  });
+
+  test('track() with an unknown id is a no-op, not a crash', () => {
+    const t = new MissionTracker();
+    t.track('not-a-real-mission');
+    assert.equal(t.trackedId, null);
+    assert.equal(t.current().id, MISSIONS[0].id);
+  });
+
+  test('every mission carries a well-formed reward (gold and/or metal, no other keys, all positive)', () => {
+    for (const m of MISSIONS) {
+      assert.ok(m.reward, `${m.id} has a reward`);
+      const keys = Object.keys(m.reward);
+      assert.ok(keys.length > 0 && keys.every(k => k === 'gold' || k === 'metal'), `${m.id}'s reward is only gold/metal`);
+      for (const k of keys) assert.ok(m.reward[k] > 0, `${m.id}'s ${k} reward is positive`);
+    }
+  });
 });

@@ -92,13 +92,13 @@
 
             <button id="repair-btn" class="repair-btn" hidden>Repair</button>
 
-            <button id="trigger-wave-btn" class="trigger-wave-btn" hidden>Trigger Wave</button>
+            <button id="trigger-wave-btn" class="trigger-wave-btn" hidden>Waves</button>
 
         </div>
 
         <div class="hud-group hud-right">
 
-            <div id="ui-mode-hint" class="hud-mode-hint">B — Command Core</div>
+            <div id="ui-mode-hint" class="hud-mode-hint">Avatar menu (top right) → Command Core · Profile · About · Settings</div>
 
             <button id="about-btn" class="hud-docs-link">ABOUT</button>
 
@@ -118,6 +118,7 @@
                 </button>
 
                 <div id="avatar-menu" class="hud-avatar-menu" hidden>
+                    <button id="menu-core" class="hud-avatar-menu-item">Command Core</button>
                     <button id="menu-profile" class="hud-avatar-menu-item">Profile</button>
                     <button id="menu-about" class="hud-avatar-menu-item">About</button>
                     <button id="menu-settings" class="hud-avatar-menu-item">Settings</button>
@@ -377,6 +378,21 @@
                 </button>
             </div>
 
+            <div class="settings-panel-title" style="margin-top:20px;">Hotkeys</div>
+
+            <div id="keybind-list" class="keybind-list"></div>
+
+            <div class="settings-btn-row">
+                <button id="keybind-reset-btn" class="settings-btn">Reset to WASD</button>
+            </div>
+
+            <div class="settings-panel-title" style="margin-top:20px;">Debug</div>
+
+            <label class="settings-row settings-checkbox-row" for="grid-checkbox">
+                <span>Show field grid lines</span>
+                <input type="checkbox" id="grid-checkbox" class="settings-checkbox">
+            </label>
+
             <div class="settings-panel-title" style="margin-top:20px;">Save Data</div>
 
             <div class="settings-row">
@@ -428,6 +444,52 @@
                 <button id="confirm-ok-btn" class="settings-btn settings-btn-danger">Delete</button>
             </div>
         </div>
+    </div>
+
+    <!-- =========================
+         WAVE MENU
+         Replaces the old direct "Trigger Wave N" button — opens onto every wave
+         reached so far (replay to farm an easier one) plus the next new wave.
+    ========================== -->
+
+    <div id="wave-panel-overlay" class="confirm-modal-overlay" hidden>
+        <aside class="wave-panel">
+            <button id="wave-panel-close-btn" class="mission-help-btn panel-close-btn" title="Close">✕</button>
+
+            <div class="wave-panel-header">
+                <div class="wave-panel-title">Waves</div>
+                <div class="wave-panel-sub">Replay a wave you've already reached to farm its rewards, or start the next one.</div>
+            </div>
+
+            <div id="wave-panel-list" class="panel-scroll wave-panel-list"></div>
+
+            <div class="panel-footer">
+                <button id="wave-panel-footer-close-btn" class="settings-btn panel-footer-close-btn">Close</button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- =========================
+         MISSION MENU
+         The banner (below) is glance-only; this is the real browse view — every
+         mission, expandable to its hint + reward, with a Track button.
+    ========================== -->
+
+    <div id="mission-panel-overlay" class="confirm-modal-overlay" hidden>
+        <aside class="wave-panel">
+            <button id="mission-panel-close-btn" class="mission-help-btn panel-close-btn" title="Close">✕</button>
+
+            <div class="wave-panel-header">
+                <div class="wave-panel-title">Missions</div>
+                <div class="wave-panel-sub">Track a mission to keep it highlighted on the HUD, or expand one to see its reward.</div>
+            </div>
+
+            <div id="mission-panel-list" class="panel-scroll wave-panel-list"></div>
+
+            <div class="panel-footer">
+                <button id="mission-panel-footer-close-btn" class="settings-btn panel-footer-close-btn">Close</button>
+            </div>
+        </aside>
     </div>
 
     <!-- =========================

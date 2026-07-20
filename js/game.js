@@ -33,8 +33,17 @@ export class Game {
       onRepairBase: () => this.world.repairBase(CONFIG.BASE_REPAIR_AMOUNT),
       onMarketBuyMetal: () => this.world.tradeGoldForMetal(),
       onMarketBuyGold: () => this.world.tradeMetalForGold(),
-      onTriggerWave: () => this.world.spawner.triggerWave(),
+      onOpenWaveMenu: () => { this.waveMenuOpen = !this.waveMenuOpen; },
+      onSelectWave: (n, isReplay) => {
+        const started = isReplay ? this.world.spawner.triggerReplay(n) : this.world.spawner.triggerWave();
+        if (started) this.waveMenuOpen = false;
+      },
+      onOpenMissionMenu: () => { this.missionMenuOpen = !this.missionMenuOpen; },
+      onTrackMission: id => this.missions.track(id),
       onRadialAction: id => this.handleRadialAction(id),
+      // Phase 8g: the only mouse-driven way into Core now that the B hotkey is
+      // gone — same toggle semantics the old key handler had (anywhere else -> field).
+      onToggleCore: () => { this.view = this.view === 'field' ? 'core' : 'field'; this.selectedRoomType = null; },
       onToggleAbout: () => { this.view = this.view === 'about' ? 'field' : 'about'; this.selectedRoomType = null; },
       onToggleProfile: () => { this.view = this.view === 'profile' ? 'field' : 'profile'; this.selectedRoomType = null; },
       onToggleSettings: () => { this.view = this.view === 'settings' ? 'field' : 'settings'; this.selectedRoomType = null; },
@@ -52,6 +61,11 @@ export class Game {
     // key) — no more "Tower" armed by default now that there's no persistent
     // build bar reminding you what's selected.
     this.fieldBuildType = null; // null | 'tower' | 'scavenger' — field-view placement mode
+    // Wave Menu overlay — independent of `view` (like radialMenu/confirmModal) so it
+    // can open from either Field or Core without disturbing the B/P/O/S view switch.
+    this.waveMenuOpen = false;
+    // Same independent-overlay treatment as waveMenuOpen above.
+    this.missionMenuOpen = false;
     this.resetRunTrackers();
   }
 
@@ -88,6 +102,8 @@ export class Game {
     this.selectedTower = null;
     this.selectedScavenger = null;
     this.fieldBuildType = null;
+    this.waveMenuOpen = false;
+    this.missionMenuOpen = false;
     this.resetRunTrackers();
   }
 
@@ -174,7 +190,7 @@ export class Game {
         this.selectedRoomType = null;
       }
     } else if (id === 'missions') {
-      this.ui.mission.flash();
+      this.missionMenuOpen = true;
     } else if (id === 'scavenger' || CONFIG.DAMAGE_TYPES[id]) {
       this.selectFieldBuild(id);
     } else if (CONFIG.ROOM_TYPES[id]) {
@@ -210,25 +226,21 @@ export class Game {
 
   handleInput() {
     for (const key of this.input.keyPresses) {
-      if (key === 'b' || key === 'tab') {
-        this.view = this.view === 'field' ? 'core' : 'field';
-        this.selectedRoomType = null;
-      } else if (key === 'p') {
-        this.view = this.view === 'profile' ? 'field' : 'profile';
-        this.selectedRoomType = null;
-      } else if (key === 'o') {
-        this.view = this.view === 'about' ? 'field' : 'about';
-        this.selectedRoomType = null;
-      } else if (key === 's') {
-        this.view = this.view === 'settings' ? 'field' : 'settings';
-        this.selectedRoomType = null;
-      } else if (key === 'escape') {
+      // Phase 8g: the B/P/O/S view-toggle hotkeys are gone — B and S both
+      // collided with WASD panning (holding S to pan south also flipped
+      // Settings open, which then stopped camera.update() from running at all
+      // since it's gated on view === 'field'). Profile/About/Settings/Command
+      // Core are all reachable from the avatar menu now instead (see
+      // js/ui/avatarMenu.js) — one mouse-driven path, not two redundant ones.
+      if (key === 'escape') {
         // Phase 9b: universal cancel — closes an open radial menu and disarms
         // whatever build type was armed, so a fresh click reopens the menu
         // instead of placing/building immediately.
         this.ui.radialMenu.close();
         this.fieldBuildType = null;
         this.selectedRoomType = null;
+        this.waveMenuOpen = false;
+        this.missionMenuOpen = false;
       } else if (this.view === 'core') {
         // Still positional (index into Object.keys(CONFIG.ROOM_TYPES)) — the
         // radial menu's Build flyout (buildRadialConfig() above) must be kept
@@ -263,9 +275,18 @@ export class Game {
       }
       if (this.view === 'field') {
         const worldPos = this.camera.screenToWorld(click.x, click.y);
+        const distToBase = Math.hypot(worldPos.x - this.world.base.x, worldPos.y - this.world.base.y);
         const existingTower = this.world.towerAt(worldPos.x, worldPos.y);
         const existingScavenger = this.world.scavengerAt(worldPos.x, worldPos.y);
-        if (existingTower) {
+        if (distToBase <= this.world.base.radius) {
+          // Phase 8g follow-up: clicking the base itself opens the Command Core —
+          // now that the B hotkey is gone, this (plus the avatar menu) is the way
+          // in. Wins over anything armed; nothing else meaningful happens from a
+          // click on the base tile, and towers/scavengers can never occupy this
+          // spot anyway (TOWER_MIN_BASE_DISTANCE keeps them off it).
+          this.view = 'core';
+          this.selectedRoomType = null;
+        } else if (existingTower) {
           // Phase 4b: click your own tower to attempt an upgrade — same
           // silent-no-op-if-you-can't-afford-it convention as upgradeRoom below.
           this.world.upgradeTower(existingTower);
@@ -323,7 +344,7 @@ export class Game {
 
   update(dt) {
     this.handleInput();
-    if (this.view === 'field') this.camera.update(this.input, dt);
+    if (this.view === 'field') this.camera.update(this.input, dt, this.ui.settings.keybindings);
 
     if (this.state === 'playing') {
       for (const tower of this.world.towers) {
@@ -336,12 +357,18 @@ export class Game {
       this.world.updatePassiveIncome(dt, this.profile.level());
       this.world.updateCycleBudget(dt);
       this.watchProfileEvents();
-      this.missions.update({
+      // A mission's `reward` (see missions.js) pays out exactly once, the instant it
+      // newly completes — same "diff-watch and translate into a world mutation" shape
+      // watchProfileEvents() above already uses for other run events.
+      for (const m of this.missions.update({
         towersPlaced: this.world.towersPlaced,
         waveNumber: this.world.spawner.waveNumber,
         roomsBuilt: this.commandCore.rooms.length,
         view: this.view
-      });
+      })) {
+        if (m.reward?.gold) this.world.addGold(m.reward.gold);
+        if (m.reward?.metal) this.world.addMetal(m.reward.metal);
+      }
 
       // Phase 8a: a base wipe no longer ends the run — Spawner.finalizeWave() heals it back
       // up and pays a lesser chest instead (see spawner.js). The only way a run now ends is
@@ -385,11 +412,11 @@ export class Game {
 
   render() {
     if (this.view === 'field') {
-      this.renderer.draw(this.world, this.camera, this.fieldBuildType, this.input.mouse);
+      this.renderer.draw(this.world, this.camera, this.fieldBuildType, this.input.mouse, this.ui.settings.showGrid);
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType, this.input.mouse);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions, this.waveMenuOpen, this.missionMenuOpen);
   }
 
   loop(timestamp) {
