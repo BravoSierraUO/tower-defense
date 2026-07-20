@@ -43,6 +43,13 @@ export class Game {
       onOpenInventoryMenu: () => { this.inventoryMenuOpen = !this.inventoryMenuOpen; },
       onRefine: id => this.world.refineMaterial(id),
       onCraft: id => this.world.craftComponent(id),
+      onCloseUpgradeModal: () => { this.upgradeModalOpen = false; },
+      onUpgradeSelected: () => {
+        if (this.selectedTower) this.world.upgradeTower(this.selectedTower);
+        else if (this.selectedScavenger) this.world.upgradeScavenger(this.selectedScavenger);
+      },
+      onEquipItem: itemId => this.world.equipItem(this.selectedTower || this.selectedScavenger, itemId),
+      onUnequipItem: () => this.world.unequipItem(this.selectedTower || this.selectedScavenger),
       onRadialAction: id => this.handleRadialAction(id),
       // Phase 8g: the only mouse-driven way into Core now that the B hotkey is
       // gone — same toggle semantics the old key handler had (anywhere else -> field).
@@ -71,6 +78,7 @@ export class Game {
     this.missionMenuOpen = false;
     // Phase 11 UI layer: same independent-overlay treatment as the two above.
     this.inventoryMenuOpen = false;
+    this.upgradeModalOpen = false;
     this.resetRunTrackers();
   }
 
@@ -110,6 +118,7 @@ export class Game {
     this.waveMenuOpen = false;
     this.missionMenuOpen = false;
     this.inventoryMenuOpen = false;
+    this.upgradeModalOpen = false;
     this.resetRunTrackers();
   }
 
@@ -250,6 +259,7 @@ export class Game {
         this.waveMenuOpen = false;
         this.missionMenuOpen = false;
         this.inventoryMenuOpen = false;
+        this.upgradeModalOpen = false;
       } else if (this.view === 'core') {
         // Still positional (index into Object.keys(CONFIG.ROOM_TYPES)) — the
         // radial menu's Build flyout (buildRadialConfig() above) must be kept
@@ -296,15 +306,17 @@ export class Game {
           this.view = 'core';
           this.selectedRoomType = null;
         } else if (existingTower) {
-          // Phase 4b: click your own tower to attempt an upgrade — same
-          // silent-no-op-if-you-can't-afford-it convention as upgradeRoom below.
-          this.world.upgradeTower(existingTower);
+          // Phase 4b originally: click your own tower to attempt an upgrade,
+          // silently, same no-op-if-you-can't-afford-it convention as upgradeRoom
+          // below. Phase 11: opens the Upgrade Modal instead — it now has real
+          // content a silent click never could (equip/unequip a crafted item).
           this.selectedTower = existingTower;
           this.selectedScavenger = null;
+          this.upgradeModalOpen = true;
         } else if (existingScavenger) {
-          this.world.upgradeScavenger(existingScavenger);
           this.selectedScavenger = existingScavenger;
           this.selectedTower = null;
+          this.upgradeModalOpen = true;
         } else if (this.fieldBuildType === 'scavenger') {
           this.selectedScavenger = this.world.placeScavenger(worldPos.x, worldPos.y);
           this.selectedTower = null;
@@ -426,7 +438,7 @@ export class Game {
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType, this.input.mouse);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions, this.waveMenuOpen, this.missionMenuOpen, this.inventoryMenuOpen);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions, this.waveMenuOpen, this.missionMenuOpen, this.inventoryMenuOpen, this.upgradeModalOpen);
   }
 
   loop(timestamp) {

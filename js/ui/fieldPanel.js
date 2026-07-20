@@ -31,16 +31,19 @@ export class FieldPanel {
       // (Railgun/Missile/Laser) instead of a generic "Tower".
       this.towerNameEl.textContent = CONFIG.DAMAGE_TYPES[selectedTower.damageType]?.label ?? 'Tower';
       this.towerTierEl.textContent = `Tier ${['I', 'II', 'III'][selectedTower.tier - 1]}`;
-      this.towerDamageEl.textContent = Math.round(selectedTower.damage * profile.damageMult());
-      this.towerRangeEl.textContent = Math.round(selectedTower.range);
-      this.towerSpeedEl.textContent = selectedTower.fireRate.toFixed(2);
+      // Phase 11: reads effective*() rather than the raw base stat, so an
+      // equipped item's affixes actually show up here instead of the card
+      // silently going stale the moment one's equipped.
+      this.towerDamageEl.textContent = Math.round(selectedTower.effectiveDamage() * profile.damageMult());
+      this.towerRangeEl.textContent = Math.round(selectedTower.effectiveRange());
+      this.towerSpeedEl.textContent = selectedTower.effectiveFireRate().toFixed(2);
       this.towerUpgradeCostEl.textContent = selectedTower.canUpgrade()
         ? `${world.towerUpgradeCost(selectedTower)}m`
         : 'MAX';
     } else if (showScavengerCard) {
       this.towerNameEl.textContent = 'Scavenger Turret';
       this.towerTierEl.textContent = `Tier ${['I', 'II', 'III'][selectedScavenger.tier - 1]}`;
-      this.towerMetalPerCycleEl.textContent = selectedScavenger.metalPerCycle;
+      this.towerMetalPerCycleEl.textContent = selectedScavenger.effectiveMetalPerCycle();
       this.towerUpgradeCostEl.textContent = selectedScavenger.canUpgrade()
         ? `${world.scavengerUpgradeCost(selectedScavenger)}m`
         : 'MAX';

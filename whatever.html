@@ -257,7 +257,7 @@
   <div class="chips">
     <span class="chip">Vanilla JS · Canvas 2D</span>
     <span class="chip">Solo build · zero deps</span>
-    <span class="chip">157 tests · node --test</span>
+    <span class="chip">168 tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
@@ -435,7 +435,7 @@
     <div class="stat"><b id="statFlows">·</b><span>system flows</span></div>
     <div class="stat"><b id="statNodes">·</b><span>documented steps</span></div>
     <div class="stat"><b id="statRefs">·</b><span>code references</span></div>
-    <div class="stat"><b>157</b><span>passing tests, zero deps</span></div>
+    <div class="stat"><b>168</b><span>passing tests, zero deps</span></div>
   </div>
 </section>
 
@@ -571,7 +571,7 @@ const ROADMAP = [
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 157 tests across 8 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. 168 tests across 8 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
@@ -627,14 +627,14 @@ const ROADMAP = [
       'Per-satellite module slots (Weapon/Power/Cooling/AI Chip/Targeting/Armor) — a second, parallel module system to the Core\'s room modules from Phase 3'
     ],
     note:'Deliberately filed unscoped, not as a designed phase card like Phase 7a above. This is the biggest lift and biggest payoff in either doc — turns one tower type + gold upgrade into an actual build-crafting layer — but it touches combat.js/tower.js/renderer.js/ui.js/tests/balance.test.mjs all at once, on top of a difficulty/balance curve nobody has playtested yet (see the "Later" section below — still blocking). Hard pre-condition: do not start this until the existing single-satellite-type loop has had at least one real playtest pass. Full reasoning in dreams/2026-07-19-fiction-vs-implementation-gaps.md.' },
-  { id:'p7c', num:'7c', title:'Turret Idle Life — Scavenger Zap & Flavor Fire', status:'BACKLOG', color:'--phase-7',
+  { id:'p7c', num:'7c', title:'Turret Idle Life — Scavenger Zap & Flavor Fire', status:'BACKLOG · PARTIAL', color:'--phase-7',
     desc:'Visual-only pass giving every placed turret a visible "doing its job" tell between real events, instead of sitting inert on the field. A Scavenger Turret visibly hauls in a passing asteroid on each metal payout; combat turrets get cosmetic potshots at enemies drifting through range. No new state, no combat.js changes — purely render-layer.',
     items:[
-      'Scavenger metal-cycle animation — an asteroid sprite drifts into the Scavenger\'s radius and gets "zapped"/pulled in, timed to the AI Cycle Budget payout it already receives (World.metalPerSecond, js/scavenger.js) rather than a fixed clock of its own, so the animation always matches the tier-scaled rate a player actually sees on the HUD',
-      'Combat turret flavor shots — cosmetic potshots at any enemy passing through range, rendered separately from the real damage-dealing Projectile in combat.js (no health change, no cooldown interaction) — the point is "this turret is alive," not a second damage source',
-      'Click-to-upgrade modal (raised same conversation) — deliberately NOT part of this card: today clicking your own Tower/Scavenger silently upgrades it if affordable (game.js), and a modal only earns the extra click if it shows something the silent path can\'t (stat deltas, real recipe costs). Parked until the material/crafting system gives it real content — see the inventory design work the same session'
+      'Scavenger metal-cycle animation — an asteroid sprite drifts into the Scavenger\'s radius and gets "zapped"/pulled in, timed to the AI Cycle Budget payout it already receives (World.metalPerSecond, js/scavenger.js) rather than a fixed clock of its own, so the animation always matches the tier-scaled rate a player actually sees on the HUD. NOT done',
+      'Combat turret flavor shots — cosmetic potshots at any enemy passing through range, rendered separately from the real damage-dealing Projectile in combat.js (no health change, no cooldown interaction) — the point is "this turret is alive," not a second damage source. NOT done',
+      'Click-to-upgrade modal — done, v2.19. js/ui/upgradeModal.js replaces the old silent click-to-upgrade-if-affordable convention: opens on clicking your own Tower/Scavenger, shows tier/cost/Upgrade, and — the reason it was worth parking until Phase 11\'s item system existed — lets you equip/unequip a crafted component and see its rolled affixes'
     ],
-    note:'Surfaced 2026-07-19 alongside Phase 7d below — split into its own card on purpose: pure render/animation, zero new state, safe to build any time as filler, unlike 7d\'s real combat rules.' },
+    note:'Surfaced 2026-07-19 alongside Phase 7d below — split into its own card on purpose: pure render/animation, zero new state, safe to build any time as filler, unlike 7d\'s real combat rules. The upgrade-modal item shipped out of order (v2.19, once Phase 11 gave it real content) — the two animation items are still just filler, unstarted.' },
   { id:'p7d', num:'7d', title:'Invader-vs-Turret Combat — Tower Health & Enemy Aggro', status:'BACKLOG · NOT SCOPED', color:'--phase-7',
     desc:'Promotes a gap flagged as far back as Phase 4b\'s note ("Tower still has no health field... enemies still walk straight through towers to the base untouched") into its own designed-but-unscoped card. Combat today is strictly one-directional (combat.js: towers shoot enemies, never the reverse) — this closes it: some enemies target a turret directly instead of the Base, the turret can take damage and die, and killing an aggro\'d enemy pays a defender\'s bonus.',
     items:[
@@ -746,7 +746,8 @@ const ROADMAP = [
       'World.refineMaterial()/craftComponent(), gated on an active Factory room — done, but Factory reuse was a real design reversal mid-build, not the original plan: a standalone Foundry room was built first, then reverted once tests/balance.test.mjs\'s Phase-4c regression guard caught ROOM_TYPES growing to 11 entries, past game.js\'s hard 10-slot number-key ceiling. Factory doing double duty (its original buildTimeReduction job, plus rarityBonusPct) fit both that ceiling and the user\'s own "can\'t have too many rooms" call, and was already the one dependency the Foundry idea needed anyway',
       '15 new tests (tests/inventory.test.mjs) — weighted-roll distributions (same statistical-loop convention tests/spawner.test.mjs already set for RNG-heavy code), craft/refine\'s afford-or-silently-no-op gate, orePerSecond()\'s formula, and rollKillDrops() landing near its configured chances over 5000 trials. Full node --test suite green at 157/157 (up from 142)',
       'Update, v2.18: the UI layer landed same session. New js/ui/inventoryPanel.js — structurally lifted from Phase 8f\'s Mission Menu (fixed recipe rows in an accordion, same .mission-row shape) plus a read-only crafted-items list reusing the Wave Menu\'s .wave-row shape. Zero new CSS beyond one divider rule. Opened via the radial menu\'s Inventory leaf, promoted from Phase 9b\'s "coming soon" stub to a real leaf the same way Missions was in Phase 8f',
-      'Still NOT done: no way to spend a crafted component at a Tower/Scavenger upgrade (that\'s Phase 7c\'s parked upgrade-modal, still parked — it now has real content to show, just no UI reads it yet), and no stats-screen odds table surfacing lifetimeOreMined/lifetimeOreSalvaged (the "metal chance 80%, diamonds 0.01%" flex) — the counters exist, nothing displays them yet'
+      'Update, v2.19: crafted items now do something — Tower/Scavenger gained a single equippedItem slot, effective*() stat methods (effectiveRange/effectiveDamage/effectiveFireRate/effectiveMetalPerCycle/rareOreFindMult) that fold in the equipped item\'s affixes via a new affixMultiplier() helper, and combat.js/world.js read those instead of the raw base fields. See Phase 7c below — its parked upgrade-modal idea is what actually exposes equip/unequip to the player',
+      'Still NOT done: no stats-screen odds table surfacing lifetimeOreMined/lifetimeOreSalvaged (the "metal chance 80%, diamonds 0.01%" flex) — the counters exist, nothing displays them yet. Also a known first-pass gap left honest rather than hidden: the buildSpeedMult affix has no hookup point anywhere (nothing per-Tower/Scavenger reads a build-speed stat), so an item that rolls it is inert on that one affix'
     ],
     note:'User\'s own framing: "Ultima Online in space," a two-stage production line (drop a component whole, or build it from refined materials), and explicit "go crazy" on affix variety — grey/green/gold rarity plus stats like fire rate, cooldown, or rare-ore find chance are all first-pass numbers, not tuned. Also feeds Phase 7c\'s parked upgrade-modal idea real content to show (a turret\'s have/need component counts, rolled affixes) once that UI actually gets built. First-pass numbers throughout, same standing caveat every constant block in this system already carries.' }
 ];
@@ -1547,11 +1548,11 @@ const FLOWS = [
   {
     id: 'balanceguards', group: 'Proving it',
     title: "A tuning pass can't silently break the economy",
-    summary: '157 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
+    summary: '168 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
     lanes: ['Change', 'Run', 'Stress', 'Checks', 'Verdict'],
     nodes: [
       { id: 'tune', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'A constant changes in config.js\ne.g. a tier-3 buff' },
-      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n157 tests, 8 files, zero deps',
+      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n168 tests, 8 files, zero deps',
         code_ref: 'package.json · tests/*.test.mjs',
         detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile/missions/inventory cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
       { id: 'maxed', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'maxOutRoom() helper\nfull tech chain, max tier, every module slot',
@@ -2002,34 +2003,40 @@ const STATS = {
       "date": "07-19",
       "cum": 10358,
       "subject": "Phases 8e-8g: Wave Menu, Mission Menu, grid/starfield settings, hotkey rebinding fix"
+    },
+    {
+      "hash": "f470dd5",
+      "date": "07-20",
+      "cum": 11067,
+      "subject": "Phase 11: Materials, Crafting & Itemization + Inventory Menu UI; file Phases 7c/7d"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 3635,
+      "value": 4065,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2920,
+      "value": 2981,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2084,
+      "value": 2128,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 1719,
+      "value": 1893,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 18.3,
+    "activeHours": 18.8,
     "sessionCount": 5,
-    "activeDays": 4,
+    "activeDays": 5,
     "sessionGapHours": 5
   }
 };

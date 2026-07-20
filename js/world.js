@@ -111,7 +111,9 @@ export class World {
   // (researchRate, dronePower, passive income). BASE_CYCLES_PER_MIN is an
   // always-on floor so metal production doesn't depend on AI Core existing.
   activeMetalProducers() {
-    const producers = this.scavengers.map(s => s.metalPerCycle);
+    // Phase 11: effectiveMetalPerCycle() folds in a Scavenger's equipped-item
+    // metalYieldMult affix, if any — Mine has no equip slot, stays as-is.
+    const producers = this.scavengers.map(s => s.effectiveMetalPerCycle());
     const mine = this.commandCore.rooms.find(r => r.type === 'mine' && r.isActive());
     if (mine) producers.push(mine.stats.metalPerCycle);
     return producers;
@@ -146,7 +148,10 @@ export class World {
     const share = this.cyclesPerSecond() / this.scavengers.length;
     return this.scavengers.reduce((sum, s) => {
       const odds = CONFIG.ORE_LOOT_TABLE[s.tier - 1][type] || 0;
-      return sum + share * s.metalPerCycle * (odds / 100);
+      // Phase 11: effectiveMetalPerCycle() folds in metalYieldMult; rareOreFindMult()
+      // is a second, independent multiplier scoped to non-Metal ore only (the only
+      // callers of orePerSecond() ever pass a rare type — see updateOreAccrual()).
+      return sum + share * s.effectiveMetalPerCycle() * (odds / 100) * s.rareOreFindMult();
     }, 0);
   }
 
@@ -189,6 +194,29 @@ export class World {
     const factory = this.craftingRoom();
     if (!factory) return null;
     return this.inventory.craft(recipeId, factory.stats.rarityBonusPct);
+  }
+
+  // Moves an item between the loose Inventory.items list and a Tower/Scavenger's
+  // single equip slot — never both at once, so no separate uniqueness check is
+  // needed (an equipped item physically isn't in the loose list to re-equip
+  // elsewhere). Re-equipping over an existing item unequips it back to the list
+  // first, same "swap, don't stack" convention CommandCore's one-room-per-type
+  // and Tower's own single-turret-per-cell already set elsewhere in this codebase.
+  equipItem(entity, itemId) {
+    if (!entity) return false;
+    const idx = this.inventory.items.findIndex(i => i.id === itemId);
+    if (idx === -1) return false;
+    const [item] = this.inventory.items.splice(idx, 1);
+    this.unequipItem(entity);
+    entity.equippedItem = item;
+    return true;
+  }
+
+  unequipItem(entity) {
+    if (!entity || !entity.equippedItem) return false;
+    this.inventory.items.push(entity.equippedItem);
+    entity.equippedItem = null;
+    return true;
   }
 
   // Phase 4b: base passive income, scaled by the player's persistent profile level.

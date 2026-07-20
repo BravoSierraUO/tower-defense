@@ -1,7 +1,9 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../js/config.js';
-import { Inventory, rollOre, rollDroppedOre, rollItemRarity, rollAffixes } from '../js/inventory.js';
+import { Inventory, rollOre, rollDroppedOre, rollItemRarity, rollAffixes, affixMultiplier } from '../js/inventory.js';
+import { Tower } from '../js/tower.js';
+import { ScavengerTurret } from '../js/scavenger.js';
 import { freshGame, finishBuild } from './helpers.mjs';
 
 // Same statistical-testing convention tests/spawner.test.mjs already uses for
@@ -170,5 +172,87 @@ describe('World: Phase 11 skeleton wiring', () => {
     const componentRate = world.inventory.items.length / N;
     assert.ok(Math.abs(componentRate - CONFIG.ENEMY_COMPONENT_DROP_CHANCE) < 0.02,
       `component drop rate ${componentRate} should track ENEMY_COMPONENT_DROP_CHANCE ${CONFIG.ENEMY_COMPONENT_DROP_CHANCE}`);
+  });
+});
+
+describe('inventory.js: affixMultiplier()', () => {
+  test('a null item, or an item with no matching affix, is a no-op (1)', () => {
+    assert.equal(affixMultiplier(null, 'damageMult'), 1);
+    const item = { affixes: [{ stat: 'rangeMult', value: 0.05 }] };
+    assert.equal(affixMultiplier(item, 'damageMult'), 1);
+  });
+
+  test('sums every matching affix into one multiplier', () => {
+    const item = { affixes: [
+      { stat: 'damageMult', value: 0.05 },
+      { stat: 'damageMult', value: 0.03 },
+      { stat: 'rangeMult', value: 0.1 }
+    ] };
+    assert.ok(Math.abs(affixMultiplier(item, 'damageMult') - 1.08) < 1e-9);
+  });
+});
+
+describe('Tower/ScavengerTurret: equipped-item effective stats (Phase 11)', () => {
+  test('Tower effective*() methods equal base stats with nothing equipped', () => {
+    const tower = new Tower(0, 0);
+    assert.equal(tower.effectiveRange(), tower.range);
+    assert.equal(tower.effectiveDamage(), tower.damage);
+    assert.equal(tower.effectiveFireRate(), tower.fireRate);
+    assert.equal(tower.cooldownAffixMult(), 1);
+  });
+
+  test('an equipped item\'s matching affixes scale Tower\'s effective stats; non-matching ones are inert', () => {
+    const tower = new Tower(0, 0);
+    tower.equippedItem = { affixes: [{ stat: 'damageMult', value: 0.1 }, { stat: 'rangeMult', value: 0.2 }] };
+    assert.ok(Math.abs(tower.effectiveDamage() - tower.damage * 1.1) < 1e-9);
+    assert.ok(Math.abs(tower.effectiveRange() - tower.range * 1.2) < 1e-9);
+    assert.equal(tower.effectiveFireRate(), tower.fireRate, 'no fireRateMult affix on this item — unaffected');
+  });
+
+  test('ScavengerTurret effective methods reflect metalYieldMult/rareOreFindMult', () => {
+    const scavenger = new ScavengerTurret(0, 0);
+    assert.equal(scavenger.effectiveMetalPerCycle(), scavenger.metalPerCycle);
+    assert.equal(scavenger.rareOreFindMult(), 1);
+
+    scavenger.equippedItem = { affixes: [{ stat: 'metalYieldMult', value: 0.08 }, { stat: 'rareOreFindMult', value: 0.05 }] };
+    assert.ok(Math.abs(scavenger.effectiveMetalPerCycle() - scavenger.metalPerCycle * 1.08) < 1e-9);
+    assert.ok(Math.abs(scavenger.rareOreFindMult() - 1.05) < 1e-9);
+  });
+});
+
+describe('World: equip/unequip (Phase 11)', () => {
+  test('equipItem moves an item out of inventory.items onto the entity; unequipItem reverses it', () => {
+    const { world } = freshGame(100000);
+    const tower = world.placeTower(200, 200);
+    const item = world.inventory.addCraftedItem('motor');
+
+    assert.equal(world.equipItem(tower, item.id), true);
+    assert.equal(tower.equippedItem, item);
+    assert.equal(world.inventory.items.includes(item), false, 'equipped item leaves the loose list');
+
+    assert.equal(world.unequipItem(tower), true);
+    assert.equal(tower.equippedItem, null);
+    assert.equal(world.inventory.items.includes(item), true, 'unequipping returns it to the list');
+  });
+
+  test('equipItem refuses an unknown item id and touches nothing', () => {
+    const { world } = freshGame(100000);
+    const tower = world.placeTower(200, 200);
+    assert.equal(world.equipItem(tower, 999999), false);
+    assert.equal(tower.equippedItem, null);
+  });
+
+  test('re-equipping over an existing item unequips the old one back to the list first — never two at once', () => {
+    const { world } = freshGame(100000);
+    const tower = world.placeTower(200, 200);
+    const itemA = world.inventory.addCraftedItem('motor');
+    const itemB = world.inventory.addCraftedItem('armorPlate');
+
+    world.equipItem(tower, itemA.id);
+    world.equipItem(tower, itemB.id);
+
+    assert.equal(tower.equippedItem, itemB);
+    assert.equal(world.inventory.items.includes(itemA), true, 'the previously equipped item came back to the list');
+    assert.equal(world.inventory.items.includes(itemB), false);
   });
 });

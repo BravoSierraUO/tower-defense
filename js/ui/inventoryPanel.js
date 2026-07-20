@@ -5,6 +5,7 @@
 // crafted/dropped item instances — gets its own list, rebuilt each update()
 // call instead of built once, since it grows at runtime.
 import { CONFIG } from '../config.js';
+import { buildItemRow } from './itemRow.js';
 
 // Ordered raw -> refined -> component, matching the production-line fiction.
 const REFINE_ORDER = Object.keys(CONFIG.REFINED_RECIPES);
@@ -84,27 +85,10 @@ export class InventoryPanel {
       r.btn.disabled = !ready;
     }
 
-    // Reuses the Wave Menu's read-only .wave-row/-info/-label/-meta shape
-    // (label + meta line, no button) — an item card needs no action, unlike
-    // a recipe row above.
+    // Read-only — no actionLabel — since a crafted item just sits here until
+    // it's equipped from the Upgrade Modal (Phase 7c/11) instead.
     this.itemList.innerHTML = '';
     const items = world.inventory.items.slice(-MAX_ITEMS_SHOWN).reverse();
-    for (const item of items) {
-      const recipe = CONFIG.COMPONENT_RECIPES[item.recipeId];
-      const rarity = CONFIG.RARITY_TIERS.find(t => t.id === item.rarity);
-      const row = document.createElement('div');
-      row.className = 'wave-row';
-      row.innerHTML = '<div class="wave-row-info"><span class="wave-row-label"></span><span class="wave-row-meta"></span></div>';
-      const label = row.querySelector('.wave-row-label');
-      label.textContent = `${recipe.label} `;
-      const rarityTag = document.createElement('span');
-      rarityTag.textContent = rarity.label;
-      rarityTag.style.color = rarity.color;
-      label.appendChild(rarityTag);
-      row.querySelector('.wave-row-meta').textContent = item.affixes.length
-        ? item.affixes.map(a => `${a.label} ${a.value >= 0 ? '+' : ''}${Math.round(a.value * 100)}%`).join(' · ')
-        : 'No affixes';
-      this.itemList.appendChild(row);
-    }
+    for (const item of items) this.itemList.appendChild(buildItemRow(item, null, null));
   }
 }

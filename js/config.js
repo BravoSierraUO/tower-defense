@@ -352,6 +352,7 @@ export const CONFIG = {
   // whatever eventually consumes affixes (Phase 7c's parked upgrade modal);
   // this pass only rolls and stores them.
   AFFIX_POOL: [
+    { id: 'damage',     label: 'Damage',         stat: 'damageMult',      min: 0.03,  max: 0.08 },
     { id: 'fireRate',   label: 'Fire Rate',      stat: 'fireRateMult',    min: 0.03,  max: 0.08 },
     { id: 'range',      label: 'Range',          stat: 'rangeMult',       min: 0.03,  max: 0.08 },
     { id: 'cooldown',   label: 'Cooldown',       stat: 'cooldownMult',    min: -0.08, max: -0.03 },

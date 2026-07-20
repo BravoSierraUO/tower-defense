@@ -520,6 +520,40 @@
         </aside>
     </div>
 
+    <!-- ==========================
+         UPGRADE MODAL (Phase 7c's parked idea, real content via Phase 11)
+         Opens on clicking your own Tower/Scavenger, replacing the old silent
+         click-to-upgrade. Tier/cost/equipped item are all specific to
+         whichever entity is selected, so unlike the panels above, nothing
+         here is a fixed row list — see js/ui/upgradeModal.js.
+    ========================== -->
+
+    <div id="upgrade-modal-overlay" class="confirm-modal-overlay" hidden>
+        <aside class="wave-panel">
+            <button id="upgrade-modal-close-btn" class="mission-help-btn panel-close-btn" title="Close">✕</button>
+
+            <div class="wave-panel-header">
+                <div id="upgrade-modal-title" class="wave-panel-title">Tower</div>
+                <div id="upgrade-modal-sub" class="wave-panel-sub"></div>
+            </div>
+
+            <div class="panel-scroll">
+                <div id="upgrade-modal-cost-line" class="mission-row-hint"></div>
+                <button id="upgrade-modal-upgrade-btn" class="settings-btn-sm">Upgrade</button>
+
+                <div class="inventory-section-heading">Equipped</div>
+                <div id="upgrade-modal-equipped" class="wave-panel-list"></div>
+
+                <div class="inventory-section-heading">Inventory</div>
+                <div id="upgrade-modal-items" class="wave-panel-list"></div>
+            </div>
+
+            <div class="panel-footer">
+                <button id="upgrade-modal-footer-close-btn" class="settings-btn panel-footer-close-btn">Close</button>
+            </div>
+        </aside>
+    </div>
+
     <!-- =========================
          RADIAL CONTEXT MENU
          Phase 9b: click empty space (Field or Core) to open — replaces the

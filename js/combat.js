@@ -46,7 +46,7 @@ export class Projectile {
 
 function findTarget(tower, enemies) {
   let closest = null;
-  let closestDist = tower.range;
+  let closestDist = tower.effectiveRange();
   for (const enemy of enemies) {
     if (enemy.isDead() || enemy.reachedTarget) continue;
     const dist = Math.hypot(enemy.x - tower.x, enemy.y - tower.y);
@@ -97,10 +97,14 @@ export function updateCombat(world, dt) {
     if (tower.cooldown > 0) continue;
     const target = findTarget(tower, world.enemies);
     if (target) {
-      // Phase 4: Damage Mastery skill multiplies every shot; Tower itself stays untouched.
-      world.projectiles.push(new Projectile(tower.x, tower.y, target, tower.damage * world.profile.damageMult(), tower.damageType));
-      // Phase 4d: a power brownout stretches the cooldown (slower firing) instead of stopping it.
-      tower.cooldown = 1 / (tower.fireRate * world.powerFactor());
+      // Phase 4: Damage Mastery skill multiplies every shot. Phase 11: an equipped
+      // item's damage affix (if any) does too — Tower's own base damage stays untouched.
+      world.projectiles.push(new Projectile(tower.x, tower.y, target, tower.effectiveDamage() * world.profile.damageMult(), tower.damageType));
+      // Phase 4d: a power brownout stretches the cooldown (slower firing) instead of
+      // stopping it. Phase 11: an equipped item's fireRate affix (effectiveFireRate())
+      // and its cooldown affix (cooldownAffixMult(), a direct multiplier on the
+      // duration itself) both shorten it further, independently.
+      tower.cooldown = (1 / (tower.effectiveFireRate() * world.powerFactor())) * tower.cooldownAffixMult();
     }
   }
 

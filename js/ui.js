@@ -11,6 +11,7 @@ import { RadialMenu } from './ui/radialMenu.js';
 import { WavePanel } from './ui/wavePanel.js';
 import { MissionPanel } from './ui/missionPanel.js';
 import { InventoryPanel } from './ui/inventoryPanel.js';
+import { UpgradeModal } from './ui/upgradeModal.js';
 
 // UI reads world state and writes to the DOM overlay. It never mutates
 // gameplay state and is never zoomed/panned by the camera (plain HTML,
@@ -25,9 +26,10 @@ export class UI {
   // callbacks: { onUnlockTech(id), onDockTrade(), onPrestige(), onBuySkill(id),
   // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold(), onToggleAbout(),
   // onToggleCore(), onReportBug(), onRadialAction(id), onOpenWaveMenu(), onSelectWave(n, isReplay),
-  // onOpenMissionMenu(), onTrackMission(id), onOpenInventoryMenu(), onRefine(id), onCraft(id) } —
+  // onOpenMissionMenu(), onTrackMission(id), onOpenInventoryMenu(), onRefine(id), onCraft(id),
+  // onCloseUpgradeModal(), onUpgradeSelected(), onEquipItem(id), onUnequipItem() } —
   // UI only translates DOM clicks into these; it never mutates gameplay state directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onRadialAction } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onCloseUpgradeModal, onUpgradeSelected, onEquipItem, onUnequipItem, onRadialAction } = {}) {
     this.modeHint = document.getElementById('ui-mode-hint');
 
     this.hud = new HudPanel({ onRestart, onRepairBase, onOpenWaveMenu });
@@ -40,6 +42,7 @@ export class UI {
     this.waves = new WavePanel({ onSelectWave, onClose: onOpenWaveMenu });
     this.missionPanel = new MissionPanel({ onTrack: onTrackMission, onClose: onOpenMissionMenu });
     this.inventoryPanel = new InventoryPanel({ onRefine, onCraft, onClose: onOpenInventoryMenu });
+    this.upgradeModal = new UpgradeModal({ onUpgrade: onUpgradeSelected, onEquip: onEquipItem, onUnequip: onUnequipItem, onClose: onCloseUpgradeModal });
 
     // afterConfirm closes the JSON viewer regardless of which reset entry point
     // was used — settingsPanel isn't constructed yet at this point, but the
@@ -50,7 +53,7 @@ export class UI {
     this.avatarMenu = new AvatarMenu({ onToggleCore, onToggleProfile, onToggleAbout, onToggleSettings, onReportBug, onOpenResetConfirm });
   }
 
-  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, missions, waveMenuOpen, missionMenuOpen, inventoryMenuOpen) {
+  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, missions, waveMenuOpen, missionMenuOpen, inventoryMenuOpen, upgradeModalOpen) {
     const spawner = world.spawner;
     const base = world.base;
 
@@ -62,6 +65,9 @@ export class UI {
 
     this.inventoryPanel.overlay.hidden = !inventoryMenuOpen;
     if (inventoryMenuOpen) this.inventoryPanel.update(world);
+
+    this.upgradeModal.overlay.hidden = !upgradeModalOpen;
+    if (upgradeModalOpen) this.upgradeModal.update(world, selectedTower, selectedScavenger);
 
     const inCore = view === 'core';
     const inProfile = view === 'profile';

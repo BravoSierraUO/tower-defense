@@ -62,6 +62,16 @@ export function rollAffixes(rarityId) {
   return picked;
 }
 
+// Reads a possibly-null equipped item's rolled affixes for one stat and folds
+// them into a single multiplier — 1 (no-op) if the item is null or carries no
+// matching affix. Tower/Scavenger call this once per relevant base stat
+// (effectiveRange(), effectiveFireRate(), etc.) rather than Tower/Scavenger
+// reaching into Inventory internals directly.
+export function affixMultiplier(item, stat) {
+  if (!item) return 1;
+  return item.affixes.reduce((mult, a) => (a.stat === stat ? mult + a.value : mult), 1);
+}
+
 let nextItemId = 1;
 
 // Phase 11 skeleton: raw ore + refined materials are plain stackable counts

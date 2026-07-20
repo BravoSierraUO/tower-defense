@@ -174,6 +174,51 @@ describe('combat: Phase 7a Damage Triangle', () => {
   });
 });
 
+describe('combat: Phase 11 equipped-item affixes', () => {
+  test('an equipped damage/fireRate affix scales the fired projectile\'s damage and the resulting cooldown', () => {
+    const { world } = freshGame(100000);
+    const reactor = world.buildRoom('reactor', 0, 0);
+    finishBuild(reactor);
+    const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    tower.equippedItem = { affixes: [{ stat: 'damageMult', value: 0.5 }, { stat: 'fireRateMult', value: 1 }] };
+    const enemy = new Enemy(AWAY_FROM_BASE + 10, AWAY_FROM_BASE, 0, 0);
+    world.enemies.push(enemy);
+
+    updateCombat(world, 0.016);
+
+    assert.equal(world.projectiles.length, 1);
+    assert.ok(Math.abs(world.projectiles[0].damage - tower.damage * 1.5) < 1e-9, 'damageMult +50% applied');
+    assert.ok(Math.abs(tower.cooldown - 1 / (tower.fireRate * 2)) < 1e-9, 'fireRateMult +100% halves the cooldown');
+  });
+
+  test('an equipped cooldown affix shortens the cooldown independently of fireRateMult', () => {
+    const { world } = freshGame(100000);
+    const reactor = world.buildRoom('reactor', 0, 0);
+    finishBuild(reactor);
+    const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    tower.equippedItem = { affixes: [{ stat: 'cooldownMult', value: -0.2 }] };
+    world.enemies.push(new Enemy(AWAY_FROM_BASE + 10, AWAY_FROM_BASE, 0, 0));
+
+    updateCombat(world, 0.016);
+
+    assert.ok(Math.abs(tower.cooldown - (1 / tower.fireRate) * 0.8) < 1e-9);
+  });
+
+  test('an equipped range affix widens what findTarget can reach', () => {
+    const { world } = freshGame(100000);
+    const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    const farEnemy = new Enemy(AWAY_FROM_BASE + tower.range + 20, AWAY_FROM_BASE, 0, 0);
+    world.enemies.push(farEnemy);
+
+    updateCombat(world, 0.016);
+    assert.equal(world.projectiles.length, 0, 'sanity: out of range with no affix equipped');
+
+    tower.equippedItem = { affixes: [{ stat: 'rangeMult', value: 1 }] }; // doubles range
+    updateCombat(world, 0.016);
+    assert.equal(world.projectiles.length, 1, 'now in range once range is doubled');
+  });
+});
+
 describe('combat: Hangar drones', () => {
   test('an active Hangar deals dronePower * dt to the enemy closest to the base every frame, with no Hangar built at all', () => {
     const { world } = freshGame(0);
