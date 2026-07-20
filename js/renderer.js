@@ -190,7 +190,25 @@ export class Renderer {
         ctx.stroke();
         ctx.restore();
       }
+
+      this.drawHealthBar(p, r, tower, camera, color);
     }
+  }
+
+  // Phase 7d: only drawn once a turret has actually taken damage — a full-health
+  // one stays exactly as clean as it was every phase before turrets had health,
+  // no permanent new UI chrome for the common case.
+  drawHealthBar(p, r, entity, camera, color) {
+    if (entity.health >= entity.maxHealth) return;
+    const ctx = this.ctx;
+    const w = r * 2;
+    const y = p.y + r + 5 * camera.zoom;
+    const pct = Math.max(0, entity.health / entity.maxHealth);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(p.x - w / 2, y, w, 3 * camera.zoom);
+    ctx.fillStyle = pct > 0.3 ? color : CONFIG.BASE_DAMAGE_COLOR;
+    ctx.fillRect(p.x - w / 2, y, w * pct, 3 * camera.zoom);
   }
 
   // A short, deterministic "is this turret flavor-firing right now" window —
@@ -246,6 +264,8 @@ export class Renderer {
         ctx.lineTo(ax, ay);
         ctx.stroke();
       }
+
+      this.drawHealthBar(p, r, scavenger, camera, CONFIG.SCAVENGER_COLOR);
     }
   }
 
@@ -283,6 +303,27 @@ export class Renderer {
         ctx.beginPath();
         ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
         ctx.stroke();
+      }
+
+      // Phase 7d: an aggro'd enemy (World.pickAggroTarget) has to read differently
+      // on screen before it arrives, or the mechanic is invisible until a turret's
+      // already dead — an outer amber ring plus a solid line at its actual target,
+      // visually distinct from Phase 7c's dashed/translucent turret flavor-shot line.
+      if (enemy.attackTarget) {
+        ctx.strokeStyle = CONFIG.ENEMY_AGGRO_COLOR;
+        ctx.lineWidth = 1.5 * camera.zoom;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r + 4 * camera.zoom, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const tp = camera.worldToScreen(enemy.attackTarget.x, enemy.attackTarget.y);
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(tp.x, tp.y);
+        ctx.stroke();
+        ctx.restore();
       }
     }
   }

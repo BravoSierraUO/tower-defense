@@ -93,7 +93,7 @@ describe('combat: Projectile', () => {
 });
 
 describe('combat: base damage & Shield', () => {
-  test('an enemy that reaches the base deals ENEMY_BASE_DAMAGE exactly once (hasHitBase guard)', () => {
+  test('an enemy that reaches the base deals ENEMY_BASE_DAMAGE exactly once (hasHitTarget guard)', () => {
     const { world } = freshGame(0);
     const enemy = new Enemy(0, 0, 0, 0);
     enemy.reachedTarget = true;
@@ -104,7 +104,7 @@ describe('combat: base damage & Shield', () => {
     assert.equal(world.base.health, healthAfterFirstHit);
 
     updateCombat(world, 0.016); // same enemy, still in world.enemies (nothing removed it here)
-    assert.equal(world.base.health, healthAfterFirstHit, 'hasHitBase prevented a second hit');
+    assert.equal(world.base.health, healthAfterFirstHit, 'hasHitTarget prevented a second hit');
   });
 
   test('an active Shield room reduces base damage by exactly its shieldPct', () => {

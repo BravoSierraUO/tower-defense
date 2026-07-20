@@ -65,14 +65,33 @@ export function findTarget(tower, enemies) {
 // cleanup. Phase 3: Shield room reduces the damage by its shieldPct. Phase 4:
 // the Fortification skill stacks on top, combined reduction capped well under
 // 100% so a maxed-out Core + maxed skill can never zero out base damage.
+// Phase 7d: only the still-base-bound enemies (attackTarget null) — an
+// aggro'd enemy is resolved by resolveTurretHits() below instead.
 function resolveBaseHits(world) {
   const reduction = Math.min(0.95, world.commandCore.totals().shieldPct + world.profile.fortifyMult());
   for (const enemy of world.enemies) {
-    if (enemy.reachedTarget && !enemy.hasHitBase) {
+    if (enemy.reachedTarget && !enemy.hasHitTarget && !enemy.attackTarget) {
       world.base.takeDamage(CONFIG.ENEMY_BASE_DAMAGE * (1 - reduction));
-      enemy.hasHitBase = true;
+      enemy.hasHitTarget = true;
     }
   }
+}
+
+// Phase 7d: an aggro'd enemy (enemy.attackTarget set by World.pickAggroTarget)
+// hits its Tower/Scavenger instead of the base on arrival — same one-shot-then-
+// eligible-for-cleanup contact damage as resolveBaseHits, but no Shield/Fortify
+// reduction: those defend the base specifically, not exterior turrets. A turret
+// destroyed this way is a real loss, not sellTowerAt's refund — filtered out of
+// world.towers/world.scavengers right here rather than left for a caller to notice.
+function resolveTurretHits(world) {
+  for (const enemy of world.enemies) {
+    if (enemy.reachedTarget && !enemy.hasHitTarget && enemy.attackTarget) {
+      enemy.attackTarget.takeDamage(CONFIG.ENEMY_BASE_DAMAGE);
+      enemy.hasHitTarget = true;
+    }
+  }
+  world.towers = world.towers.filter(t => !t.isDestroyed());
+  world.scavengers = world.scavengers.filter(s => !s.isDestroyed());
 }
 
 // Phase 3: Hangar's "interceptor drones" are a passive, tower-independent
@@ -118,4 +137,5 @@ export function updateCombat(world, dt) {
 
   applyHangarDrones(world, dt);
   resolveBaseHits(world);
+  resolveTurretHits(world);
 }

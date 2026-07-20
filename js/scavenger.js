@@ -16,7 +16,19 @@ export class ScavengerTurret {
   }
 
   applyTier() {
-    this.metalPerCycle = CONFIG.SCAVENGER_TIERS[this.tier - 1].metalPerCycle;
+    const t = CONFIG.SCAVENGER_TIERS[this.tier - 1];
+    this.metalPerCycle = t.metalPerCycle;
+    // Phase 7d: see Tower.applyTier()'s comment — same full-heal-on-upgrade call.
+    this.maxHealth = CONFIG.SCAVENGER_HEALTH * t.healthMult;
+    this.health = this.maxHealth;
+  }
+
+  takeDamage(amount) {
+    this.health = Math.max(0, this.health - amount);
+  }
+
+  isDestroyed() {
+    return this.health <= 0;
   }
 
   effectiveMetalPerCycle() {

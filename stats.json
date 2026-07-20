@@ -276,22 +276,28 @@
       "date": "07-20",
       "cum": 11589,
       "subject": "Phase 11 fill: stats-screen Loot Odds table in the Profile panel"
+    },
+    {
+      "hash": "a08b6cf",
+      "date": "07-20",
+      "cum": 11625,
+      "subject": "Phase 5b fill: merge avatar icon with the level badge"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4373,
+      "value": 4375,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3024,
+      "value": 3037,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2170,
+      "value": 2191,
       "tone": "info"
     },
     {
@@ -301,7 +307,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 19.2,
+    "activeHours": 19.3,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

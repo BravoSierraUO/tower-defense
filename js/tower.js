@@ -25,6 +25,20 @@ export class Tower {
     this.range = CONFIG.TOWER_RANGE * t.rangeMult;
     this.damage = CONFIG.TOWER_DAMAGE * t.damageMult;
     this.fireRate = CONFIG.TOWER_FIRE_RATE * t.fireRateMult;
+    // Phase 7d: an upgrade also fully heals — investing more in a turret
+    // both raises its cap and repairs whatever an enemy had chipped off.
+    this.maxHealth = CONFIG.TOWER_HEALTH * t.healthMult;
+    this.health = this.maxHealth;
+  }
+
+  // Phase 7d: an aggro'd enemy (World.pickAggroTarget) deals contact damage here
+  // instead of to the base — same shape as Base.takeDamage()/isDestroyed().
+  takeDamage(amount) {
+    this.health = Math.max(0, this.health - amount);
+  }
+
+  isDestroyed() {
+    return this.health <= 0;
   }
 
   // Base stat * whatever the equipped item's matching affix rolled (1 = no

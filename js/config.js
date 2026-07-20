@@ -63,6 +63,20 @@ export const CONFIG = {
   ENEMY_SPAWN_INTERVAL: 1.2,
   ENEMY_BASE_DAMAGE: 10,
 
+  // Phase 7d: Invader-vs-Turret Combat. Rolled once per spawn (World.pickAggroTarget) —
+  // on a hit, the enemy walks at the nearest live Tower/Scavenger instead of the base;
+  // on a miss (or an empty field), behavior is unchanged from every phase before this
+  // one. Deals the same ENEMY_BASE_DAMAGE contact hit a base-bound enemy would, just to
+  // a turret's health pool instead — no separate damage constant invented for it.
+  ENEMY_AGGRO_CHANCE: 0.2,
+  ENEMY_AGGRO_COLOR: '#FFB020', // telegraph ring/line color, distinct from every DAMAGE_TYPES/SCAVENGER color already in play
+  // A tower kill scored while it was still aggro'd on a turret (i.e. shot down before
+  // reaching it) pays extra, on top of the normal GOLD_PER_ENEMY_HEALTH payout — the
+  // user's own framing was "we get some metal and money," so this is the game's first
+  // per-kill metal payout, distinct from wave-clear metal.
+  DEFENDER_BONUS_GOLD_MULT: 0.5,
+  DEFENDER_BONUS_METAL_PER_ENEMY_HEALTH: 0.2,
+
   BASE_X: 0,
   BASE_Y: 0,
   BASE_HEALTH: 100,
@@ -248,10 +262,14 @@ export const CONFIG = {
   COMBO_MAX_STACKS: 25,          // caps the combo bonus at +50%
   BASE_PASSIVE_INCOME_PER_LEVEL: 0.05, // gold/sec per profile level
   FAST_BUILD_GOLD_PER_SECOND: 4, // cost to rush-finish a room's remaining build timer
+  // Phase 7d: healthMult added to every tier — a turret is now a real target
+  // (see ENEMY_AGGRO_CHANCE above), so upgrading it buys survivability too,
+  // not just damage/range/fire-rate.
+  TOWER_HEALTH: 60,
   TOWER_TIERS: [
-    { damageMult: 1,   rangeMult: 1,    fireRateMult: 1 },
-    { damageMult: 1.8, rangeMult: 1.15, fireRateMult: 1.15 },
-    { damageMult: 3,   rangeMult: 1.3,  fireRateMult: 1.3 }
+    { damageMult: 1,   rangeMult: 1,    fireRateMult: 1,    healthMult: 1 },
+    { damageMult: 1.8, rangeMult: 1.15, fireRateMult: 1.15, healthMult: 1.6 },
+    { damageMult: 3,   rangeMult: 1.3,  fireRateMult: 1.3,  healthMult: 2.4 }
   ],
   TOWER_UPGRADE_COST_BASE: 30,
   TOWER_UPGRADE_COST_GROWTH: 1.8,
@@ -273,10 +291,13 @@ export const CONFIG = {
                           // the starter Scavenger Turret "already producing" true from minute one
   SCAVENGER_COST: 25,
   SCAVENGER_MAX_COUNT: 20,
+  // Phase 7d: a Scavenger has no way to defend itself, so it's the more
+  // fragile of the two exterior placeables tier-for-tier (see TOWER_HEALTH).
+  SCAVENGER_HEALTH: 40,
   SCAVENGER_TIERS: [
-    { metalPerCycle: 3 },
-    { metalPerCycle: 8 },
-    { metalPerCycle: 18 }
+    { metalPerCycle: 3,  healthMult: 1 },
+    { metalPerCycle: 8,  healthMult: 1.4 },
+    { metalPerCycle: 18, healthMult: 2 }
   ],
   SCAVENGER_UPGRADE_COST_BASE: 20,
   SCAVENGER_UPGRADE_COST_GROWTH: 1.8,

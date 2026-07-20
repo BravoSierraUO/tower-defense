@@ -257,7 +257,7 @@
   <div class="chips">
     <span class="chip">Vanilla JS · Canvas 2D</span>
     <span class="chip">Solo build · zero deps</span>
-    <span class="chip">168 tests · node --test</span>
+    <span class="chip">179 tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
@@ -435,7 +435,7 @@
     <div class="stat"><b id="statFlows">·</b><span>system flows</span></div>
     <div class="stat"><b id="statNodes">·</b><span>documented steps</span></div>
     <div class="stat"><b id="statRefs">·</b><span>code references</span></div>
-    <div class="stat"><b>168</b><span>passing tests, zero deps</span></div>
+    <div class="stat"><b>179</b><span>passing tests, zero deps</span></div>
   </div>
 </section>
 
@@ -571,7 +571,7 @@ const ROADMAP = [
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 168 tests across 8 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. 179 tests across 9 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory/phase7d cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
@@ -635,15 +635,15 @@ const ROADMAP = [
       'Click-to-upgrade modal — done, v2.19. js/ui/upgradeModal.js replaces the old silent click-to-upgrade-if-affordable convention: opens on clicking your own Tower/Scavenger, shows tier/cost/Upgrade, and — the reason it was worth parking until Phase 11\'s item system existed — lets you equip/unequip a crafted component and see its rolled affixes'
     ],
     note:'Surfaced 2026-07-19 alongside Phase 7d below — split into its own card on purpose: pure render/animation, zero new state, safe to build any time as filler, unlike 7d\'s real combat rules. All three items now shipped, out of the original order (upgrade modal first, v2.19, once Phase 11 gave it real content; the two animations last, v2.20, exactly the "safe to build any time as filler" this note originally called them).' },
-  { id:'p7d', num:'7d', title:'Invader-vs-Turret Combat — Tower Health & Enemy Aggro', status:'BACKLOG · NOT SCOPED', color:'--phase-7',
-    desc:'Promotes a gap flagged as far back as Phase 4b\'s note ("Tower still has no health field... enemies still walk straight through towers to the base untouched") into its own designed-but-unscoped card. Combat today is strictly one-directional (combat.js: towers shoot enemies, never the reverse) — this closes it: some enemies target a turret directly instead of the Base, the turret can take damage and die, and killing an aggro\'d enemy pays a defender\'s bonus.',
+  { id:'p7d', num:'7d', title:'Invader-vs-Turret Combat — Tower Health & Enemy Aggro', status:'DONE', color:'--phase-7',
+    desc:'Closes a gap flagged as far back as Phase 4b\'s note ("Tower still has no health field... enemies still walk straight through towers to the base untouched"). Combat was strictly one-directional (combat.js: towers shoot enemies, never the reverse) — now some enemies target a turret directly instead of the Base, the turret takes real damage and can die, and killing an aggro\'d enemy pays a defender\'s bonus.',
     items:[
-      'Tower/Scavenger need a health field + takeDamage() — neither exists today; a destroyed turret needs a real removal path, a loss rather than sellTowerAt\'s refund',
-      'Enemy targeting fork — extend the spawner\'s per-enemy roll (same shape as Phase 7a\'s pickArmorType()) to occasionally aggro the nearest in-range turret instead of walking to Base; needs an actual decision rule (distance? turret tier? random weight?), not a coin flip, or it reads as noise rather than a real choice enemies make',
-      'Reward hook — a turret kill needs its own metal+gold payout wired in alongside the existing per-kill reward path in combat.js; user\'s framing was "we get some metal and money," not yet a real formula',
-      'Visual telegraph — an aggro\'d enemy peeling off toward a turret has to read differently on screen than one beelining for Base, or the mechanic is invisible until the turret\'s already gone'
+      'Tower/Scavenger health — both gained a tier-scaled maxHealth (TOWER_HEALTH:60 / SCAVENGER_HEALTH:40, Scavenger the more fragile of the two) plus takeDamage()/isDestroyed(), same shape as base.js. An upgrade fully heals as well as raising the cap. A destroyed turret is filtered straight out of world.towers/world.scavengers in combat.js\'s resolveTurretHits() — a real loss, no sellTowerAt refund',
+      'Enemy targeting fork — World.pickAggroTarget() rolls ENEMY_AGGRO_CHANCE (0.2) per spawn; a hit aggroes the nearest live Tower/Scavenger to the spawn point (distance-based, not a coin flip — placing turrets closer to the spawn ring now draws more aggro, a real placement tradeoff). An empty field always falls back to the base',
+      'Reward hook — World.updateEnemies() pays a defender\'s bonus (DEFENDER_BONUS_GOLD_MULT extra gold, plus DEFENDER_BONUS_METAL_PER_ENEMY_HEALTH metal — the game\'s first per-kill metal source) when a still-aggro\'d enemy is shot down before it reaches its target',
+      'Visual telegraph — an aggro\'d enemy draws an amber outer ring (ENEMY_AGGRO_COLOR) plus a solid line at its real target, distinct from Phase 7c\'s dashed/translucent flavor-shot line; damaged turrets show a health bar (hidden at full health, no new chrome on the common case)'
     ],
-    note:'User\'s own framing, 2026-07-19: "maybe the invader will decide he wants to take on that turret." Real balance/design surface, same caution Phase 6/7b/8d already carry — aggro rate, turret HP, and payout size all need actual numbers before this feels fair rather than punishing, not just a lookup against existing patterns. No dependency on 7c\'s animation pass, but building 7c first is free filler while this gets designed properly.' },
+    note:'User\'s own framing, 2026-07-19: "maybe the invader will decide he wants to take on that turret." Numbers (0.2 aggro chance, 60/40 tower/scavenger health, 0.5x/0.2x defender bonus mults) are a first working pass per [[feedback_ship_velocity_over_polish]], not a tuned balance point — same "real numbers, not yet tuned" caveat Phase 4d\'s brownout constants got. New flow: A turret gets aggro\'d (WhatHow, Defending group). 11 new tests (tests/phase7d.test.mjs): health/takeDamage/isDestroyed, pickAggroTarget\'s distance rule + aggro-rate statistics, resolveTurretHits removing a destroyed turret, and the defender\'s-bonus reward isolated from Phase 4b\'s combo-stacking bonus. Full node --test pass stayed green (179/179).' },
   { id:'p8a', num:'8a', title:'Idle Wave Loop & Salvage Rewards', status:'DONE', color:'--phase-8',
     desc:'Replaces spawner.js\'s fully automatic countdown→spawning→active loop with a player-paced idle phase: gather resources, place a turret or two, then manually trigger each wave instead of it auto-starting on a timer. Wave-clear rewards become itemized salvage (metal, upgrade modules, production parts, gold) instead of one gold lump, and a wipe still pays out a tiered chest scaled to how far you got.',
     items:[
@@ -986,7 +986,7 @@ const FLOWS = [
   {
     id: 'towerfires', group: 'Defending',
     title: 'A tower fires',
-    summary: 'Runs every frame inside updateCombat — the Phase 1 targeting-and-firing loop, now with the Damage Mastery skill multiplying every shot at the moment it leaves the barrel. (Towers themselves have no health — nothing in the game can damage a tower yet; deliberately deferred out of Phase 4b as an unscoped backlog item, see the Roadmap.)',
+    summary: 'Runs every frame inside updateCombat — the Phase 1 targeting-and-firing loop, now with the Damage Mastery skill multiplying every shot at the moment it leaves the barrel. (As of Phase 7d, towers can take damage too — see A turret gets aggro\'d for the enemy-initiated side of combat.)',
     lanes: ['Tower', 'Target', 'Range', 'Shot', 'Impact'],
     nodes: [
       { id: 'cooldown', col: 0, row: 0.5, kind: 'decision', tone: 'warn', label: 'cooldown <= 0 ?',
@@ -1021,14 +1021,14 @@ const FLOWS = [
   {
     id: 'basehit', group: 'Defending',
     title: 'The base takes a hit',
-    summary: "resolveBaseHits, called at the end of every updateCombat pass — where Shield's damage reduction and the Fortification skill stack, hard-capped so the base can never become unkillable.",
+    summary: "resolveBaseHits, called at the end of every updateCombat pass — where Shield's damage reduction and the Fortification skill stack, hard-capped so the base can never become unkillable. Phase 7d split this: only enemies still base-bound (attackTarget null) resolve here — an aggro'd enemy resolves in resolveTurretHits instead, see A turret gets aggro'd.",
     lanes: ['Enemy', 'Guard', 'Mitigation', 'Base', 'Outcome'],
     nodes: [
       { id: 'arrive', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Enemy reaches the base\nreachedTarget flips true',
         code_ref: 'enemy.js (update)' },
-      { id: 'guard', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'hasHitBase === false ?',
+      { id: 'guard', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'hasHitTarget === false ?',
         code_ref: 'combat.js (resolveBaseHits)',
-        detail: "Without this guard, an enemy standing at the base's exact position would deal damage every single frame it sits there instead of once. hasHitBase flips the instant damage is applied." },
+        detail: "Without this guard, an enemy standing at the base's exact position would deal damage every single frame it sits there instead of once. hasHitTarget flips the instant damage is applied — the same flag resolveTurretHits() uses for its own one-shot guard, since Phase 7d gave every enemy exactly one contact hit regardless of which target it lands on." },
       { id: 'already', col: 1, row: 1.75, kind: 'terminal', tone: 'idle', label: 'Already hit\nskipped' },
       { id: 'reduce', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'reduction = min(0.95,\nshieldPct + fortifyMult())',
         code_ref: 'combat.js (resolveBaseHits)',
@@ -1050,6 +1050,44 @@ const FLOWS = [
       { from: 'reduce', to: 'damage' },
       { from: 'damage', to: 'destroyed' },
       { from: 'destroyed', to: 'wiped', tone: 'alert' }
+    ]
+  },
+  {
+    id: 'turretaggro', group: 'Defending',
+    title: 'A turret gets aggro\'d',
+    summary: "Phase 7d: World.spawnEnemy() rolls ENEMY_AGGRO_CHANCE (20%) per enemy — a hit sends it at the nearest live Tower/Scavenger instead of the base. Closes the gap flagged as far back as Phase 4b's own roadmap note (\"enemies still walk straight through towers to the base untouched\").",
+    lanes: ['Spawn', 'Aggro Roll', 'Pick Target', 'Approach', 'Contact'],
+    nodes: [
+      { id: 'spawn', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Enemy spawns on the ring\nWorld.spawnEnemy()',
+        code_ref: 'world.js (spawnEnemy)' },
+      { id: 'roll', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'aggro roll hits,\na live turret exists ?',
+        code_ref: 'world.js (pickAggroTarget)',
+        detail: "ENEMY_AGGRO_CHANCE is 0.2, rolled fresh per spawn — independent of Phase 7a's armor-type roll, same 'separate axis, not a disguised tier-counter' reasoning. An empty field (no Tower/Scavenger placed yet) always falls back to the base, same as every phase before this one." },
+      { id: 'basebound', col: 1, row: 1.75, kind: 'terminal', tone: 'idle', label: 'Base-bound\nsame path as every phase before 7d' },
+      { id: 'nearest', col: 2, row: 0.5, kind: 'process', tone: 'ok', label: 'nearest live Tower/Scavenger\nto the spawn point wins',
+        code_ref: 'world.js (pickAggroTarget)',
+        detail: 'Distance-based, not a coin flip among every candidate — the roadmap card explicitly called out that a coin flip would read as noise. Turrets placed closer to the spawn ring draw more aggro, a real placement tradeoff instead of a cosmetic label.' },
+      { id: 'approach', col: 3, row: 0.5, kind: 'process', tone: 'sig', label: 'Enemy walks at attackTarget\ntelegraphed: amber ring + line',
+        code_ref: 'enemy.js (update) · renderer.js (drawEnemies)',
+        detail: "Has to read differently on screen before the turret's already dead, or the mechanic is invisible — an outer amber ring (ENEMY_AGGRO_COLOR) plus a solid line at the real target, visually distinct from Phase 7c's dashed/translucent flavor-shot line." },
+      { id: 'shotdown', col: 3, row: 1.75, kind: 'terminal', tone: 'special', label: "Killed en route\nDefender's bonus: extra gold + metal",
+        code_ref: 'world.js (updateEnemies)',
+        detail: "A kill scored on a still-aggro'd enemy (attackTarget set, never reached it) pays DEFENDER_BONUS_GOLD_MULT extra gold on top of the normal per-kill payout, plus DEFENDER_BONUS_METAL_PER_ENEMY_HEALTH metal — the game's first per-kill metal source, distinct from wave-clear metal. User's own framing: \"we get some metal and money.\"" },
+      { id: 'contact', col: 4, row: 0.5, kind: 'process', tone: 'ok', label: 'attackTarget.takeDamage(ENEMY_BASE_DAMAGE)\non arrival',
+        code_ref: 'combat.js (resolveTurretHits)',
+        detail: 'Same one-shot-then-guarded contact damage as a base hit (hasHitTarget), same ENEMY_BASE_DAMAGE amount — no separate turret-damage constant invented. No Shield/Fortification reduction: those defend the base specifically, not exterior turrets.' },
+      { id: 'destroyed', col: 4, row: 1.75, kind: 'terminal', tone: 'alert', label: 'isDestroyed() ?\nremoved — a real loss, no sell refund',
+        code_ref: 'combat.js (resolveTurretHits) · tower.js / scavenger.js (isDestroyed)',
+        detail: "A destroyed turret is filtered straight out of world.towers/world.scavengers, unlike sellTowerAt's 60% refund. A turret that survives stays damaged (visible as a health bar under it) until its next upgrade fully heals it — no auto-heal on its own, unlike the base's full heal on a wave wipe." }
+    ],
+    edges: [
+      { from: 'spawn', to: 'roll' },
+      { from: 'roll', to: 'basebound', dashed: true, tone: 'idle' },
+      { from: 'roll', to: 'nearest', tone: 'ok' },
+      { from: 'nearest', to: 'approach' },
+      { from: 'approach', to: 'shotdown', dashed: true, tone: 'special' },
+      { from: 'approach', to: 'contact', tone: 'sig' },
+      { from: 'contact', to: 'destroyed', tone: 'alert' }
     ]
   },
   {
@@ -1549,11 +1587,11 @@ const FLOWS = [
   {
     id: 'balanceguards', group: 'Proving it',
     title: "A tuning pass can't silently break the economy",
-    summary: '168 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
+    summary: '179 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
     lanes: ['Change', 'Run', 'Stress', 'Checks', 'Verdict'],
     nodes: [
       { id: 'tune', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'A constant changes in config.js\ne.g. a tier-3 buff' },
-      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n168 tests, 8 files, zero deps',
+      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n179 tests, 9 files, zero deps',
         code_ref: 'package.json · tests/*.test.mjs',
         detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile/missions/inventory cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
       { id: 'maxed', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'maxOutRoom() helper\nfull tech chain, max tier, every module slot',
@@ -2028,22 +2066,28 @@ const STATS = {
       "date": "07-20",
       "cum": 11589,
       "subject": "Phase 11 fill: stats-screen Loot Odds table in the Profile panel"
+    },
+    {
+      "hash": "a08b6cf",
+      "date": "07-20",
+      "cum": 11625,
+      "subject": "Phase 5b fill: merge avatar icon with the level badge"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4373,
+      "value": 4375,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3024,
+      "value": 3037,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2170,
+      "value": 2191,
       "tone": "info"
     },
     {
@@ -2053,7 +2097,7 @@ const STATS = {
     }
   ],
   "velocity": {
-    "activeHours": 19.2,
+    "activeHours": 19.3,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

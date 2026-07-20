@@ -1,11 +1,15 @@
 import { CONFIG } from './config.js';
 
 export class Enemy {
-  // Spawns at (x, y) and walks in a straight line toward (targetX, targetY) — the base.
+  // Spawns at (x, y) and walks in a straight line toward (targetX, targetY) — the base,
+  // unless Phase 7d's aggro roll (World.pickAggroTarget) picked a Tower/Scavenger instead.
   // Phase 7a: armorType defaults to null (neutral to every damage type) so every
   // pre-existing call site (tests included) keeps taking unmodified damage —
   // World.spawnEnemy() is the one real-game call site that assigns a real type.
-  constructor(x, y, targetX, targetY, healthMultiplier = 1, speedMultiplier = 1, armorType = null) {
+  // Phase 7d: attackTarget defaults to null (base-bound, the only behavior that existed
+  // before this phase) — World.spawnEnemy() passes a live Tower/Scavenger instance when
+  // the aggro roll hits, with targetX/targetY already pointed at that turret's position.
+  constructor(x, y, targetX, targetY, healthMultiplier = 1, speedMultiplier = 1, armorType = null, attackTarget = null) {
     this.x = x;
     this.y = y;
     this.targetX = targetX;
@@ -14,8 +18,9 @@ export class Enemy {
     this.health = CONFIG.ENEMY_HEALTH * healthMultiplier;
     this.maxHealth = this.health;
     this.reachedTarget = false;
-    this.hasHitBase = false; // combat.js flips this once damage is applied
+    this.hasHitTarget = false; // combat.js flips this once contact damage is applied (base or turret)
     this.armorType = armorType; // 'kinetic' | 'plasma' | 'energy' | null, see CONFIG.DAMAGE_TYPES
+    this.attackTarget = attackTarget; // Tower | ScavengerTurret | null (null = base-bound)
   }
 
   update(dt) {

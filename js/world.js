@@ -224,7 +224,8 @@ export class World {
     this.addGold(level * CONFIG.BASE_PASSIVE_INCOME_PER_LEVEL * dt);
   }
 
-  // Spawns an enemy at a random angle on a ring outside the world, aimed at the base.
+  // Spawns an enemy at a random angle on a ring outside the world, aimed at the base
+  // — or, since Phase 7d, at a live Tower/Scavenger instead (see pickAggroTarget()).
   // Returns the enemy so Spawner can tally its maxHealth into the wave's value total.
   // Phase 7a: armorType defaults to null (neutral) here too — Spawner.pickArmorType()
   // is what actually assigns a real type for live-game spawns.
@@ -232,9 +233,36 @@ export class World {
     const angle = Math.random() * Math.PI * 2;
     const x = this.base.x + Math.cos(angle) * this.spawnRadius;
     const y = this.base.y + Math.sin(angle) * this.spawnRadius;
-    const enemy = new Enemy(x, y, this.base.x, this.base.y, healthMultiplier, speedMultiplier, armorType);
+
+    const aggroTarget = this.pickAggroTarget(x, y);
+    const targetX = aggroTarget ? aggroTarget.x : this.base.x;
+    const targetY = aggroTarget ? aggroTarget.y : this.base.y;
+
+    const enemy = new Enemy(x, y, targetX, targetY, healthMultiplier, speedMultiplier, armorType, aggroTarget);
     this.enemies.push(enemy);
     return enemy;
+  }
+
+  // Phase 7d: rolls CONFIG.ENEMY_AGGRO_CHANCE per spawn. A hit aggroes the nearest live
+  // Tower/Scavenger to the spawn point (distance-based, not a coin flip among all of
+  // them — placing turrets closer to the spawn ring draws more aggro, a real strategic
+  // choice) instead of the base; an empty field (or a miss) falls back to null, the
+  // base-bound behavior every phase before this one had.
+  pickAggroTarget(spawnX, spawnY) {
+    if (Math.random() >= CONFIG.ENEMY_AGGRO_CHANCE) return null;
+    const candidates = [...this.towers, ...this.scavengers];
+    if (candidates.length === 0) return null;
+
+    let nearest = null;
+    let nearestDist = Infinity;
+    for (const candidate of candidates) {
+      const dist = Math.hypot(candidate.x - spawnX, candidate.y - spawnY);
+      if (dist < nearestDist) {
+        nearest = candidate;
+        nearestDist = dist;
+      }
+    }
+    return nearest;
   }
 
   updateSpawning(dt) {
@@ -262,15 +290,23 @@ export class World {
         this.score += Math.round(enemy.maxHealth);
         this.kills++;
         this.addGold(Math.round(enemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * this.rewardMultiplier()));
+        // Phase 7d: a defender's bonus — this enemy was still aggro'd on a turret (shot
+        // down before it ever arrived) rather than base-bound. Extra gold on top of the
+        // normal per-kill payout, plus the game's first per-kill metal.
+        if (enemy.attackTarget) {
+          this.addGold(Math.round(enemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * CONFIG.DEFENDER_BONUS_GOLD_MULT * this.rewardMultiplier()));
+          this.addMetal(Math.round(enemy.maxHealth * CONFIG.DEFENDER_BONUS_METAL_PER_ENEMY_HEALTH));
+        }
         this.spawner.waveValueKilled += enemy.maxHealth; // Phase 8a: raw value, feeds finalizeWave()'s chest-tier %
         this.rollKillDrops(); // Phase 11 skeleton: tower-defensish material path
       }
     }
-    // Frame order is spawning -> combat (resolveBaseHits) -> here. An enemy that just
-    // arrived this frame has reachedTarget=true but hasHitBase=false — filtering on
-    // reachedTarget alone would remove it before combat.js's next pass ever sees it,
-    // so base damage would never actually apply. Keep it one extra frame until hasHitBase flips.
-    this.enemies = this.enemies.filter(e => !e.isDead() && !(e.reachedTarget && e.hasHitBase));
+    // Frame order is spawning -> combat (resolveBaseHits/resolveTurretHits) -> here. An
+    // enemy that just arrived this frame has reachedTarget=true but hasHitTarget=false —
+    // filtering on reachedTarget alone would remove it before combat.js's next pass ever
+    // sees it, so base/turret damage would never actually apply. Keep it one extra frame
+    // until hasHitTarget flips.
+    this.enemies = this.enemies.filter(e => !e.isDead() && !(e.reachedTarget && e.hasHitTarget));
   }
 
   snapToGrid(x, y) {
