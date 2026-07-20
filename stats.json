@@ -324,32 +324,38 @@
       "date": "07-20",
       "cum": 12656,
       "subject": "v2.29 - Phase 6: Comms & Station Identity — the 5 orbital abilities"
+    },
+    {
+      "hash": "837c658",
+      "date": "07-20",
+      "cum": 12864,
+      "subject": "v2.30 - Phase 12: Base Self-Defense + Phase 11 fix: buildSpeedMult"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4794,
+      "value": 4848,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3254,
+      "value": 3867,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2258,
+      "value": 1691,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 2350,
+      "value": 2458,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 25.7,
+    "activeHours": 25.9,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

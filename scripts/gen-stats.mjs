@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Regenerates stats.json (canonical, git-log-derived velocity data) and re-inlines the same
-// object into whatever.html's STATS block, between the STATS_GENERATED_START/END markers.
+// object into index.html's STATS block, between the STATS_GENERATED_START/END markers.
 // Run manually via `npm run stats`, or automatically from the pre-commit hook
 // (scripts/hooks/pre-commit, installed via `npm run hooks:install`).
 import { execFileSync } from 'node:child_process';
@@ -31,7 +31,7 @@ function blobLines(sha) {
 function categoryFor(file) {
   if (file.startsWith('tests/')) return 'Tests';
   if (file.startsWith('js/')) return 'Engine (JS)';
-  if (file.startsWith('css/') || file === 'index.html') return 'Game shell (HTML/CSS)';
+  if (file.startsWith('css/') || file === 'game.html') return 'Game shell (HTML/CSS)';
   return 'Docs & tooling';
 }
 
@@ -96,14 +96,14 @@ const stats = {
 
 writeFileSync(path.join(ROOT, 'stats.json'), JSON.stringify(stats, null, 2) + '\n');
 
-const docPath = path.join(ROOT, 'whatever.html');
+const docPath = path.join(ROOT, 'index.html');
 const doc = readFileSync(docPath, 'utf8');
 const START = '// STATS_GENERATED_START';
 const END = '// STATS_GENERATED_END';
 const startIdx = doc.indexOf(START);
 const endIdx = doc.indexOf(END);
 if (startIdx === -1 || endIdx === -1) {
-  console.error('gen-stats: STATS_GENERATED_START/END markers not found in whatever.html');
+  console.error('gen-stats: STATS_GENERATED_START/END markers not found in index.html');
   process.exit(1);
 }
 const inlineStats = { growth: stats.growth, categories: stats.categories, velocity: stats.velocity };
@@ -111,4 +111,4 @@ const replacement = `${START}\nconst STATS = ${JSON.stringify(inlineStats, null,
 const updatedDoc = doc.slice(0, startIdx) + replacement + doc.slice(endIdx + END.length);
 writeFileSync(docPath, updatedDoc);
 
-console.log(`gen-stats: wrote stats.json + refreshed whatever.html (${growth.length} commits, ${categories.reduce((s, c) => s + c.value, 0)} lines, ~${activeHours}h across ${sessionCount} sessions/${activeDays} days)`);
+console.log(`gen-stats: wrote stats.json + refreshed index.html (${growth.length} commits, ${categories.reduce((s, c) => s + c.value, 0)} lines, ~${activeHours}h across ${sessionCount} sessions/${activeDays} days)`);

@@ -1,9 +1,9 @@
 #!/bin/sh
-# Regenerates stats.json + whatever.html's inline STATS block from real git history before every
+# Regenerates stats.json + index.html's inline STATS block from real git history before every
 # commit, so Velocity never goes stale. Installed via `npm run hooks:install` (git doesn't version
 # .git/hooks, so this source file is the one that's tracked).
 node scripts/gen-stats.mjs || exit 1
-git add stats.json whatever.html
+git add stats.json index.html
 
 # Advisory only (see the script's own comment) — never blocks the commit.
 node scripts/check-roadmap-sync.mjs
