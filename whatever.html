@@ -579,16 +579,16 @@ const ROADMAP = [
       '/docs folder: architecture notes + contribution guide — done. docs/architecture.md (module map, orchestration, economy layers, testing philosophy, known non-goals) and docs/CONTRIBUTING.md (setup, commands, pre-commit checklist, codebase conventions).'
     ],
     note:'Interview-portfolio motivated — "built a working game AND the tooling to prove how it was built." All six items shipped; Phase 5b (player menu shell) split off as its own unscoped backlog card rather than folded in here.' },
-  { id:'p5b', num:'5b', title:'Player Menu Shell — Avatar Dropdown & Account/Settings/Inventory/Base Modal', status:'BACKLOG · PARTIAL', color:'--phase-5',
-    desc:'Today the game has four separate full-screen views toggled by raw hotkeys (B — Command Core, P — Profile, O — About, S — Settings), each its own top-level `aside`. The typical pattern instead: a small avatar + level badge in a HUD corner, click opens a dropdown/menu, which opens a modal with tabbed sections — Account (today\'s Profile panel), Settings (shipped, see below), Inventory (doesn\'t exist yet — no item/loadout system in the game at all right now), Base (today\'s Command Core panel). About/Analytics would fold in as one more tab.',
+  { id:'p5b', num:'5b', title:'Player Menu Shell — Avatar Dropdown & Account/Settings/Inventory/Base Modal', status:'DONE', color:'--phase-5',
+    desc:'Today\'s shape: one modal (`js/ui/menuModal.js`), opened from the avatar dropdown or the radial menu\'s Inventory leaf, hosting Account/Settings/Inventory/About as real tabbed sections plus a fifth "Base →" tab that isn\'t content at all — it closes the modal and hands off to the Command Core view instead. That split was a deliberate call, not an oversight: Core is a full interactive canvas (grid clicks, room placement), not a static panel like the other four, so cramming it into a modal tab would have meant a much bigger canvas-in-modal rework for no real benefit over just linking out to the view that already exists.',
     items:[
       'Avatar as a single clickable HUD element — done (2026-07-19). Top-right corner button opens a dropdown (Profile/About/Settings/Reset Progress). Update, v2.22: merged with the level badge — a small corner badge on the avatar icon itself now shows the player\'s level (reads the same `level` value `HudPanel` already passed to the left-side LEVEL stat, no new state), same gradient `.profile-level-badge` uses inside the Profile panel, shrunk to a notification-badge size',
-      'Dropdown → modal shell that hosts Account/Settings/Inventory/Base/About as tabbed sections instead of five independent hotkey-toggled asides — NOT done, still the "big bite" below',
-      'Settings tab: real content shipped (2026-07-19) — Appearance (light/dark theme toggle, persisted to localStorage) and Save Data (storage key + live byte size, a raw-JSON viewer of the profile blob, Delete Save Data behind a confirm modal that also restarts the run). Lives as its own `aside` (S hotkey or the avatar menu), not yet a modal tab',
-      'Inventory tab: no item/equipment system exists yet at all — this tab has nothing to show until some form of loadout/item system is designed (possibly overlaps Phase 7\'s per-satellite module slots, possibly its own thing)',
-      'Migrating existing Profile (P) and Command Core (B) panels into the new shell without breaking their current hotkey muscle-memory — not attempted; B/P/O/S all still work exactly as before, the avatar menu is a parallel entry point onto the same view-toggle callbacks, not a replacement'
+      'Dropdown → modal shell hosting Account/Settings/Inventory/About as tabbed sections — done. `js/ui/menuModal.js` owns the tab bar and shared close chrome (one ✕ button, one backdrop-click-to-dismiss, reusing `.confirm-modal-overlay` exactly the way the Wave/Mission Menus already do) instead of each panel carrying its own two close buttons. `Game.menuModalOpen`/`menuModalTab` replaced the old `view` values `\'profile\'`/`\'about\'`/`\'settings\'` and Phase 11\'s standalone `inventoryMenuOpen` — `view` itself is down to just `\'field\'`/`\'core\'` now',
+      'Settings tab: real content shipped (2026-07-19, unchanged this pass) — Appearance (light/dark theme toggle, persisted to localStorage) and Save Data (storage key + live byte size, a raw-JSON viewer of the profile blob, Delete Save Data behind a confirm modal that also restarts the run). Now a modal tab body instead of its own `aside`',
+      'Inventory tab: this line was stale by the time the modal shipped — Phase 11 (v2.18-2.21, shipped after this card was written) had already built a real item/crafting system with its own UI (`js/ui/inventoryPanel.js`, opened via the radial menu\'s Inventory leaf). Folding it in was mostly relocation: its content moved from a standalone `.confirm-modal-overlay` into a plain tab body, its own close buttons dropped in favor of the shared one',
+      'Migrating existing Profile/Command Core panels into the new shell — Profile (Account tab) migrated cleanly, content unchanged. Command Core deliberately did NOT migrate — see desc above; its avatar-menu entry point (`onToggleCore`) is now also what the modal\'s "Base →" tab calls, so there\'s still exactly one way in'
     ],
-    note:'Floated during the Phase 5 About-screen build (2026-07-19), explicitly filed rather than built — "a big bite," per the user. Same day, picked back up as a deliberately scoped slice: the avatar dropdown (new, additive) and real Settings-tab content (previously nonexistent) shipped; the tabbed-modal IA redesign and Inventory tab were deliberately left alone — that\'s still a from-scratch panel-system redesign, not an extension, and stays unscoped until picked up on purpose. Same caution Phase 7 already carries. Update, Phase 8g (same day): the "B/P/O/S all still work exactly as before" line above is now stale on purpose, left unedited as an honest historical record rather than silently rewritten — those hotkeys were removed once S turned out to collide with WASD camera panning. The avatar menu stopped being a parallel path and became the only path; see the Phase 8g card below.' },
+    note:'Floated during the Phase 5 About-screen build (2026-07-19), explicitly filed rather than built — "a big bite," per the user. Picked back up 2026-07-20 as the next real feature after a run of small fixes (v2.25-v2.27). Scoping conversation that morning surfaced the Command-Core asymmetry above — the original desc text glossed over it ("Base = today\'s Command Core panel") as if it were just another static panel, which it isn\'t — and the user chose the "Base tab = launch action" option over a full canvas-in-modal rework or leaving Base out of the modal entirely, keeping this a same-day, contained change instead of an open-ended one. No new tests (pure DOM-wiring/markup move, same "no Node-safe path" precedent every other `js/ui/*.js` panel change already sets); full `node --test` untouched and green at 183/183, verified via `node --check` on every touched `.js` file plus an id-uniqueness/`getElementById` cross-check. Verified statically only, continuing the standing no-Playwright-on-this-project rule.' },
   { id:'p5c', num:'5c', title:'In-Game Bug Reporting — GitHub Issues', status:'BACKLOG · PARTIAL', color:'--phase-5',
     desc:'A "Report a Bug" entry point in the game itself, filing a real GitHub issue against this repo instead of the player having to leave the game, screenshot, and write it up by hand.',
     items:[
@@ -2120,6 +2120,12 @@ const STATS = {
       "date": "07-20",
       "cum": 12178,
       "subject": "v2.26 - Fix: radial Build menu gave no reason when a room/tower/scavenger couldn't be built"
+    },
+    {
+      "hash": "e56315b",
+      "date": "07-20",
+      "cum": 12208,
+      "subject": "v2.27 - Fix: Velocity tab's commit log silently truncated to one row"
     }
   ],
   "categories": [
@@ -2130,7 +2136,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 3151,
+      "value": 3181,
       "tone": "special"
     },
     {
@@ -2145,7 +2151,7 @@ const STATS = {
     }
   ],
   "velocity": {
-    "activeHours": 20.4,
+    "activeHours": 20.5,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

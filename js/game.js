@@ -40,7 +40,7 @@ export class Game {
       },
       onOpenMissionMenu: () => { this.missionMenuOpen = !this.missionMenuOpen; },
       onTrackMission: id => this.missions.track(id),
-      onOpenInventoryMenu: () => { this.inventoryMenuOpen = !this.inventoryMenuOpen; },
+      onOpenInventoryMenu: () => this.openMenuTab('inventory'),
       onRefine: id => this.world.refineMaterial(id),
       onCraft: id => this.world.craftComponent(id),
       onCloseUpgradeModal: () => { this.upgradeModalOpen = false; },
@@ -53,17 +53,20 @@ export class Game {
       onRadialAction: id => this.handleRadialAction(id),
       // Phase 8g: the only mouse-driven way into Core now that the B hotkey is
       // gone — same toggle semantics the old key handler had (anywhere else -> field).
-      onToggleCore: () => { this.view = this.view === 'field' ? 'core' : 'field'; this.selectedRoomType = null; },
-      onToggleAbout: () => { this.view = this.view === 'about' ? 'field' : 'about'; this.selectedRoomType = null; },
-      onToggleProfile: () => { this.view = this.view === 'profile' ? 'field' : 'profile'; this.selectedRoomType = null; },
-      onToggleSettings: () => { this.view = this.view === 'settings' ? 'field' : 'settings'; this.selectedRoomType = null; },
+      // Phase 5b: also closes the Player Menu Shell modal if it happened to be
+      // open — the "Base" tab button routes here (see js/ui/menuModal.js).
+      onToggleCore: () => { this.menuModalOpen = false; this.view = this.view === 'field' ? 'core' : 'field'; this.selectedRoomType = null; },
+      onToggleAbout: () => this.openMenuTab('about'),
+      onToggleProfile: () => this.openMenuTab('account'),
+      onToggleSettings: () => this.openMenuTab('settings'),
+      onCloseMenuModal: () => { this.menuModalOpen = false; },
       onResetProgress: () => { this.profile.hardReset(); this.restart(); },
       onReportBug: () => this.reportBug()
     });
     this.lastTime = 0;
     this.fps = 0;
     this.state = 'playing'; // 'playing' | 'won' — 'lost' retired in Phase 8a, see update() below
-    this.view = 'field'; // 'field' | 'core' | 'profile' | 'about' | 'settings'
+    this.view = 'field'; // 'field' | 'core' — Account/Settings/Inventory/About live in the menuModal* state below instead, not view
     this.selectedRoomType = null;
     this.selectedTower = null; // Phase 4b: tower the tower-card is showing
     this.selectedScavenger = null; // Phase 4c: scavenger the tower-card is showing
@@ -72,14 +75,27 @@ export class Game {
     // build bar reminding you what's selected.
     this.fieldBuildType = null; // null | 'tower' | 'scavenger' — field-view placement mode
     // Wave Menu overlay — independent of `view` (like radialMenu/confirmModal) so it
-    // can open from either Field or Core without disturbing the B/P/O/S view switch.
+    // can open from either Field or Core without disturbing the view switch.
     this.waveMenuOpen = false;
     // Same independent-overlay treatment as waveMenuOpen above.
     this.missionMenuOpen = false;
-    // Phase 11 UI layer: same independent-overlay treatment as the two above.
-    this.inventoryMenuOpen = false;
+    // Phase 5b: the Player Menu Shell — one modal, Account/Settings/Inventory/
+    // About as tabs (menuModalTab), replacing the old profile/about/settings
+    // view values and Phase 11's standalone inventoryMenuOpen. Same
+    // independent-of-`view` overlay treatment as waveMenuOpen/missionMenuOpen.
+    this.menuModalOpen = false;
+    this.menuModalTab = 'account'; // 'account' | 'settings' | 'inventory' | 'about'
     this.upgradeModalOpen = false;
     this.resetRunTrackers();
+  }
+
+  // Shared by the avatar menu's Profile/Settings/About items, the radial menu's
+  // Inventory leaf, and the modal's own tab bar (js/ui/menuModal.js) — one path
+  // to open (or, clicking the already-active tab again, close) the Player Menu
+  // Shell on a given tab. "Base" isn't a tab here — see onToggleCore above.
+  openMenuTab(tab) {
+    if (this.menuModalOpen && this.menuModalTab === tab) this.menuModalOpen = false;
+    else { this.menuModalOpen = true; this.menuModalTab = tab; }
   }
 
   // Phase 4c: onboarding guarantee — a free, already-active starter Reactor and
@@ -117,7 +133,7 @@ export class Game {
     this.fieldBuildType = null;
     this.waveMenuOpen = false;
     this.missionMenuOpen = false;
-    this.inventoryMenuOpen = false;
+    this.menuModalOpen = false;
     this.upgradeModalOpen = false;
     this.resetRunTrackers();
   }
@@ -239,7 +255,8 @@ export class Game {
     } else if (id === 'missions') {
       this.missionMenuOpen = true;
     } else if (id === 'inventory') {
-      this.inventoryMenuOpen = true;
+      this.menuModalOpen = true;
+      this.menuModalTab = 'inventory';
     } else if (id === 'scavenger' || CONFIG.DAMAGE_TYPES[id]) {
       this.selectFieldBuild(id);
     } else if (CONFIG.ROOM_TYPES[id]) {
@@ -290,7 +307,7 @@ export class Game {
         this.selectedRoomType = null;
         this.waveMenuOpen = false;
         this.missionMenuOpen = false;
-        this.inventoryMenuOpen = false;
+        this.menuModalOpen = false;
         this.upgradeModalOpen = false;
       } else if (this.view === 'core') {
         // Still positional (index into Object.keys(CONFIG.ROOM_TYPES)) — the
@@ -470,7 +487,7 @@ export class Game {
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType, this.input.mouse);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions, this.waveMenuOpen, this.missionMenuOpen, this.inventoryMenuOpen, this.upgradeModalOpen);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions, this.waveMenuOpen, this.missionMenuOpen, this.menuModalOpen, this.menuModalTab, this.upgradeModalOpen);
   }
 
   loop(timestamp) {

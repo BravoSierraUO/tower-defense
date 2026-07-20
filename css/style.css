@@ -79,12 +79,10 @@ html,body{
 .tower-card,
 .core-panel,
 .ui-banner,
-.profile-panel,
-.about-panel,
-.settings-panel,
 .hud-avatar-menu,
 .confirm-modal,
 .wave-panel,
+.menu-modal,
 .mission-banner,
 .radial-slot{
     backdrop-filter:blur(18px);
@@ -589,22 +587,70 @@ html,body{
     cursor:not-allowed;
 }
 /* ===========================
-   PHASE 4: PROFILE PANEL (level/XP, prestige, skills, achievements)
+   PHASE 5b: PLAYER MENU SHELL
+   Reuses .confirm-modal-overlay for the backdrop (same fixed/centered/
+   click-to-dismiss shell the Wave/Mission Menus use) — .menu-modal is the
+   card, sized like the old bespoke .profile-panel/.about-panel/.settings-panel
+   it replaces. Each tab body is plain .panel-scroll (no per-tab glass/border,
+   see the shared-glass rule above), so only .menu-modal itself needs the
+   backdrop-blur/border treatment.
 =========================== */
 
-.profile-panel{
-    position:absolute;
-    left:50%;
-    top:132px;
-    bottom:28px;
-    transform:translateX(-50%);
-    width:600px;
+.menu-modal{
+    position:relative;
+    width:640px;
     max-width:calc(100% - 48px);
+    height:calc(100% - 96px);
     display:flex;
     flex-direction:column;
     overflow:hidden;
     pointer-events:auto;
 }
+
+.menu-modal-tabs{
+    display:flex;
+    gap:4px;
+    padding:16px 24px 0;
+    flex-shrink:0;
+    border-bottom:1px solid var(--hairline);
+}
+
+.menu-modal-tab{
+    pointer-events:auto;
+    padding:12px 16px;
+    font-size:12px;
+    font-weight:700;
+    font-family:inherit;
+    color:var(--text-dim);
+    background:transparent;
+    border:none;
+    border-bottom:2px solid transparent;
+    cursor:pointer;
+    transition:.15s;
+}
+
+.menu-modal-tab:hover{
+    color:var(--text-primary);
+}
+
+.menu-modal-tab-active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+}
+
+.menu-modal-tab-launch{
+    margin-left:auto;
+    color:var(--accent);
+    opacity:.8;
+}
+
+.menu-modal-tab-launch:hover{
+    opacity:1;
+}
+
+/* ===========================
+   PHASE 4: PROFILE PANEL (level/XP, prestige, skills, achievements)
+=========================== */
 
 .profile-header{
     display:flex;
@@ -829,20 +875,6 @@ html,body{
 /* ===========================
    PHASE 5: ABOUT / ANALYTICS PANEL (reads stats.json — see scripts/gen-stats.mjs)
 =========================== */
-
-.about-panel{
-    position:absolute;
-    left:50%;
-    top:132px;
-    bottom:28px;
-    transform:translateX(-50%);
-    width:520px;
-    max-width:calc(100% - 48px);
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-    pointer-events:auto;
-}
 
 .about-header{
     display:flex;
@@ -1092,20 +1124,6 @@ html,body{
 /* ===========================
    SETTINGS PANEL
 =========================== */
-
-.settings-panel{
-    position:absolute;
-    left:50%;
-    top:132px;
-    bottom:28px;
-    transform:translateX(-50%);
-    width:460px;
-    max-width:calc(100% - 48px);
-    display:flex;
-    flex-direction:column;
-    overflow:hidden;
-    pointer-events:auto;
-}
 
 .settings-header{
     margin-bottom:18px;

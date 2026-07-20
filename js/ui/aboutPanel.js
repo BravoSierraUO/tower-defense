@@ -13,8 +13,6 @@ export class AboutPanel {
     this.el = document.getElementById('about-panel');
     this.aboutBtn = document.getElementById('about-btn');
     this.aboutBtn.addEventListener('click', () => onToggleAbout?.());
-    document.getElementById('about-close-btn').addEventListener('click', () => onToggleAbout?.());
-    document.getElementById('about-footer-close-btn').addEventListener('click', () => onToggleAbout?.());
     this.generatedEl = document.getElementById('about-generated');
     this.totalLinesEl = document.getElementById('about-total-lines');
     this.categoriesEl = document.getElementById('about-categories');

@@ -1,9 +1,11 @@
-// Inventory Menu (Phase 11 UI layer): structurally lifted from missionPanel.js/
-// wavePanel.js — same .wave-panel shell, same "build every row once at
-// construction, only update() touches live values" pattern (recipes are fixed
-// at import time just like MISSIONS was). The one thing that ISN'T fixed —
-// crafted/dropped item instances — gets its own list, rebuilt each update()
-// call instead of built once, since it grows at runtime.
+// Inventory Menu: recipe rows structurally lifted from missionPanel.js/
+// wavePanel.js — same "build every row once at construction, only update()
+// touches live values" pattern (recipes are fixed at import time just like
+// MISSIONS was). The one thing that ISN'T fixed — crafted/dropped item
+// instances — gets its own list, rebuilt each update() call instead of built
+// once, since it grows at runtime. Phase 5b: no longer its own standalone
+// overlay — this is now one tab body inside MenuModal's shared shell
+// (js/ui/menuModal.js), same as Account/Settings/About.
 import { CONFIG } from '../config.js';
 import { buildItemRow } from './itemRow.js';
 
@@ -23,14 +25,11 @@ function materialLabel(key) {
 }
 
 export class InventoryPanel {
-  constructor({ onRefine, onCraft, onClose } = {}) {
-    this.overlay = document.getElementById('inventory-panel-overlay');
+  constructor({ onRefine, onCraft } = {}) {
+    this.overlay = document.getElementById('inventory-panel');
     this.sub = document.getElementById('inventory-panel-sub');
     this.recipeList = document.getElementById('inventory-panel-recipes');
     this.itemList = document.getElementById('inventory-panel-items');
-    document.getElementById('inventory-panel-close-btn').addEventListener('click', () => onClose?.());
-    document.getElementById('inventory-panel-footer-close-btn').addEventListener('click', () => onClose?.());
-    this.overlay.addEventListener('click', e => { if (e.target === this.overlay) onClose?.(); });
 
     this.rows = {};
     for (const id of REFINE_ORDER) this.buildRow(id, CONFIG.REFINED_RECIPES[id], 'ore', 'Refine', () => onRefine?.(id));

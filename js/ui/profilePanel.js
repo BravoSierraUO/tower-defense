@@ -3,10 +3,8 @@ import { CONFIG } from '../config.js';
 import { ACHIEVEMENTS } from '../achievements.js';
 
 export class ProfilePanel {
-  constructor({ onPrestige, onBuySkill, onClose } = {}) {
+  constructor({ onPrestige, onBuySkill } = {}) {
     this.el = document.getElementById('profile-panel');
-    document.getElementById('profile-close-btn').addEventListener('click', () => onClose?.());
-    document.getElementById('profile-footer-close-btn').addEventListener('click', () => onClose?.());
     this.levelEl = document.getElementById('profile-level');
     this.cpEl = document.getElementById('profile-cp');
     this.xpFill = document.getElementById('profile-xp-fill');
