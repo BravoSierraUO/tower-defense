@@ -87,7 +87,7 @@ export class UI {
     if (inCore) this.core.update(world, commandCore);
 
     const snap = profile.snapshot();
-    if (inProfile) this.profile.update(snap, profile);
+    if (inProfile) this.profile.update(snap, profile, world.inventory);
 
     this.hud.update({ world, spawner, base, fps, state, level: snap.level, profile });
     this.field.update(view, world, profile, selectedTower, selectedScavenger);

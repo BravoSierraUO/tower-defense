@@ -747,7 +747,8 @@ const ROADMAP = [
       '15 new tests (tests/inventory.test.mjs) — weighted-roll distributions (same statistical-loop convention tests/spawner.test.mjs already set for RNG-heavy code), craft/refine\'s afford-or-silently-no-op gate, orePerSecond()\'s formula, and rollKillDrops() landing near its configured chances over 5000 trials. Full node --test suite green at 157/157 (up from 142)',
       'Update, v2.18: the UI layer landed same session. New js/ui/inventoryPanel.js — structurally lifted from Phase 8f\'s Mission Menu (fixed recipe rows in an accordion, same .mission-row shape) plus a read-only crafted-items list reusing the Wave Menu\'s .wave-row shape. Zero new CSS beyond one divider rule. Opened via the radial menu\'s Inventory leaf, promoted from Phase 9b\'s "coming soon" stub to a real leaf the same way Missions was in Phase 8f',
       'Update, v2.19: crafted items now do something — Tower/Scavenger gained a single equippedItem slot, effective*() stat methods (effectiveRange/effectiveDamage/effectiveFireRate/effectiveMetalPerCycle/rareOreFindMult) that fold in the equipped item\'s affixes via a new affixMultiplier() helper, and combat.js/world.js read those instead of the raw base fields. See Phase 7c below — its parked upgrade-modal idea is what actually exposes equip/unequip to the player',
-      'Still NOT done: no stats-screen odds table surfacing lifetimeOreMined/lifetimeOreSalvaged (the "metal chance 80%, diamonds 0.01%" flex) — the counters exist, nothing displays them yet. Also a known first-pass gap left honest rather than hidden: the buildSpeedMult affix has no hookup point anywhere (nothing per-Tower/Scavenger reads a build-speed stat), so an item that rolls it is inert on that one affix'
+      'Update, v2.21: the stats-screen odds table shipped — Profile panel\'s new "Loot Odds" section, one row per tracked ore type (Fancy Metal/Platinum/Diamonds; plain Metal has no lifetime counter to show), each reading straight off CONFIG.ORE_LOOT_TABLE/ENEMY_ORE_DROP_TABLE for the configured T1→T3 mining range and per-kill salvage chance, plus Inventory.lifetimeOreMined/lifetimeOreSalvaged for the actual lifetime counts. Rows reuse .wave-row verbatim, same "reuse the shape, not a new palette" convention this whole system has followed since Phase 8f',
+      'Still NOT done: known first-pass gap left honest rather than hidden — the buildSpeedMult affix has no hookup point anywhere (nothing per-Tower/Scavenger reads a build-speed stat), so an item that rolls it is inert on that one affix'
     ],
     note:'User\'s own framing: "Ultima Online in space," a two-stage production line (drop a component whole, or build it from refined materials), and explicit "go crazy" on affix variety — grey/green/gold rarity plus stats like fire rate, cooldown, or rare-ore find chance are all first-pass numbers, not tuned. Also feeds Phase 7c\'s parked upgrade-modal idea real content to show (a turret\'s have/need component counts, rolled affixes) once that UI actually gets built. First-pass numbers throughout, same standing caveat every constant block in this system already carries.' }
 ];
@@ -2015,17 +2016,23 @@ const STATS = {
       "date": "07-20",
       "cum": 11440,
       "subject": "Phase 7c: equip crafted items on Tower/Scavenger via a real Upgrade Modal"
+    },
+    {
+      "hash": "5ce3547",
+      "date": "07-20",
+      "cum": 11522,
+      "subject": "Phase 7c complete: turret idle animations"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4260,
+      "value": 4328,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2996,
+      "value": 3010,
       "tone": "special"
     },
     {

@@ -264,17 +264,23 @@
       "date": "07-20",
       "cum": 11440,
       "subject": "Phase 7c: equip crafted items on Tower/Scavenger via a real Upgrade Modal"
+    },
+    {
+      "hash": "5ce3547",
+      "date": "07-20",
+      "cum": 11522,
+      "subject": "Phase 7c complete: turret idle animations"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4260,
+      "value": 4328,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2996,
+      "value": 3010,
       "tone": "special"
     },
     {

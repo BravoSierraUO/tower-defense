@@ -39,9 +39,52 @@ export class ProfilePanel {
       this.achievementList.appendChild(el);
       this.achievementEls[a.id] = el;
     }
+
+    // Loot Odds — the "metal chance 80%, diamonds 0.01%" stats-screen flex
+    // Phase 11 filed and parked (its lifetimeOreMined/lifetimeOreSalvaged
+    // counters existed since v2.17 with nothing displaying them). Only the 3
+    // ore types Inventory actually tracks lifetime totals for get a row —
+    // plain Metal isn't one of them (World.metal owns that pool directly,
+    // see inventory.js's addOre() comment).
+    this.lootOddsList = document.getElementById('loot-odds-list');
+    this.lootOddsRows = {};
+    for (const type of Object.keys(CONFIG.ORE_TYPES)) {
+      if (type === 'metal') continue;
+      const row = document.createElement('div');
+      row.className = 'wave-row';
+      row.innerHTML =
+        '<div class="wave-row-info">' +
+          `<span class="wave-row-label">${CONFIG.ORE_TYPES[type].label}</span>` +
+          '<span class="wave-row-meta"></span>' +
+        '</div>';
+      this.lootOddsList.appendChild(row);
+      this.lootOddsRows[type] = row.querySelector('.wave-row-meta');
+    }
   }
 
-  update(snap, profile) {
+  // Trims to 2 decimals for sub-1% odds (so "0.01%" survives) and to a whole
+  // number above that — matches the precision CONFIG.ORE_LOOT_TABLE/
+  // ENEMY_ORE_DROP_TABLE's own comments already use.
+  formatPct(n) {
+    return `${(n < 1 ? n.toFixed(2) : Math.round(n))}%`;
+  }
+
+  updateLootOdds(inventory) {
+    for (const [type, meta] of Object.entries(this.lootOddsRows)) {
+      const t1 = CONFIG.ORE_LOOT_TABLE[0][type] || 0;
+      const t3 = CONFIG.ORE_LOOT_TABLE[CONFIG.ORE_LOOT_TABLE.length - 1][type] || 0;
+      const salvageWeight = CONFIG.ENEMY_ORE_DROP_TABLE[type] || 0;
+      const salvagePct = (salvageWeight / 100) * CONFIG.ENEMY_ORE_DROP_CHANCE * 100;
+      const mined = Math.round(inventory.lifetimeOreMined[type] || 0);
+      const salvaged = inventory.lifetimeOreSalvaged[type] || 0;
+      meta.textContent =
+        `Mining ${this.formatPct(t1)} (T1) → ${this.formatPct(t3)} (T3) · ` +
+        `Salvage ${this.formatPct(salvagePct)}/kill  —  ` +
+        `Lifetime: ${mined.toLocaleString()} mined, ${salvaged.toLocaleString()} salvaged`;
+    }
+  }
+
+  update(snap, profile, inventory) {
     this.levelEl.textContent = snap.level;
     this.cpEl.textContent = `${snap.cp} CP  (${snap.levelCp} → ${snap.nextCp})`;
     this.xpFill.style.width = `${Math.round(Math.max(0, Math.min(1, snap.progress)) * 100)}%`;
@@ -73,5 +116,7 @@ export class ProfilePanel {
       el.querySelector('.achievement-name').textContent = a.earned ? a.name : '???';
       el.querySelector('.achievement-hint').textContent = a.earned ? a.hint : '';
     }
+
+    this.updateLootOdds(inventory);
   }
 }

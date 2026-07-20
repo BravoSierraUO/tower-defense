@@ -703,6 +703,10 @@ html,body{
     color:var(--accent);
 }
 
+#loot-odds-list{
+    margin-bottom:20px;
+}
+
 .skill-list{
     display:flex;
     flex-direction:column;
