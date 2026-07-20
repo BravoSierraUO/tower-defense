@@ -294,6 +294,12 @@
       "date": "07-20",
       "cum": 12112,
       "subject": "v2.24 - Phase 6 fill: station-tier visual reskin"
+    },
+    {
+      "hash": "facff6d",
+      "date": "07-20",
+      "cum": 12125,
+      "subject": "v2.25 - Fix: whatever.html's inline <script> block was completely broken"
     }
   ],
   "categories": [
@@ -304,7 +310,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 3125,
+      "value": 3138,
       "tone": "special"
     },
     {
@@ -319,7 +325,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 19.8,
+    "activeHours": 19.9,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

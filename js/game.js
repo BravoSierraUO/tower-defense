@@ -162,15 +162,25 @@ export class Game {
       // Phase 7a: the old single "Tower" leaf is now 3 typed attackers
       // (Railgun/Laser/Missile — CONFIG.DAMAGE_TYPES' labels), same cost/
       // stats as each other this phase, differing only in damageType.
-      const towerCost = `${this.world.towerCost()}m`;
+      const towerCostNum = this.world.towerCost();
+      const scavengerCostNum = this.world.scavengerCost();
+      // Phase 12: locked+reason on affordability so a click while too poor explains
+      // itself (radial-stub) instead of silently no-op'ing once armed and clicked
+      // on the field — see the reactor confusion this same gap caused in Core view.
       const attackerLeaves = Object.entries(CONFIG.DAMAGE_TYPES).map(([type, def], i) => ({
-        id: type, digit: `${i + 1}`, label: def.label, color: def.color, cost: towerCost
+        id: type, digit: `${i + 1}`, label: def.label, color: def.color, cost: `${towerCostNum}m`,
+        locked: this.world.metal < towerCostNum,
+        reason: `Need ${towerCostNum}m metal (have ${Math.floor(this.world.metal)}m)`
       }));
       const build = {
         id: 'build', icon: '+', label: 'Build',
         flyout: [
           ...attackerLeaves,
-          { id: 'scavenger', digit: '4', label: 'Scavenger', cost: `${this.world.scavengerCost()}m` }
+          {
+            id: 'scavenger', digit: '4', label: 'Scavenger', cost: `${scavengerCostNum}m`,
+            locked: this.world.metal < scavengerCostNum,
+            reason: `Need ${scavengerCostNum}m metal (have ${Math.floor(this.world.metal)}m)`
+          }
         ]
       };
       return { level1: [missions, inventory, home, build], flyoutRadius: 190, flyoutArc: 90 };
@@ -178,14 +188,36 @@ export class Game {
 
     // Core view: same keyOrder convention as the '1'-'9'/'0' shortcut above,
     // so the digit badge in each flyout leaf still matches its keyboard key.
+    // Phase 12: each room leaf now carries its build cost and, when locked, a
+    // `reason` (already built — one of each room, upgrade instead; missing
+    // tech; or can't afford it) so RadialMenu can surface it as a tooltip/stub
+    // instead of the leaf just silently doing nothing on click.
     const keyOrder = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-    const roomFlyout = Object.keys(CONFIG.ROOM_TYPES).map((type, i) => ({
-      id: type,
-      digit: keyOrder[i],
-      label: CONFIG.ROOM_TYPES[type].label,
-      color: CONFIG.ROOM_TYPES[type].color,
-      locked: !this.commandCore.isRoomUnlocked(type)
-    }));
+    const roomFlyout = Object.keys(CONFIG.ROOM_TYPES).map((type, i) => {
+      const def = CONFIG.ROOM_TYPES[type];
+      const unlocked = this.commandCore.isRoomUnlocked(type);
+      const built = this.commandCore.isBuilt(type);
+      const cost = this.commandCore.buildCost(type);
+      const afford = this.world.gold >= cost;
+      let reason = null;
+      if (built) {
+        reason = `${def.label} already built — click it on the grid to upgrade instead`;
+      } else if (!unlocked) {
+        const techNode = CONFIG.TECH_TREE.find(n => n.unlocksRoom === type);
+        reason = techNode ? `Requires ${techNode.label} tech` : 'Locked';
+      } else if (!afford) {
+        reason = `Need ${cost}g gold (have ${Math.floor(this.world.gold)}g)`;
+      }
+      return {
+        id: type,
+        digit: keyOrder[i],
+        label: def.label,
+        color: def.color,
+        cost: built ? null : `${cost}g`,
+        locked: !unlocked || built || !afford,
+        reason
+      };
+    });
     const build = { id: 'build', icon: '+', label: 'Build', flyout: roomFlyout };
     return { level1: [missions, inventory, home, build], flyoutRadius: 260, flyoutArc: 170 };
   }

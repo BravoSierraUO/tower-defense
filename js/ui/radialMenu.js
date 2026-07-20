@@ -13,8 +13,10 @@
 //   ],
 //   flyoutRadius, flyoutArc }                        // shared by whichever level1 item has a flyout
 //
-// flyout leaf shape: { id, label, digit?, cost?, color?, locked? } — clicking
-// a non-locked leaf calls onAction(leaf.id) and closes the whole menu.
+// flyout leaf shape: { id, label, digit?, cost?, color?, locked?, reason? } —
+// clicking a non-locked leaf calls onAction(leaf.id) and closes the whole
+// menu. A locked leaf instead flashes `reason` via showStub() (also set as
+// its hover title) so "why can't I build this" never has to be guessed at.
 import { layoutRadial, slotAngle } from './radialLayout.js';
 
 const LEVEL1_RADIUS = 85;
@@ -94,6 +96,7 @@ export class RadialMenu {
       btn.className = 'radial-slot radial-slot-leaf';
       if (leaf.locked) btn.classList.add('locked');
       if (leaf.color) btn.style.setProperty('--leaf-color', leaf.color);
+      if (leaf.reason) btn.title = leaf.reason;
       btn.innerHTML = [
         leaf.digit != null ? `<span>${leaf.digit}</span>` : '',
         leaf.label,
@@ -101,7 +104,10 @@ export class RadialMenu {
       ].join('');
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        if (leaf.locked) return;
+        if (leaf.locked) {
+          if (leaf.reason) this.showStub(leaf.reason);
+          return;
+        }
         this.onAction?.(leaf.id);
         this.close();
       });
