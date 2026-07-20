@@ -1,6 +1,7 @@
 import { CONFIG } from './config.js';
 import { drawGrid } from './grid.js';
 import { drawStarfield } from './starfield.js';
+import { findTarget } from './combat.js';
 
 export class Renderer {
   constructor(canvas) {
@@ -156,23 +157,63 @@ export class Renderer {
 
   drawTowers(world, camera) {
     const ctx = this.ctx;
+    const now = performance.now() / 1000;
     for (const tower of world.towers) {
       const p = camera.worldToScreen(tower.x, tower.y);
       const r = CONFIG.TOWER_RADIUS * camera.zoom;
+      const color = CONFIG.DAMAGE_TYPES[tower.damageType]?.color ?? CONFIG.TOWER_COLOR;
 
       // Phase 7a: color by damageType (Railgun/Missile/Laser) instead of one
       // flat TOWER_COLOR, so the 3 types read apart on the field.
-      ctx.fillStyle = CONFIG.DAMAGE_TYPES[tower.damageType]?.color ?? CONFIG.TOWER_COLOR;
+      ctx.fillStyle = color;
       ctx.beginPath();
       ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
       ctx.fill();
+
+      // Phase 7c: cosmetic flavor shot at whichever enemy findTarget() (the
+      // same combat.js targeting a real shot would use) picks — a brief
+      // dashed, translucent line, visually distinct from combat.js's real
+      // Projectile so it reads as "this turret is alive," not a second
+      // damage source. Pure render-layer: no health change, no cooldown
+      // interaction, zero gameplay coupling.
+      const flavorTarget = this.flavorShotActive(tower, now) ? findTarget(tower, world.enemies) : null;
+      if (flavorTarget) {
+        const tp = camera.worldToScreen(flavorTarget.x, flavorTarget.y);
+        ctx.save();
+        ctx.globalAlpha = 0.35;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5 * camera.zoom;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(tp.x, tp.y);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
+  }
+
+  // A short, deterministic "is this turret flavor-firing right now" window —
+  // FLAVOR_SHOT_WINDOW seconds out of every FLAVOR_SHOT_PERIOD, phase-offset
+  // per tower (off its own position) so a field of turrets doesn't all flash
+  // in lockstep. Driven off performance.now(), same "no persisted animation
+  // state" approach starfield.js's twinkle already uses.
+  flavorShotActive(tower, now) {
+    const period = 1.4;
+    const window = 0.15;
+    const phase = (now + tower.x * 0.013 + tower.y * 0.007) % period;
+    return phase < window;
   }
 
   // Phase 4c: passive metal-mining exterior placeables — smaller and a
   // different color than combat towers to read as visually secondary.
   drawScavengers(world, camera) {
     const ctx = this.ctx;
+    const now = performance.now() / 1000;
+    // Time between AI Cycle Budget payouts (world.js) — the zap below is
+    // timed to the real mechanic's own rate, not a clock of its own, so
+    // upgrading AI Core/Scavenger tiers visibly speeds the animation up too.
+    const period = 1 / Math.max(0.01, world.cyclesPerSecond());
     for (const scavenger of world.scavengers) {
       const p = camera.worldToScreen(scavenger.x, scavenger.y);
       const r = CONFIG.TOWER_RADIUS * camera.zoom * 0.8;
@@ -181,6 +222,30 @@ export class Renderer {
       ctx.beginPath();
       ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
       ctx.fill();
+
+      // Phase 7c: an asteroid drifts in from a fixed approach angle and gets
+      // "zapped" on arrival, then the cycle repeats — phase-offset per
+      // Scavenger (off its own position) so a field of them doesn't all zap
+      // in lockstep.
+      const phase = ((now + scavenger.x * 0.01) % period) / period; // 0 (just zapped) .. 1 (about to zap)
+      const angle = (scavenger.x + scavenger.y) * 0.02;
+      const dist = r * 3.2 * (1 - phase);
+      const ax = p.x + Math.cos(angle) * (r + dist);
+      const ay = p.y + Math.sin(angle) * (r + dist);
+
+      ctx.fillStyle = '#8FA6B8';
+      ctx.beginPath();
+      ctx.arc(ax, ay, r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (phase > 0.85) {
+        ctx.strokeStyle = CONFIG.SCAVENGER_COLOR;
+        ctx.lineWidth = 2 * camera.zoom;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(ax, ay);
+        ctx.stroke();
+      }
     }
   }
 

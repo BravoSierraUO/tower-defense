@@ -627,14 +627,14 @@ const ROADMAP = [
       'Per-satellite module slots (Weapon/Power/Cooling/AI Chip/Targeting/Armor) — a second, parallel module system to the Core\'s room modules from Phase 3'
     ],
     note:'Deliberately filed unscoped, not as a designed phase card like Phase 7a above. This is the biggest lift and biggest payoff in either doc — turns one tower type + gold upgrade into an actual build-crafting layer — but it touches combat.js/tower.js/renderer.js/ui.js/tests/balance.test.mjs all at once, on top of a difficulty/balance curve nobody has playtested yet (see the "Later" section below — still blocking). Hard pre-condition: do not start this until the existing single-satellite-type loop has had at least one real playtest pass. Full reasoning in dreams/2026-07-19-fiction-vs-implementation-gaps.md.' },
-  { id:'p7c', num:'7c', title:'Turret Idle Life — Scavenger Zap & Flavor Fire', status:'BACKLOG · PARTIAL', color:'--phase-7',
+  { id:'p7c', num:'7c', title:'Turret Idle Life — Scavenger Zap & Flavor Fire', status:'DONE', color:'--phase-7',
     desc:'Visual-only pass giving every placed turret a visible "doing its job" tell between real events, instead of sitting inert on the field. A Scavenger Turret visibly hauls in a passing asteroid on each metal payout; combat turrets get cosmetic potshots at enemies drifting through range. No new state, no combat.js changes — purely render-layer.',
     items:[
-      'Scavenger metal-cycle animation — an asteroid sprite drifts into the Scavenger\'s radius and gets "zapped"/pulled in, timed to the AI Cycle Budget payout it already receives (World.metalPerSecond, js/scavenger.js) rather than a fixed clock of its own, so the animation always matches the tier-scaled rate a player actually sees on the HUD. NOT done',
-      'Combat turret flavor shots — cosmetic potshots at any enemy passing through range, rendered separately from the real damage-dealing Projectile in combat.js (no health change, no cooldown interaction) — the point is "this turret is alive," not a second damage source. NOT done',
+      'Scavenger metal-cycle animation — done, v2.20. An asteroid drifts into the Scavenger\'s radius and gets "zapped" on arrival, timed to World.cyclesPerSecond() — the real AI Cycle Budget rate, not a clock of its own — so upgrading AI Core/Scavenger tiers visibly speeds the animation up too. Phase-offset per Scavenger (off its own position) so a field of them doesn\'t zap in lockstep. Zero persisted animation state — driven off performance.now() each frame, same approach starfield.js\'s twinkle already uses',
+      'Combat turret flavor shots — done, v2.20. A brief dashed, translucent line to whichever enemy findTarget() (combat.js\'s real targeting, exported and reused rather than duplicated) would pick, visually distinct from the real Projectile — no health change, no cooldown interaction, zero gameplay coupling',
       'Click-to-upgrade modal — done, v2.19. js/ui/upgradeModal.js replaces the old silent click-to-upgrade-if-affordable convention: opens on clicking your own Tower/Scavenger, shows tier/cost/Upgrade, and — the reason it was worth parking until Phase 11\'s item system existed — lets you equip/unequip a crafted component and see its rolled affixes'
     ],
-    note:'Surfaced 2026-07-19 alongside Phase 7d below — split into its own card on purpose: pure render/animation, zero new state, safe to build any time as filler, unlike 7d\'s real combat rules. The upgrade-modal item shipped out of order (v2.19, once Phase 11 gave it real content) — the two animation items are still just filler, unstarted.' },
+    note:'Surfaced 2026-07-19 alongside Phase 7d below — split into its own card on purpose: pure render/animation, zero new state, safe to build any time as filler, unlike 7d\'s real combat rules. All three items now shipped, out of the original order (upgrade modal first, v2.19, once Phase 11 gave it real content; the two animations last, v2.20, exactly the "safe to build any time as filler" this note originally called them).' },
   { id:'p7d', num:'7d', title:'Invader-vs-Turret Combat — Tower Health & Enemy Aggro', status:'BACKLOG · NOT SCOPED', color:'--phase-7',
     desc:'Promotes a gap flagged as far back as Phase 4b\'s note ("Tower still has no health field... enemies still walk straight through towers to the base untouched") into its own designed-but-unscoped card. Combat today is strictly one-directional (combat.js: towers shoot enemies, never the reverse) — this closes it: some enemies target a turret directly instead of the Base, the turret can take damage and die, and killing an aggro\'d enemy pays a defender\'s bonus.',
     items:[
@@ -2009,32 +2009,38 @@ const STATS = {
       "date": "07-20",
       "cum": 11067,
       "subject": "Phase 11: Materials, Crafting & Itemization + Inventory Menu UI; file Phases 7c/7d"
+    },
+    {
+      "hash": "005dbe0",
+      "date": "07-20",
+      "cum": 11440,
+      "subject": "Phase 7c: equip crafted items on Tower/Scavenger via a real Upgrade Modal"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4065,
+      "value": 4260,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 2981,
+      "value": 2996,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2128,
+      "value": 2162,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 1893,
+      "value": 2022,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 18.8,
+    "activeHours": 19,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

@@ -44,7 +44,10 @@ export class Projectile {
   }
 }
 
-function findTarget(tower, enemies) {
+// Exported for renderer.js's Phase 7c flavor-shot animation — it needs the
+// same "closest enemy in range" pick for its cosmetic-only potshots, and
+// reusing this avoids a second, drifting copy of the same targeting logic.
+export function findTarget(tower, enemies) {
   let closest = null;
   let closestDist = tower.effectiveRange();
   for (const enemy of enemies) {
