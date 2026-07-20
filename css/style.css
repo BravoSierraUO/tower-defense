@@ -1004,6 +1004,7 @@ html,body{
 }
 
 .hud-avatar-btn{
+    position:relative;
     width:40px;
     height:40px;
     border-radius:50%;
@@ -1021,6 +1022,25 @@ html,body{
 .hud-avatar-btn[aria-expanded="true"]{
     border-color:var(--accent);
     background:rgba(126,217,255,.1);
+}
+
+/* Same gradient .profile-level-badge uses inside the Profile panel, shrunk to
+   a corner notification badge — the avatar had no level tell of its own before this. */
+.hud-avatar-level-badge{
+    position:absolute;
+    bottom:-3px;
+    right:-3px;
+    min-width:16px;
+    height:16px;
+    padding:0 3px;
+    border-radius:50%;
+    border:2px solid var(--page-bg);
+    background:linear-gradient(135deg,var(--accent),#48B8FF);
+    color:#0B1020;
+    font-size:9px;
+    font-weight:700;
+    line-height:12px;
+    text-align:center;
 }
 
 .hud-avatar-menu{

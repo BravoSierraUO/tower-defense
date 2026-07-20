@@ -270,22 +270,28 @@
       "date": "07-20",
       "cum": 11522,
       "subject": "Phase 7c complete: turret idle animations"
+    },
+    {
+      "hash": "cd4f505",
+      "date": "07-20",
+      "cum": 11589,
+      "subject": "Phase 11 fill: stats-screen Loot Odds table in the Profile panel"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4328,
+      "value": 4373,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3010,
+      "value": 3024,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2162,
+      "value": 2170,
       "tone": "info"
     },
     {
@@ -295,7 +301,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 19,
+    "activeHours": 19.2,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

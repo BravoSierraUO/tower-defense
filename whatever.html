@@ -582,7 +582,7 @@ const ROADMAP = [
   { id:'p5b', num:'5b', title:'Player Menu Shell — Avatar Dropdown & Account/Settings/Inventory/Base Modal', status:'BACKLOG · PARTIAL', color:'--phase-5',
     desc:'Today the game has four separate full-screen views toggled by raw hotkeys (B — Command Core, P — Profile, O — About, S — Settings), each its own top-level `aside`. The typical pattern instead: a small avatar + level badge in a HUD corner, click opens a dropdown/menu, which opens a modal with tabbed sections — Account (today\'s Profile panel), Settings (shipped, see below), Inventory (doesn\'t exist yet — no item/loadout system in the game at all right now), Base (today\'s Command Core panel). About/Analytics would fold in as one more tab.',
     items:[
-      'Avatar as a single clickable HUD element — done (2026-07-19). Top-right corner button opens a dropdown (Profile/About/Settings/Reset Progress); still just a person-outline icon, not yet merged with the level badge (profile-level-badge still only lives inside the Profile panel itself)',
+      'Avatar as a single clickable HUD element — done (2026-07-19). Top-right corner button opens a dropdown (Profile/About/Settings/Reset Progress). Update, v2.22: merged with the level badge — a small corner badge on the avatar icon itself now shows the player\'s level (reads the same `level` value `HudPanel` already passed to the left-side LEVEL stat, no new state), same gradient `.profile-level-badge` uses inside the Profile panel, shrunk to a notification-badge size',
       'Dropdown → modal shell that hosts Account/Settings/Inventory/Base/About as tabbed sections instead of five independent hotkey-toggled asides — NOT done, still the "big bite" below',
       'Settings tab: real content shipped (2026-07-19) — Appearance (light/dark theme toggle, persisted to localStorage) and Save Data (storage key + live byte size, a raw-JSON viewer of the profile blob, Delete Save Data behind a confirm modal that also restarts the run). Lives as its own `aside` (S hotkey or the avatar menu), not yet a modal tab',
       'Inventory tab: no item/equipment system exists yet at all — this tab has nothing to show until some form of loadout/item system is designed (possibly overlaps Phase 7\'s per-satellite module slots, possibly its own thing)',
@@ -2022,22 +2022,28 @@ const STATS = {
       "date": "07-20",
       "cum": 11522,
       "subject": "Phase 7c complete: turret idle animations"
+    },
+    {
+      "hash": "cd4f505",
+      "date": "07-20",
+      "cum": 11589,
+      "subject": "Phase 11 fill: stats-screen Loot Odds table in the Profile panel"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4328,
+      "value": 4373,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3010,
+      "value": 3024,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2162,
+      "value": 2170,
       "tone": "info"
     },
     {
@@ -2047,7 +2053,7 @@ const STATS = {
     }
   ],
   "velocity": {
-    "activeHours": 19,
+    "activeHours": 19.2,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

@@ -19,6 +19,7 @@ export class HudPanel {
     this.waveEl = document.getElementById('ui-wave');
     this.tierEl = document.getElementById('ui-tier');
     this.levelEl = document.getElementById('ui-level');
+    this.avatarLevelBadge = document.getElementById('avatar-level-badge');
     this.fpsEl = document.getElementById('ui-fps');
     this.baseFill = document.getElementById('ui-base-fill');
     this.baseText = document.getElementById('ui-base-text');
@@ -49,6 +50,7 @@ export class HudPanel {
 
   update({ world, spawner, base, fps, state, level, profile }) {
     this.levelEl.textContent = level;
+    this.avatarLevelBadge.textContent = level;
 
     // Achievement-unlock toast: queued so a fixpoint burst of unlocks shows one at a time.
     for (const a of profile.drainUnlocks()) this.achievementToast.push(a);
