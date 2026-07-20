@@ -751,13 +751,24 @@ const ROADMAP = [
       'Still NOT done: known first-pass gap left honest rather than hidden — the buildSpeedMult affix has no hookup point anywhere (nothing per-Tower/Scavenger reads a build-speed stat), so an item that rolls it is inert on that one affix'
     ],
     note:'User\'s own framing: "Ultima Online in space," a two-stage production line (drop a component whole, or build it from refined materials), and explicit "go crazy" on affix variety — grey/green/gold rarity plus stats like fire rate, cooldown, or rare-ore find chance are all first-pass numbers, not tuned. Also feeds Phase 7c\'s parked upgrade-modal idea real content to show (a turret\'s have/need component counts, rolled affixes) once that UI actually gets built. First-pass numbers throughout, same standing caveat every constant block in this system already carries.' },
-  { id:'p12', num:'12', title:'Base Self-Defense', status:'BACKLOG · NOT SCOPED', color:'--phase-6',
-    desc:'Right now `Base` (js/base.js) is purely a damage sink — `takeDamage()`/`isDestroyed()`, no attack of its own, while every Tower/Scavenger on the field fights back. A base that shoots too (even a weak, always-on pulse, closer to Hangar\'s passive drone DPS than a real targeted turret) would close that asymmetry.',
+  { id:'p12', num:'12', title:'Base Self-Defense', status:'DONE', color:'--phase-6',
+    desc:'`Base` (js/base.js) used to be a pure damage sink — `takeDamage()`/`isDestroyed()`, no attack of its own, while every Tower/Scavenger on the field fought back. It now fights back too, scaling with the same lever that already grows it visually.',
     items:[
-      'Not designed: damage/range/fire-rate numbers, whether it scales with Station Tier (Phase 6 above — "Defense Station" is literally tier 2\'s name, an unplanned but real thematic fit), and whether it only activates once Communications or some other room is built rather than being on from wave 1'
+      'combat.js\'s new applyBaseDefense(world, dt) — same passive, no-projectile/no-visual DPS shape as applyHangarDrones (closest live enemy to the base, continuous dt-scaled damage), not a Tower/Projectile. Deliberately not profile.damageMult()\'d the way Tower shots are — Hangar drones aren\'t either, and Base defense is architecturally that same family, not a turret.',
+      'Damage scales off Profile.stationTier() — CONFIG.STATION_TIERS gained a baseDamage field per tier (0 at Outpost through 75 at Dyson Node, roughly bracketing Hangar\'s own 3/8/15 dronePower tier curve since both are continuous DPS). Prestige (Phase 6) was already the one lever that visibly grows the station\'s rings — it\'s now also the lever that grows its self-defense, rather than a second currency/gate the user\'s original "and upgrades to those?" question would\'ve needed answered from scratch. Tier 0 stays exactly the "nothing extra yet" precedent drawStationRings() already set — a fresh game\'s base still doesn\'t shoot.',
+      'Not built: any visual tell (a flash, a beam) when the base fires — same "no projectile/visual" call Hangar\'s drones already made, so nothing here is a regression against that precedent, just consistent with it.'
     ],
-    depends:'Phase 6 (Communications unlock) and/or Phase 4 (Station Tier), if either gates it — undecided',
-    note:'Surfaced by the user 2026-07-20 alongside the Phase 6 abilities work, explicitly filed as "just a thought, your call" rather than scoped for that same pass — kept separate on purpose: the ability system is one clean, testable slice, and folding in a second, undesigned combat change would\'ve blurred what actually shipped. Filed unscoped rather than built, same caution Phase 7b/8c/8d/10 already carry.' }
+    depends:'Phase 6 (Station Tier / Prestige)',
+    note:'Surfaced by the user 2026-07-20 alongside the Phase 6 abilities work ("maybe the base should defend itself as well? your call sir"), filed unscoped that same day rather than folded into the ability-system pass. Picked back up immediately after, alongside the Phase 11 fix below, once the user confirmed both as the day\'s wrap-up items and asked specifically "and upgrades to those?" for this one — Station Tier already being the base\'s one progression axis (Phase 6) made the answer straightforward rather than a new design question. 5 new tests (tests/phase12.test.mjs): tier-0 deals nothing, a prestiged tier deals exactly baseDamage×dt, only the closest live enemy is hit, dead/reached enemies are skipped. Full node --test pass: 203/203. Verified statically only, continuing the standing no-Playwright-on-this-project rule.' },
+  { id:'p11fix', num:'11', title:'Materials & Itemization — buildSpeedMult, the last dead affix', status:'DONE', color:'--phase-11',
+    desc:'Phase 11\'s own roadmap card (above) flagged this honestly rather than hiding it: the buildSpeedMult affix could roll on a crafted item and equip onto a Tower/Scavenger, but nothing anywhere ever read it.',
+    items:[
+      'Root cause, worked out before touching code: buildSpeedMult can never speed up the very placement that lets it get equipped (no item exists before the unit does, and placement is instant), and neither Tower/Scavenger upgrades nor Command Core room upgrades have a timer at all — Room *construction* is the only build timer anywhere in the game.',
+      'New World.buildSpeedMult() — the single best buildSpeedMult currently equipped across all your Towers/Scavengers (max, not summed, so it rewards one strong item rather than stacking a whole fleet of them into an exploit) — folds into buildRoom() alongside the existing Build Mastery skill multiplier, same floored-at-1-second treatment.',
+      'Reframes the affix as "your equipped gear supports base construction" — the same reach Hangar/Shield already make between the field grid and the Core (a field-placed room\'s stats affecting field combat), just running the other direction this time.'
+    ],
+    depends:'Phase 11 (Materials & Itemization) — the affix already existed, this only wires it up',
+    note:'Bundled into the same wrap-up session as Phase 12 above (2026-07-20), the user\'s own pairing — "phase 11\'s dead feature" alongside base self-defense. 5 new tests (tests/phase12.test.mjs): no-op with nothing equipped, picked up from either a Tower or a Scavenger, best-of (not summed) across multiple equipped items, and buildRoom() dividing buildTimeTotal by the multiplier — plus a regression check that an unequipped run\'s build time is bit-for-bit unchanged from before this fix. Full node --test pass: 203/203. Verified statically only, continuing the standing no-Playwright-on-this-project rule.' }
 ];
 
 function renderRoadmap(){
@@ -1157,6 +1168,27 @@ const FLOWS = [
     ],
     edges: [
       { from: 'read', to: 'scan' },
+      { from: 'scan', to: 'hit', tone: 'sig' }
+    ]
+  },
+  {
+    id: 'basedefense', group: 'Defending',
+    title: 'The base fights back',
+    summary: "Phase 12: same passive, no-projectile DPS shape as Hangar's interceptor drones above, but sourced from Profile.stationTier() instead of a Command Core room — Prestige (Phase 6) already grows the station's rings, now it also grows its self-defense.",
+    lanes: ['Tier', 'Scan', 'Impact'],
+    nodes: [
+      { id: 'tier', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'baseDamage read\nfrom STATION_TIERS[stationTier()]',
+        code_ref: 'combat.js (applyBaseDefense) · config.js (STATION_TIERS)',
+        detail: "Called once per frame alongside applyHangarDrones. Tier 0 (Outpost, prestige 0) is baseDamage: 0, so the function returns immediately — a fresh game's base still doesn't shoot, same 'nothing extra yet' precedent drawStationRings() set for the rings themselves." },
+      { id: 'scan', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'Closest live enemy to the base\nnot range-limited',
+        code_ref: 'combat.js (applyBaseDefense)',
+        detail: 'Identical targeting to Hangar\'s drones — every enemy in the world is a candidate, whichever is nearest the base wins, no zone the base can\'t reach.' },
+      { id: 'hit', col: 2, row: 0.5, kind: 'terminal', tone: 'sig', label: 'closest.health -= baseDamage × dt',
+        code_ref: 'combat.js (applyBaseDefense)',
+        detail: "Not run through profile.damageMult() — Hangar's drones aren't either, and this is that same 'passive DPS source' family, not a Tower shot. The only way to raise it is Prestige, same lever as the visual rings." }
+    ],
+    edges: [
+      { from: 'tier', to: 'scan' },
       { from: 'scan', to: 'hit', tone: 'sig' }
     ]
   },
@@ -2178,32 +2210,38 @@ const STATS = {
       "date": "07-20",
       "cum": 12257,
       "subject": "v2.28 - Phase 5b: Player Menu Shell — Account/Settings/Inventory/Base modal"
+    },
+    {
+      "hash": "fb4bbdd",
+      "date": "07-20",
+      "cum": 12656,
+      "subject": "v2.29 - Phase 6: Comms & Station Identity — the 5 orbital abilities"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4657,
+      "value": 4794,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3194,
+      "value": 3254,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2186,
+      "value": 2258,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 2220,
+      "value": 2350,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 25.3,
+    "activeHours": 25.7,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

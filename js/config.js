@@ -421,20 +421,28 @@ export const CONFIG = {
     PRESTIGE_FLAT_BONUS_PER: 0.1     // +10% CP gain per prestige, always on (before any skill spend)
   },
 
-  // Phase 6, station-tier item: purely cosmetic, no new persistent state — driven off
-  // the prestige count Profile already tracks (Profile.stationTier()). Names straight
-  // from lore.md's growth chain (Small -> Orbital Platform -> ... -> Dyson Node), with
+  // Phase 6, station-tier item: no new persistent state — driven off the prestige
+  // count Profile already tracks (Profile.stationTier()). Names straight from
+  // lore.md's growth chain (Small -> Orbital Platform -> ... -> Dyson Node), with
   // "Small" renamed "Outpost" for a real display label. Index = min(prestige,
   // length-1), so a maxed-out run settles at Dyson Node instead of running off the end.
+  //
+  // Phase 12: baseDamage turns the same tier index into the Base's own passive DPS
+  // (combat.js's applyBaseDefense, same shape as Hangar's applyHangarDrones) — Prestige
+  // is already the one lever that grows the station visually, so it's also the one
+  // lever that grows its self-defense, rather than inventing a second currency/gate.
+  // Tier 0 (Outpost) deals 0, same "nothing extra yet" precedent drawStationRings()
+  // already set. First-pass numbers, not tuned, roughly bracketing Hangar's own
+  // dronePower tier curve (3/8/15) since both are continuous no-projectile DPS.
   STATION_TIERS: [
-    { name: 'Outpost' },
-    { name: 'Orbital Platform' },
-    { name: 'Defense Station' },
-    { name: 'Citadel' },
-    { name: 'Orbital City' },
-    { name: 'Mega Station' },
-    { name: 'Planetary Ring' },
-    { name: 'Dyson Node' }
+    { name: 'Outpost', baseDamage: 0 },
+    { name: 'Orbital Platform', baseDamage: 4 },
+    { name: 'Defense Station', baseDamage: 10 },
+    { name: 'Citadel', baseDamage: 18 },
+    { name: 'Orbital City', baseDamage: 28 },
+    { name: 'Mega Station', baseDamage: 40 },
+    { name: 'Planetary Ring', baseDamage: 55 },
+    { name: 'Dyson Node', baseDamage: 75 }
   ],
 
   // Prestige skill tree: each node is a flat % bonus to one stat, spent with

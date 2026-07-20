@@ -114,6 +114,30 @@ function applyHangarDrones(world, dt) {
   if (closest) closest.health -= dronePower * dt;
 }
 
+// Phase 12: the Base finally fights back instead of only ever taking damage —
+// same passive, no-projectile/no-visual DPS shape as applyHangarDrones above
+// (closest live enemy, continuous dt-scaled damage), not a Tower/Projectile.
+// Damage scales off Profile.stationTier() — Prestige (Phase 6) is already the
+// one lever that visibly grows the station, so it's also the lever that grows
+// its self-defense rather than a second currency/gate. Tier 0 (Outpost) is 0,
+// same "nothing extra yet" precedent drawStationRings() already set.
+function applyBaseDefense(world, dt) {
+  const baseDamage = CONFIG.STATION_TIERS[world.profile.stationTier()].baseDamage;
+  if (baseDamage <= 0) return;
+
+  let closest = null;
+  let closestDist = Infinity;
+  for (const enemy of world.enemies) {
+    if (enemy.isDead() || enemy.reachedTarget) continue;
+    const dist = Math.hypot(enemy.x - world.base.x, enemy.y - world.base.y);
+    if (dist < closestDist) {
+      closest = enemy;
+      closestDist = dist;
+    }
+  }
+  if (closest) closest.health -= baseDamage * dt;
+}
+
 export function updateCombat(world, dt) {
   for (const tower of world.towers) {
     if (tower.cooldown > 0) continue;
@@ -136,6 +160,7 @@ export function updateCombat(world, dt) {
   world.projectiles = world.projectiles.filter(p => !p.dead);
 
   applyHangarDrones(world, dt);
+  applyBaseDefense(world, dt);
   resolveBaseHits(world);
   resolveTurretHits(world);
 }

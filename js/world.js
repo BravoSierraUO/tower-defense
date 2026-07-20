@@ -5,7 +5,7 @@ import { Enemy } from './enemy.js';
 import { Base } from './base.js';
 import { Spawner } from './spawner.js';
 import { Profile } from './profile.js';
-import { Inventory, rollDroppedOre } from './inventory.js';
+import { Inventory, rollDroppedOre, affixMultiplier } from './inventory.js';
 
 export class World {
   // `profile` defaults to a fresh Profile so every existing caller (tests
@@ -534,6 +534,26 @@ export class World {
     return true;
   }
 
+  // Phase 11 fix: AFFIX_POOL's buildSpeedMult affix could equip onto a Tower/
+  // Scavenger but had no consumer anywhere — flagged honestly as a known gap
+  // on the Roadmap card rather than hidden. Root cause: it can never speed up
+  // the placement that lets it get equipped in the first place (no item exists
+  // before the unit does), and neither Tower/Scavenger upgrades nor Room
+  // upgrades have a timer at all — Room *construction* is the only build timer
+  // anywhere in the game. So the real fix is here: the single best buildSpeedMult
+  // currently equipped on any of your Towers/Scavengers (not summed — one strong
+  // item, not a stacking-fleet exploit) shortens Command Core construction,
+  // same "your equipped gear supports base construction" reach Hangar/Shield
+  // already make between the field grid and the Core.
+  buildSpeedMult() {
+    let best = 1;
+    for (const unit of [...this.towers, ...this.scavengers]) {
+      const mult = affixMultiplier(unit.equippedItem, 'buildSpeedMult');
+      if (mult > best) best = mult;
+    }
+    return best;
+  }
+
   // Phase 3: Command Core rooms now cost gold to build/upgrade/mod — these
   // wrap CommandCore's validity checks with the gold gate (same split as
   // towerCost()/placeTower() above: CommandCore owns state, World owns gold).
@@ -543,8 +563,9 @@ export class World {
     const room = this.commandCore.placeRoom(type, gx, gy);
     if (!room) return null;
     this.gold -= cost;
-    // Phase 4: Build Mastery skill shortens the timer CommandCore already set, floored the same way.
-    room.buildTimeTotal = Math.max(1, room.buildTimeTotal / this.profile.buildMult());
+    // Phase 4: Build Mastery skill shortens the timer CommandCore already set, floored the
+    // same way. Phase 11 fix: an equipped buildSpeedMult item shortens it further, independently.
+    room.buildTimeTotal = Math.max(1, room.buildTimeTotal / this.profile.buildMult() / this.buildSpeedMult());
     room.buildTimeRemaining = room.buildTimeTotal;
     return room;
   }
