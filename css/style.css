@@ -258,6 +258,73 @@ html,body{
     display:none;
 }
 
+/* Phase 6: orbital ability bar. Explicit [hidden]{display:none} on both the
+   bar and each button — no reliance on a global [hidden] rule, same lesson
+   Phase 8b's cascade bug already taught this file (see the note atop this
+   stylesheet). */
+.ability-bar{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:12px;
+}
+
+.ability-bar[hidden]{
+    display:none;
+}
+
+.ability-btn{
+    position:relative;
+    width:56px;
+    height:56px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+    padding:0;
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:10px;
+    background:var(--control-bg);
+    color:var(--text-primary);
+    cursor:pointer;
+    overflow:hidden;
+    transition:.15s;
+}
+
+.ability-btn:hover:not(:disabled){
+    filter:brightness(1.2);
+    border-color:var(--accent);
+}
+
+.ability-btn:disabled{
+    opacity:.5;
+    cursor:default;
+}
+
+.ability-icon{
+    font-size:16px;
+    z-index:1;
+}
+
+.ability-label{
+    font-size:8px;
+    letter-spacing:.3px;
+    text-align:center;
+    z-index:1;
+    opacity:.8;
+}
+
+.ability-cooldown-fill{
+    position:absolute;
+    left:0;
+    bottom:0;
+    width:100%;
+    height:0%;
+    background:rgba(11,16,32,.75);
+    transition:height .2s linear;
+}
+
 .ui-bar-track{
     height:14px;
     overflow:hidden;

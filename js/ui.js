@@ -29,12 +29,13 @@ export class UI {
   // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold(), onToggleAbout(),
   // onToggleCore(), onReportBug(), onRadialAction(id), onOpenWaveMenu(), onSelectWave(n, isReplay),
   // onOpenMissionMenu(), onTrackMission(id), onOpenInventoryMenu(), onRefine(id), onCraft(id),
-  // onCloseUpgradeModal(), onUpgradeSelected(), onEquipItem(id), onUnequipItem(), onCloseMenuModal() } —
+  // onCloseUpgradeModal(), onUpgradeSelected(), onEquipItem(id), onUnequipItem(), onCloseMenuModal(),
+  // onUseAbility(id) } —
   // UI only translates DOM clicks into these; it never mutates gameplay state directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onCloseUpgradeModal, onUpgradeSelected, onEquipItem, onUnequipItem, onRadialAction, onCloseMenuModal } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onCloseUpgradeModal, onUpgradeSelected, onEquipItem, onUnequipItem, onRadialAction, onCloseMenuModal, onUseAbility } = {}) {
     this.modeHint = document.getElementById('ui-mode-hint');
 
-    this.hud = new HudPanel({ onRestart, onRepairBase, onOpenWaveMenu });
+    this.hud = new HudPanel({ onRestart, onRepairBase, onOpenWaveMenu, onUseAbility });
     this.core = new CorePanel({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold });
     this.field = new FieldPanel();
     this.profile = new ProfilePanel({ onPrestige, onBuySkill });

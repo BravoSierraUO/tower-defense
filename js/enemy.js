@@ -21,15 +21,22 @@ export class Enemy {
     this.hasHitTarget = false; // combat.js flips this once contact damage is applied (base or turret)
     this.armorType = armorType; // 'kinetic' | 'plasma' | 'energy' | null, see CONFIG.DAMAGE_TYPES
     this.attackTarget = attackTarget; // Tower | ScavengerTurret | null (null = base-bound)
+    this.slowTimer = 0; // Phase 6: seconds remaining on World's EMP ability, ticked down in update()
+    this.slowMult = 1;  // set alongside slowTimer by World.useAbility('emp'); irrelevant once slowTimer hits 0
+  }
+
+  effectiveSpeed() {
+    return this.slowTimer > 0 ? this.speed * this.slowMult : this.speed;
   }
 
   update(dt) {
     if (this.reachedTarget) return;
+    if (this.slowTimer > 0) this.slowTimer = Math.max(0, this.slowTimer - dt);
 
     const dx = this.targetX - this.x;
     const dy = this.targetY - this.y;
     const dist = Math.hypot(dx, dy);
-    const step = this.speed * dt;
+    const step = this.effectiveSpeed() * dt;
 
     if (step >= dist) {
       this.x = this.targetX;

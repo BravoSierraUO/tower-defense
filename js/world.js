@@ -33,6 +33,10 @@ export class World {
     this.spawnRadius = Math.hypot(this.width / 2, this.height / 2) + CONFIG.SPAWN_MARGIN;
     this.comboStreak = 0; // Phase 4b: consecutive kills within COMBO_WINDOW of each other
     this.comboTimer = 0;
+    // Phase 6: one cooldown-remaining timer per CONFIG.ABILITIES entry, all starting
+    // ready (0) — commsAccess (not this) is what actually gates first use.
+    this.abilityCooldowns = {};
+    for (const ability of CONFIG.ABILITIES) this.abilityCooldowns[ability.id] = 0;
   }
 
   // Command Core output feeds the economy: Reactor(power) now supplies the Phase 4d
@@ -307,6 +311,64 @@ export class World {
     // sees it, so base/turret damage would never actually apply. Keep it one extra frame
     // until hasHitTarget flips.
     this.enemies = this.enemies.filter(e => !e.isDead() && !(e.reachedTarget && e.hasHitTarget));
+  }
+
+  // Phase 6: ticks every ability's cooldown down, independent of whether commsAccess
+  // is even unlocked yet — harmless since they all start at 0 and useAbility() is the
+  // only thing that ever sets one above 0.
+  updateAbilities(dt) {
+    for (const id in this.abilityCooldowns) {
+      if (this.abilityCooldowns[id] > 0) this.abilityCooldowns[id] = Math.max(0, this.abilityCooldowns[id] - dt);
+    }
+  }
+
+  abilityDef(id) {
+    return CONFIG.ABILITIES.find(a => a.id === id) || null;
+  }
+
+  canUseAbility(id) {
+    const def = this.abilityDef(id);
+    if (!def) return false;
+    return this.commandCore.unlockedTech.has('commsAccess') && this.abilityCooldowns[id] <= 0;
+  }
+
+  // All 5 are global/no-target effects — see CONFIG.ABILITIES' note on why a
+  // click-to-aim version stays unscoped. Returns false (no cooldown spent) if
+  // still locked or on cooldown, true once the effect actually applied.
+  useAbility(id) {
+    const def = this.abilityDef(id);
+    if (!this.canUseAbility(id)) return false;
+
+    if (id === 'emp') {
+      for (const enemy of this.enemies) {
+        if (enemy.reachedTarget) continue;
+        enemy.slowTimer = def.duration;
+        enemy.slowMult = def.slowMult;
+      }
+    } else if (id === 'orbitalLaser') {
+      for (const enemy of this.enemies) enemy.health = Math.max(0, enemy.health - def.damage);
+    } else if (id === 'supplyDrop') {
+      this.addGold(def.gold);
+      this.addMetal(def.metal);
+    } else if (id === 'droneRepair') {
+      for (const unit of [...this.towers, ...this.scavengers]) {
+        unit.health = Math.min(unit.maxHealth, unit.health + unit.maxHealth * def.healPct);
+      }
+    } else if (id === 'satelliteRecall') {
+      // Pulls every aggro'd enemy off its Tower/Scavenger and back onto the base path —
+      // a panic button for a turret about to die, same base-bound shape World.spawnEnemy()
+      // already gives an enemy that never aggroed in the first place.
+      for (const enemy of this.enemies) {
+        if (enemy.attackTarget) {
+          enemy.attackTarget = null;
+          enemy.targetX = this.base.x;
+          enemy.targetY = this.base.y;
+        }
+      }
+    }
+
+    this.abilityCooldowns[id] = def.cooldown;
+    return true;
   }
 
   snapToGrid(x, y) {

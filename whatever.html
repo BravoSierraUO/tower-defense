@@ -598,15 +598,15 @@ const ROADMAP = [
       'The fuller "never leaves the game" version (actually filing the issue via the API without a tab-switch) stays unscoped until the token/auth question above actually gets answered.'
     ],
     note:'Idea surfaced 2026-07-19, right after filing issue #1 the old manual way made the gap obvious; the smallest safe slice shipped the same day once the token/auth blocker made clear which option was actually buildable now. Reuses Phase 5\'s tooling-family color rather than a new hue, same call Phase 5b made.' },
-  { id:'p6', num:'6', title:'Comms & Station Identity', status:'LATER · PARTIAL', color:'--phase-6',
-    desc:'From `structures.md`/`lore.md`: a Communications room unlocking active, player-triggered orbital abilities (the game\'s current loop is 100% passive/economic once a wave starts — this is the first thing that gives the player something to *do* mid-wave), plus a station skin that visibly grows from Orbital Platform to Dyson Node as the player prestiges.',
+  { id:'p6', num:'6', title:'Comms & Station Identity', status:'DONE', color:'--phase-6',
+    desc:'From `structures.md`/`lore.md`: a Communications unlock gating active, player-triggered orbital abilities (the game\'s loop was 100% passive/economic once a wave started — this is the first thing that gives the player something to *do* mid-wave), plus a station skin that visibly grows from Orbital Platform to Dyson Node as the player prestiges.',
     items:[
-      'Communications room (Command Core, same build/tier framework as Lab/Factory/Shield/etc. from Phase 3)',
-      '5 orbital abilities from the lore doc, cooldown-gated: EMP, Orbital Laser, Supply Drop, Drone Repair, Satellite Recall — needs targeting/cooldown UI, currently nothing in the game is player-triggered mid-wave',
-      'Station-tier visual reskin — done, v2.24. `Profile.stationTier()` (new, clamped to `CONFIG.STATION_TIERS.length-1`) turns the existing prestige count into a tier index; `Renderer#drawStationRings()` draws one extra concentric ring around the base per tier (reusing `BASE_COLOR` at falling opacity, not a new hue) and the Profile panel gets a matching "Station" stat row. No new persistent state — a render/UI-layer lookup off a number that already existed.'
+      'Communications Access — not a Command Core room. `ROOM_TYPES` was already sitting at its hard cap of 10 (see the Factory/Foundry note above and `tests/balance.test.mjs`\'s regression guard), and unlike every other room Communications doesn\'t produce a resource — it just flips on the ability bar. Followed `moduleSlots`\' own precedent instead: a `TECH_TREE` node (`commsAccess`, 30 research, root-level like Lab/Factory) with no `unlocksRoom` key at all. Deviates from the card\'s original "Communications room" wording on purpose — same "note the fork, don\'t silently force it into the original shape" call this doc already makes elsewhere.',
+      '5 orbital abilities from the lore doc, cooldown-gated: EMP (slows every en-route enemy), Orbital Laser (flat burst damage to every live enemy), Supply Drop (instant gold+metal), Drone Repair (heals every placed Tower/Scavenger by a % of missing health), Satellite Recall (strips aggro off every turret-bound enemy, redirecting it back to the base — a panic button that closes the loop Phase 7d\'s aggro mechanic opened). All 5 are global/no-target effects, not click-to-aim — that\'s the piece of "needs targeting/cooldown UI" that actually needed real design, carved out the same way Phase 7a carved a testable slice out of 7b\'s bigger vision. A future click-to-target version (Orbital Laser hitting a chosen spot, say) stays unscoped.',
+      'Station-tier visual reskin — done, v2.24. `Profile.stationTier()` (new, clamped to `CONFIG.STATION_TIERS.length-1`) turns the existing prestige count into a tier index; `Renderer#drawStationRings()` draws one extra concentric ring around the base per tier (reusing `BASE_COLOR` at falling opacity, not a new hue) and the Profile panel gets a matching "Station" stat row. No new persistent state — a render/UI-layer lookup off a number that already existed. Tier 0 (Outpost, prestige 0) draws nothing extra on purpose — Prestige (Account tab, gated at Level 10) is the only lever that advances it; there is no separate "upgrade the base" action.'
     ],
     depends:'Phase 3 (room framework), Phase 4 (prestige-level gate)',
-    note:'From dreams/2026-07-19-fiction-vs-implementation-gaps.md. The station-tier piece was the cheapest item on the whole roadmap — pure render, zero new state — and shipped as filler, exactly the role this note originally gave it (2026-07-20); the abilities piece is still real scope (targeting/cooldown UI) and stays LATER, scheduled deliberately rather than squeezed in alongside the reskin.' },
+    note:'From dreams/2026-07-19-fiction-vs-implementation-gaps.md. The station-tier piece was the cheapest item on the whole roadmap — pure render, zero new state — and shipped as filler, exactly the role this note originally gave it (2026-07-20). The abilities piece shipped 2026-07-20 too, picked back up as the next real feature: cooldown UI (a bottom-up fill on each of 5 HUD buttons, `js/ui/hudPanel.js`) plus World.useAbility()/updateAbilities() driving 5 global effects. 10 new tests (`tests/phase6.test.mjs`) cover the commsAccess gate, per-ability cooldown independence, and each of the 5 effects; full `node --test` pass stayed green (193/193). Verified statically only (`node --check` on every touched `.js` file), continuing the standing no-Playwright-on-this-project rule.' },
   { id:'p7a', num:'7a', title:'Satellite Identity — Damage Triangle', status:'DONE', color:'--phase-7',
     desc:'A rock-paper-scissors damage/armor triangle (Kinetic → beats → Plasma → beats → Energy → beats → Kinetic, same-type is neutral) carved out of the bigger Phase 7b vision below because it didn\'t need the rest of that vision to test — 3 typed attackers, one new enemy attribute, and a one-line combat.js hook, small enough to build and feel out before committing to the full 9-class/XP/evolution lift.',
     items:[
@@ -750,7 +750,14 @@ const ROADMAP = [
       'Update, v2.21: the stats-screen odds table shipped — Profile panel\'s new "Loot Odds" section, one row per tracked ore type (Fancy Metal/Platinum/Diamonds; plain Metal has no lifetime counter to show), each reading straight off CONFIG.ORE_LOOT_TABLE/ENEMY_ORE_DROP_TABLE for the configured T1→T3 mining range and per-kill salvage chance, plus Inventory.lifetimeOreMined/lifetimeOreSalvaged for the actual lifetime counts. Rows reuse .wave-row verbatim, same "reuse the shape, not a new palette" convention this whole system has followed since Phase 8f',
       'Still NOT done: known first-pass gap left honest rather than hidden — the buildSpeedMult affix has no hookup point anywhere (nothing per-Tower/Scavenger reads a build-speed stat), so an item that rolls it is inert on that one affix'
     ],
-    note:'User\'s own framing: "Ultima Online in space," a two-stage production line (drop a component whole, or build it from refined materials), and explicit "go crazy" on affix variety — grey/green/gold rarity plus stats like fire rate, cooldown, or rare-ore find chance are all first-pass numbers, not tuned. Also feeds Phase 7c\'s parked upgrade-modal idea real content to show (a turret\'s have/need component counts, rolled affixes) once that UI actually gets built. First-pass numbers throughout, same standing caveat every constant block in this system already carries.' }
+    note:'User\'s own framing: "Ultima Online in space," a two-stage production line (drop a component whole, or build it from refined materials), and explicit "go crazy" on affix variety — grey/green/gold rarity plus stats like fire rate, cooldown, or rare-ore find chance are all first-pass numbers, not tuned. Also feeds Phase 7c\'s parked upgrade-modal idea real content to show (a turret\'s have/need component counts, rolled affixes) once that UI actually gets built. First-pass numbers throughout, same standing caveat every constant block in this system already carries.' },
+  { id:'p12', num:'12', title:'Base Self-Defense', status:'BACKLOG · NOT SCOPED', color:'--phase-6',
+    desc:'Right now `Base` (js/base.js) is purely a damage sink — `takeDamage()`/`isDestroyed()`, no attack of its own, while every Tower/Scavenger on the field fights back. A base that shoots too (even a weak, always-on pulse, closer to Hangar\'s passive drone DPS than a real targeted turret) would close that asymmetry.',
+    items:[
+      'Not designed: damage/range/fire-rate numbers, whether it scales with Station Tier (Phase 6 above — "Defense Station" is literally tier 2\'s name, an unplanned but real thematic fit), and whether it only activates once Communications or some other room is built rather than being on from wave 1'
+    ],
+    depends:'Phase 6 (Communications unlock) and/or Phase 4 (Station Tier), if either gates it — undecided',
+    note:'Surfaced by the user 2026-07-20 alongside the Phase 6 abilities work, explicitly filed as "just a thought, your call" rather than scoped for that same pass — kept separate on purpose: the ability system is one clean, testable slice, and folding in a second, undesigned combat change would\'ve blurred what actually shipped. Filed unscoped rather than built, same caution Phase 7b/8c/8d/10 already carry.' }
 ];
 
 function renderRoadmap(){
@@ -1676,6 +1683,45 @@ const FLOWS = [
       { from: 'doc', to: 'velocity' },
       { from: 'fetch', to: 'about' }
     ]
+  },
+  {
+    id: 'orbitalabilities', group: 'Defending',
+    title: 'Triggering an orbital ability',
+    summary: "Phase 6: the game's first player-triggered, mid-wave action — 5 cooldown-gated abilities from lore.md/structures.md, gated behind Communications Access instead of a room (ROOM_TYPES was already at its 10-slot hard cap; see the Roadmap card's note on why this took the moduleSlots-style tech-node path instead).",
+    lanes: ['Trigger', 'Gate', 'Dispatch', 'Effect'],
+    nodes: [
+      { id: 'click', col: 0, row: 1.5, kind: 'input', tone: 'sig', label: 'Player clicks an ability button\nHUD ability bar',
+        code_ref: 'js/ui/hudPanel.js',
+        detail: "One button per CONFIG.ABILITIES entry, built from the array rather than hardcoded in index.html. Hidden entirely until commsAccess unlocks; once visible, a button's own cooldown fill and disabled state already reflect whether this click can do anything — the gate to the right is what actually enforces it." },
+      { id: 'gate', col: 1, row: 1.5, kind: 'decision', tone: 'warn', label: 'commsAccess unlocked\nAND cooldown ready ?',
+        code_ref: 'world.js (canUseAbility)',
+        detail: "commsAccess is a TECH_TREE node, not a room — no unlocksRoom key, same shape moduleSlots already uses. Both conditions are checked here again even though the button should already be disabled/hidden if either fails; useAbility() calls this same gate, so there's exactly one source of truth, not two that could drift." },
+      { id: 'blocked', col: 1, row: 3, kind: 'terminal', tone: 'idle', label: 'No-op\nreturns false, no state touched' },
+      { id: 'dispatch', col: 2, row: 1.5, kind: 'process', tone: 'ok', label: 'World.useAbility(id)\ncooldown starts: abilityCooldowns[id] = def.cooldown',
+        code_ref: 'world.js (useAbility, updateAbilities)',
+        detail: "Cooldown is set the instant the effect applies, not after — updateAbilities(dt) ticks every ability's timer down each frame regardless of commsAccess, harmless since none of them can ever rise above 0 except through this one call site." },
+      { id: 'emp', col: 3, row: 0, kind: 'terminal', tone: 'sig', label: 'EMP\nslowTimer/slowMult on every still-en-route enemy',
+        code_ref: 'enemy.js (effectiveSpeed)',
+        detail: 'A few seconds of reduced speed across the whole field — the "reduced accuracy, disabled abilities" wording Phase 4d\'s brownout card explicitly punted on finally gets a real mechanic here.' },
+      { id: 'laser', col: 3, row: 0.9, kind: 'terminal', tone: 'sig', label: 'Orbital Laser\nflat damage straight to every live enemy.health',
+        detail: 'No armor-type multiplier — a sky strike, not a Tower shot. Feeds the ordinary kill/reward path for free: World.updateEnemies()\'s isDead() sweep pays gold/combo/kills the same way regardless of what dropped the health to 0.' },
+      { id: 'supply', col: 3, row: 1.8, kind: 'terminal', tone: 'sig', label: 'Supply Drop\naddGold/addMetal, capped at the normal pool ceilings' },
+      { id: 'repair', col: 3, row: 2.7, kind: 'terminal', tone: 'sig', label: 'Drone Repair\nheals every placed Tower/Scavenger by healPct of missing health',
+        detail: "Reads the health/maxHealth Phase 7d already gave every Tower/Scavenger — never overheals past maxHealth." },
+      { id: 'recall', col: 3, row: 3.6, kind: 'terminal', tone: 'special', label: "Satellite Recall\nclears attackTarget, redirects the enemy back to the base",
+        code_ref: 'world.js (useAbility)',
+        detail: "The one ability with real synergy rather than being self-contained — a panic button that closes the loop A turret gets aggro'd opened: pull the pressure off a turret about to die and dump it back onto the base instead." }
+    ],
+    edges: [
+      { from: 'click', to: 'gate' },
+      { from: 'gate', to: 'blocked', dashed: true, tone: 'idle' },
+      { from: 'gate', to: 'dispatch', tone: 'ok' },
+      { from: 'dispatch', to: 'emp', tone: 'sig' },
+      { from: 'dispatch', to: 'laser', tone: 'sig' },
+      { from: 'dispatch', to: 'supply', tone: 'sig' },
+      { from: 'dispatch', to: 'repair', tone: 'sig' },
+      { from: 'dispatch', to: 'recall', tone: 'special' }
+    ]
   }
 ];
 
@@ -2126,22 +2172,28 @@ const STATS = {
       "date": "07-20",
       "cum": 12208,
       "subject": "v2.27 - Fix: Velocity tab's commit log silently truncated to one row"
+    },
+    {
+      "hash": "a9ace01",
+      "date": "07-20",
+      "cum": 12257,
+      "subject": "v2.28 - Phase 5b: Player Menu Shell — Account/Settings/Inventory/Base modal"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4609,
+      "value": 4657,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3181,
+      "value": 3194,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2198,
+      "value": 2186,
       "tone": "info"
     },
     {
@@ -2151,7 +2203,7 @@ const STATS = {
     }
   ],
   "velocity": {
-    "activeHours": 20.5,
+    "activeHours": 25.3,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

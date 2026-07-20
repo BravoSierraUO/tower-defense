@@ -312,22 +312,28 @@
       "date": "07-20",
       "cum": 12208,
       "subject": "v2.27 - Fix: Velocity tab's commit log silently truncated to one row"
+    },
+    {
+      "hash": "a9ace01",
+      "date": "07-20",
+      "cum": 12257,
+      "subject": "v2.28 - Phase 5b: Player Menu Shell — Account/Settings/Inventory/Base modal"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4609,
+      "value": 4657,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3181,
+      "value": 3194,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2198,
+      "value": 2186,
       "tone": "info"
     },
     {
@@ -337,7 +343,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 20.5,
+    "activeHours": 25.3,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

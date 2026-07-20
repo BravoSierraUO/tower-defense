@@ -61,7 +61,8 @@ export class Game {
       onToggleSettings: () => this.openMenuTab('settings'),
       onCloseMenuModal: () => { this.menuModalOpen = false; },
       onResetProgress: () => { this.profile.hardReset(); this.restart(); },
-      onReportBug: () => this.reportBug()
+      onReportBug: () => this.reportBug(),
+      onUseAbility: id => this.world.useAbility(id)
     });
     this.lastTime = 0;
     this.fps = 0;
@@ -423,6 +424,7 @@ export class Game {
       this.world.updateSpawning(dt);
       updateCombat(this.world, dt);
       this.world.updateEnemies(dt);
+      this.world.updateAbilities(dt);
       this.commandCore.update(dt);
       this.world.updatePassiveIncome(dt, this.profile.level());
       this.world.updateCycleBudget(dt);

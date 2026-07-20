@@ -186,12 +186,21 @@ export const CONFIG = {
   // requires its prereqs unlocked first — Lab itself needs no node since
   // it's the always-buildable root; no Lab built = no researchRate = tree
   // never advances, which is gate enough without a separate "lab built" check.
+  //
+  // Phase 6: commsAccess follows moduleSlots' precedent — a tech node with no
+  // unlocksRoom key at all, gating a feature rather than a Command Core room.
+  // Deliberate: ROOM_TYPES is already at its hard cap of 10 (see the Factory/
+  // Foundry note above and tests/balance.test.mjs's regression guard), and
+  // Communications doesn't produce a resource the way every other room does —
+  // it just flips on the ability bar. Root-level (no prereq) like Lab/Factory/
+  // moduleSlots rather than nested, since nothing else depends on it.
   TECH_TREE: [
     { id: 'factoryAccess', label: 'Factory Access', cost: 15, prereq: [], unlocksRoom: 'factory' },
     { id: 'hangarAccess', label: 'Hangar Access', cost: 25, prereq: ['factoryAccess'], unlocksRoom: 'hangar' },
     { id: 'shieldAccess', label: 'Shield Access', cost: 25, prereq: ['factoryAccess'], unlocksRoom: 'shield' },
     { id: 'dockAccess', label: 'Dock Access', cost: 40, prereq: ['hangarAccess', 'shieldAccess'], unlocksRoom: 'dock' },
-    { id: 'moduleSlots', label: 'Module Slots', cost: 20, prereq: [], unlocksModules: true }
+    { id: 'moduleSlots', label: 'Module Slots', cost: 20, prereq: [], unlocksModules: true },
+    { id: 'commsAccess', label: 'Communications Access', cost: 30, prereq: [], unlocksAbilities: true }
   ],
 
   // Phase 3: room construction now costs gold and takes time (reduced by
@@ -435,5 +444,22 @@ export const CONFIG = {
     { id: 'damage', stat: 'damage', name: 'Damage Mastery', icon: '⚔️', per: 0.05, max: 10 },
     { id: 'build', stat: 'build', name: 'Build Mastery', icon: '🔧', per: 0.08, max: 10 },
     { id: 'fortify', stat: 'fortify', name: 'Fortification', icon: '🛡️', per: 0.03, max: 10 }
+  ],
+
+  // Phase 6: the 5 orbital abilities from lore.md/structures.md, gated behind
+  // TECH_TREE's commsAccess node — the first player-triggered, mid-wave action
+  // in a game that was 100% passive/economic once a wave started. Deliberately
+  // all global/no-target effects (World.useAbility() applies to every enemy/
+  // tower on the field at once) rather than click-to-aim — that's the slice
+  // that needed real design (see the Roadmap card) and stays LATER; this ships
+  // the cooldown-gated trigger loop itself, same "carve the testable slice out
+  // of the bigger vision" call Phase 7a made against 7b. First-pass numbers,
+  // not tuned, same standing caveat every constant block here already carries.
+  ABILITIES: [
+    { id: 'emp', label: 'EMP Burst', icon: '⚡', cooldown: 45, slowMult: 0.35, duration: 4 },
+    { id: 'orbitalLaser', label: 'Orbital Laser', icon: '🛰️', cooldown: 60, damage: 45 },
+    { id: 'supplyDrop', label: 'Supply Drop', icon: '📦', cooldown: 50, gold: 80, metal: 40 },
+    { id: 'droneRepair', label: 'Drone Repair', icon: '🔧', cooldown: 40, healPct: 0.5 },
+    { id: 'satelliteRecall', label: 'Satellite Recall', icon: '📡', cooldown: 35 }
   ]
 };

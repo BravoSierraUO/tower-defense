@@ -6,7 +6,7 @@ import { CONFIG } from '../config.js';
 import { Toast } from './toast.js';
 
 export class HudPanel {
-  constructor({ onRestart, onRepairBase, onOpenWaveMenu } = {}) {
+  constructor({ onRestart, onRepairBase, onOpenWaveMenu, onUseAbility } = {}) {
     this.scoreEl = document.getElementById('ui-score');
     this.goldEl = document.getElementById('ui-gold');
     this.metalEl = document.getElementById('ui-metal');
@@ -39,6 +39,30 @@ export class HudPanel {
 
     this.achievementToast = new Toast(document.getElementById('achievement-toast'));
     this.chestToast = new Toast(document.getElementById('chest-toast'));
+
+    // Phase 6: one button per CONFIG.ABILITIES entry, built here since index.html
+    // shouldn't hardcode a list that's meant to stay data-driven (see game.js's
+    // own comment on ROOM_TYPES for the same convention). Cooldown fill is a
+    // bottom-anchored overlay div, same "track + fill" shape as ui-bar-fill.
+    this.abilityBar = document.getElementById('ability-bar');
+    this.abilityEls = {};
+    for (const ability of CONFIG.ABILITIES) {
+      const btn = document.createElement('button');
+      btn.className = 'ability-btn';
+      btn.title = ability.label;
+      const icon = document.createElement('span');
+      icon.className = 'ability-icon';
+      icon.textContent = ability.icon;
+      const fill = document.createElement('div');
+      fill.className = 'ability-cooldown-fill';
+      const label = document.createElement('span');
+      label.className = 'ability-label';
+      label.textContent = ability.label;
+      btn.append(fill, icon, label);
+      btn.addEventListener('click', () => onUseAbility?.(ability.id));
+      this.abilityBar.appendChild(btn);
+      this.abilityEls[ability.id] = { btn, fill };
+    }
   }
 
   currentTierName(waveNumber) {
@@ -109,6 +133,21 @@ export class HudPanel {
     this.triggerWaveBtn.hidden = state !== 'playing' || !spawner.canTriggerWave();
     if (!this.triggerWaveBtn.hidden) {
       this.triggerWaveBtn.textContent = `Wave ${spawner.maxWave + 1} ▾`;
+    }
+
+    // Phase 6: the whole bar stays hidden until commsAccess is unlocked — no point
+    // teasing 5 dead buttons before the player has any way to use them.
+    const commsUnlocked = world.commandCore.unlockedTech.has('commsAccess');
+    this.abilityBar.hidden = !commsUnlocked;
+    if (commsUnlocked) {
+      for (const ability of CONFIG.ABILITIES) {
+        const { btn, fill } = this.abilityEls[ability.id];
+        const remaining = world.abilityCooldowns[ability.id];
+        const pct = Math.max(0, Math.min(1, remaining / ability.cooldown));
+        fill.style.height = `${pct * 100}%`;
+        btn.disabled = state !== 'playing' || remaining > 0;
+        btn.title = remaining > 0 ? `${ability.label} — ${Math.ceil(remaining)}s` : ability.label;
+      }
     }
 
     // Phase 8a: 'lost' is no longer a reachable Game.state — a base wipe now heals
