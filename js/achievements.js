@@ -1,9 +1,9 @@
-// Phase 4: achievement registry (pure data), ported from RMUV's pattern. Each
+// Phase 4: achievement registry (pure data), ported from the sister project's pattern. Each
 // entry: {id, name, hint, icon, tier, test(profile, ev)}. tier drives the CP
 // bonus on unlock (CONFIG.PROFILE.TIER_CP). `profile` is Profile#snapshot();
 // `ev` is {type, data} — the event that just fired. Tested on every emit via
 // Profile#checkAchievements's fixpoint loop; once earned it sticks for good
-// (no RMUV-style prestige re-earn here — see profile.js's prestige() notes).
+// (no sister-project-style prestige re-earn here — see profile.js's prestige() notes).
 export const ACHIEVEMENTS = [
   // ---- common: you'll trip over these ----
   { id: 'first-blood', name: 'First Blood', hint: 'Land your first kill', icon: '🎯', tier: 'common', test: (p) => p.life.kills >= 1 },

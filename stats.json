@@ -330,6 +330,12 @@
       "date": "07-20",
       "cum": 12864,
       "subject": "v2.30 - Phase 12: Base Self-Defense + Phase 11 fix: buildSpeedMult"
+    },
+    {
+      "hash": "077fa86",
+      "date": "07-20",
+      "cum": 12985,
+      "subject": "Promote observability page to landing; add portfolio README"
     }
   ],
   "categories": [
@@ -340,12 +346,12 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 3867,
+      "value": 3421,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1691,
+      "value": 2258,
       "tone": "info"
     },
     {
@@ -355,7 +361,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 25.9,
+    "activeHours": 26.1,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

@@ -401,7 +401,7 @@ export const CONFIG = {
   BROWNOUT_MIN_FIRE_RATE_MULT: 0.25,
 
   // Phase 4: player profile (persistent across runs — level/achievements/prestige).
-  // Cascade-style CP economy ported from a sister project (RMUV): a single CP spine
+  // Cascade-style CP economy ported from a sister project: a single CP spine
   // fed by run events, a gentle sqrt level curve, and a prestige loop that resets the
   // CP climb for a permanent CP-gain bonus + spendable skill points. See profile.js.
   PROFILE: {

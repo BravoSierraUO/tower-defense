@@ -2,15 +2,15 @@ import { CONFIG } from './config.js';
 import { ACHIEVEMENTS } from './achievements.js';
 
 // Phase 4: persistent player profile (survives run restarts, lives across
-// waves/runs in one JSON blob). Skeleton ported from a sister project (RMUV),
-// stripped of everything that was really about RMUV's 40-game arcade catalog
+// waves/runs in one JSON blob). Skeleton ported from a sister project,
+// stripped of everything that was really about the sister project's 40-game arcade catalog
 // (avatars/wreaths/genre shelves/cross-game cascade normalization) — this
 // game has one CP source (its own runs), so it needed none of that. What
 // carried over: the sqrt level curve, the data-driven achievement registry
 // tested via a fixpoint loop, and the prestige-for-permanent-bonus loop.
 //
-// Simplification vs. RMUV: prestige here only resets `cp` (the level climb).
-// RMUV also wiped per-game play stats so achievements could re-earn across
+// Simplification vs. the sister project: prestige here only resets `cp` (the level climb).
+// the sister project also wiped per-game play stats so achievements could re-earn across
 // "lifetimes" (mastery stars). That's real design value but real added
 // complexity (a parallel life/permanent stat split) — skipped for this pass;
 // `life` stats and earned badges are permanent. Revisit if prestiging ever

@@ -246,18 +246,19 @@
 <button class="mode" id="modeBtn" aria-label="Switch color theme">Light</button>
 
 <header class="wrap">
+  <div class="eyebrow">Deterministic 2D Simulation Engine &amp; Observability Framework</div>
   <div class="wordmark">TOWER DEFENSE<span class="dot">.</span></div>
   <div class="ring" aria-hidden="true"></div>
-  <p class="tag">A static-world siege game for the browser. Build towers, hold the base, out-tech the wave.</p>
+  <p class="tag">A zero-dependency, reproducible tick-based simulation engine — 12,000+ lines of native Vanilla JS and Canvas 2D, 203 passing tests, no build step — driving hundreds of autonomous agents over custom pathfinding. Implemented as a real-time, static-world siege simulation.</p>
   <a class="play" href="game.html">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-    Play in your browser
+    Launch the simulation
   </a>
   <div class="playnote">free · runs entirely client-side · nothing to install</div>
   <div class="chips">
-    <span class="chip">Vanilla JS · Canvas 2D</span>
-    <span class="chip">Solo build · zero deps</span>
-    <span class="chip">183 tests · node --test</span>
+    <span class="chip">Vanilla JS · Canvas 2D · zero deps</span>
+    <span class="chip">Deterministic state machines</span>
+    <span class="chip">203 tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
@@ -442,8 +443,8 @@
 <footer class="wrap">
   <p>Tower Defense is built solo in vanilla JS and Canvas 2D — a static-world siege loop, an
   interior Command Core grid with a real tech tree, and a persistent profile (levels, 21
-  achievements, prestige) ported from a sister project.</p>
-  <p class="mono" style="margin-top:10px">Generated from whatever.html's FLOWS and ROADMAP on 2026-07-19 ·
+  achievements, prestige).</p>
+  <p class="mono" style="margin-top:10px">Generated from index.html's FLOWS and ROADMAP on 2026-07-19 ·
   formerly two pages (docs.html + whathow.html), merged into one · github.com/BravoSierraUO/tower-defense</p>
 </footer>
 
@@ -525,7 +526,7 @@ const ROADMAP = [
     ],
     note:'Design calls made without back-and-forth (changelog v0.9): kept one-of-each-room-type, Lab needs no tech node (root — no researchRate without it), Shield/Hangar read commandCore.totals() directly from combat.js rather than routing through the gold-focused Economy web.' },
   { id:'p4', num:'4', title:'Progression — Levels, Achievements & Prestige', status:'DONE', color:'--phase-4',
-    desc:'Persistent player profile: a CP/level curve, a data-driven achievement registry, and a prestige loop that resets the climb for a permanent bonus + a spendable skill tree. Skeleton ported from a sister project (RMUV), stripped of everything that was really about RMUV\'s 40-game arcade catalog.',
+    desc:'Persistent player profile: a CP/level curve, a data-driven achievement registry, and a prestige loop that resets the climb for a permanent bonus + a spendable skill tree.',
     items:[
       'Persistent profile (localStorage, survives run restarts) — done, profile.js',
       'CP economy fed by run events (kills/wave clears/towers/rooms/tech/run end) — done',
@@ -536,7 +537,7 @@ const ROADMAP = [
       '"Play Again" restart flow (previously the win/lose banner was a dead end) — done',
       'Profile view (P key): level/XP, prestige, skill tree, achievement grid, unlock toast — done'
     ],
-    note:'Renumbered ahead of the original "Economy Depth" Phase 4 (now Phase 4b below). Deliberate scope cut vs. RMUV: prestige here only resets CP, not lifetime stats/badges (RMUV\'s mastery-star re-earn-across-lifetimes mechanic was skipped — see changelog.md v1.0). 21 new tests in tests/profile.test.mjs.' },
+    note:'Renumbered ahead of the original "Economy Depth" Phase 4 (now Phase 4b below). Deliberate scope cut: prestige here only resets CP, not lifetime stats/badges (a mastery-star re-earn-across-lifetimes mechanic was considered and skipped — see changelog.md v1.0). 21 new tests in tests/profile.test.mjs.' },
   { id:'p4b', num:'4b', title:'Economy Depth', status:'DONE', color:'--phase-4b',
     desc:'Combo streaks, passive income, a Fast-Build rush for Command Core rooms, and the tower-side upgrade-cost gate rooms already had.',
     items:[
@@ -1502,7 +1503,7 @@ const FLOWS = [
         detail: 'If yes, the whole 21-badge sweep runs again from a fresh snapshot. Hitting Level 3 can itself push cp/life stats past another badge\'s threshold in the same event — a plain single pass would miss it.' },
       { id: 'queue', col: 4, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Queued for the UI\ndrainUnlocks()',
         code_ref: 'profile.js (drainUnlocks)',
-        detail: "Earning is permanent — there's no RMUV-style prestige re-earn here (see You prestige). Once a badge is in data.badges, it's there for good; the queue only exists so the toast can show it once." }
+        detail: "Earning is permanent — there's no prestige re-earn here (see You prestige). Once a badge is in data.badges, it's there for good; the queue only exists so the toast can show it once." }
     ],
     edges: [
       { from: 'fire', to: 'snap' },
@@ -2222,6 +2223,12 @@ const STATS = {
       "date": "07-20",
       "cum": 12864,
       "subject": "v2.30 - Phase 12: Base Self-Defense + Phase 11 fix: buildSpeedMult"
+    },
+    {
+      "hash": "077fa86",
+      "date": "07-20",
+      "cum": 12985,
+      "subject": "Promote observability page to landing; add portfolio README"
     }
   ],
   "categories": [
@@ -2232,12 +2239,12 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 3867,
+      "value": 3421,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 1691,
+      "value": 2258,
       "tone": "info"
     },
     {
@@ -2247,7 +2254,7 @@ const STATS = {
     }
   ],
   "velocity": {
-    "activeHours": 25.9,
+    "activeHours": 26.1,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5
