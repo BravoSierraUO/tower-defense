@@ -300,22 +300,28 @@
       "date": "07-20",
       "cum": 12125,
       "subject": "v2.25 - Fix: whatever.html's inline <script> block was completely broken"
+    },
+    {
+      "hash": "16c534d",
+      "date": "07-20",
+      "cum": 12178,
+      "subject": "v2.26 - Fix: radial Build menu gave no reason when a room/tower/scavenger couldn't be built"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4571,
+      "value": 4609,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3138,
+      "value": 3151,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2196,
+      "value": 2198,
       "tone": "info"
     },
     {
@@ -325,7 +331,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 19.9,
+    "activeHours": 20.4,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5

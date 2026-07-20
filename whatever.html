@@ -340,7 +340,7 @@
   </div>
 
   <div class="vcard" style="margin-top:16px">
-    <h4>The <span id="commitLogCount">·</span> commits</h4>
+    <h4>The last <span id="commitLogShown">·</span> of <span id="commitLogCount">·</span> commits</h4>
     <div class="commitlog" id="commitLog"></div>
   </div>
 </section>
@@ -2114,22 +2114,28 @@ const STATS = {
       "date": "07-20",
       "cum": 12125,
       "subject": "v2.25 - Fix: whatever.html's inline <script> block was completely broken"
+    },
+    {
+      "hash": "16c534d",
+      "date": "07-20",
+      "cum": 12178,
+      "subject": "v2.26 - Fix: radial Build menu gave no reason when a room/tower/scavenger couldn't be built"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4571,
+      "value": 4609,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3138,
+      "value": 3151,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2196,
+      "value": 2198,
       "tone": "info"
     },
     {
@@ -2139,13 +2145,23 @@ const STATS = {
     }
   ],
   "velocity": {
-    "activeHours": 19.9,
+    "activeHours": 20.4,
     "sessionCount": 5,
     "activeDays": 5,
     "sessionGapHours": 5
   }
 };
 // STATS_GENERATED_END
+
+// Commit subjects are raw git log text, not authored copy — one of them (v2.25's own fix
+// commit) literally contains the substring "<script>", which an unescaped innerHTML/SVG
+// assignment lets the browser's HTML parser read as a real (inert) script-tag open, silently
+// swallowing everything rendered after it. Escaping here is what actually fixed that, not the
+// v2.25 patch (which only fixed a *different* bug — a raw apostrophe breaking this page's own
+// <script> block's JS syntax). Applied everywhere a commit's hash/date/subject reaches HTML.
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 function renderGrowthChart() {
   const svg = document.getElementById('growthChart');
@@ -2170,7 +2186,7 @@ function renderGrowthChart() {
   svgContent += `<path d="${area}" class="varea"/>`;
   svgContent += `<path d="${line}" class="vline"/>`;
   pts.forEach((p, i) => {
-    svgContent += `<circle cx="${x(i)}" cy="${y(p.cum)}" r="4" class="vdot"><title>${p.hash} · ${p.date} · ${p.cum} lines\n${p.subject}</title></circle>`;
+    svgContent += `<circle cx="${x(i)}" cy="${y(p.cum)}" r="4" class="vdot"><title>${escapeHtml(p.hash)} · ${escapeHtml(p.date)} · ${p.cum} lines\n${escapeHtml(p.subject)}</title></circle>`;
   });
   // callout on the single biggest jump
   let biggest = 1;
@@ -2206,13 +2222,20 @@ function renderPieChart() {
     `<div><i style="background:${css(c.tone)}"></i>${c.label}<b>${c.value}</b></div>`).join('');
 }
 
+// The list itself is capped to the most recent COMMIT_LOG_LIMIT — the full count (STATS.growth.length,
+// which only ever grows) still drives the lede/stat-tile/heading numbers via commitLogCount below, this
+// only bounds how many rows actually render so the page doesn't grow a row per commit forever.
+const COMMIT_LOG_LIMIT = 20;
+
 function renderCommitLog() {
-  document.getElementById('commitLog').innerHTML = STATS.growth.slice().reverse().map(p => {
+  const shown = STATS.growth.slice(-COMMIT_LOG_LIMIT);
+  document.getElementById('commitLog').innerHTML = shown.slice().reverse().map(p => {
     const idx = STATS.growth.indexOf(p);
     const prev = idx > 0 ? STATS.growth[idx - 1].cum : 0;
     const delta = p.cum - prev;
-    return `<div class="commitrow"><span class="h">${p.hash}</span><span class="d">${p.date}</span><span class="s">${p.subject}</span><span class="n">${delta >= 0 ? '+' : ''}${delta}</span></div>`;
+    return `<div class="commitrow"><span class="h">${escapeHtml(p.hash)}</span><span class="d">${escapeHtml(p.date)}</span><span class="s">${escapeHtml(p.subject)}</span><span class="n">${delta >= 0 ? '+' : ''}${delta}</span></div>`;
   }).join('');
+  document.getElementById('commitLogShown').textContent = shown.length;
 }
 
 document.getElementById('statTotalLines').textContent =
