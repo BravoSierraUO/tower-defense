@@ -94,13 +94,9 @@ function resolveTurretHits(world) {
   world.scavengers = world.scavengers.filter(s => !s.isDestroyed());
 }
 
-// Phase 3: Hangar's "interceptor drones" are a passive, tower-independent
-// DPS source — no projectile/visual, just damage applied straight to
-// whichever live enemy is closest to the base each frame.
-function applyHangarDrones(world, dt) {
-  const dronePower = world.commandCore.totals().dronePower;
-  if (dronePower <= 0) return;
-
+// The live enemy closest to the base — shared by every passive base-side DPS
+// source below so world.enemies gets walked once per frame, not once per source.
+function nearestEnemyToBase(world) {
   let closest = null;
   let closestDist = Infinity;
   for (const enemy of world.enemies) {
@@ -111,31 +107,26 @@ function applyHangarDrones(world, dt) {
       closestDist = dist;
     }
   }
-  if (closest) closest.health -= dronePower * dt;
+  return closest;
 }
 
-// Phase 12: the Base finally fights back instead of only ever taking damage —
-// same passive, no-projectile/no-visual DPS shape as applyHangarDrones above
-// (closest live enemy, continuous dt-scaled damage), not a Tower/Projectile.
-// Damage scales off Profile.stationTier() — Prestige (Phase 6) is already the
-// one lever that visibly grows the station, so it's also the lever that grows
-// its self-defense rather than a second currency/gate. Tier 0 (Outpost) is 0,
-// same "nothing extra yet" precedent drawStationRings() already set.
-function applyBaseDefense(world, dt) {
-  const baseDamage = CONFIG.STATION_TIERS[world.profile.stationTier()].baseDamage;
-  if (baseDamage <= 0) return;
+// The two passive, no-projectile/no-visual DPS sources — the Hangar's interceptor
+// drones (Phase 3, tower-independent) and the Base's own self-defense (Phase 12) —
+// both hit the single live enemy closest to the base each frame, i.e. the identical
+// pick. Summed and applied once here rather than each re-scanning world.enemies.
+// Base damage scales off Profile.stationTier() — Prestige (Phase 6) is already the
+// one lever that visibly grows the station, so it's also the lever that grows its
+// self-defense rather than a second currency/gate. Tier 0 (Outpost) is 0, same
+// "nothing extra yet" precedent drawStationRings() already set. dps<=0 short-circuits
+// before the scan, preserving the old "no Hangar + Outpost tier = free frame" case.
+function applyPassiveBaseDefense(world, dt) {
+  const dronePower = Math.max(0, world.commandCore.totals().dronePower);
+  const baseDamage = Math.max(0, CONFIG.STATION_TIERS[world.profile.stationTier()].baseDamage);
+  const dps = dronePower + baseDamage;
+  if (dps <= 0) return;
 
-  let closest = null;
-  let closestDist = Infinity;
-  for (const enemy of world.enemies) {
-    if (enemy.isDead() || enemy.reachedTarget) continue;
-    const dist = Math.hypot(enemy.x - world.base.x, enemy.y - world.base.y);
-    if (dist < closestDist) {
-      closest = enemy;
-      closestDist = dist;
-    }
-  }
-  if (closest) closest.health -= baseDamage * dt;
+  const closest = nearestEnemyToBase(world);
+  if (closest) closest.health -= dps * dt;
 }
 
 export function updateCombat(world, dt) {
@@ -159,8 +150,7 @@ export function updateCombat(world, dt) {
   }
   world.projectiles = world.projectiles.filter(p => !p.dead);
 
-  applyHangarDrones(world, dt);
-  applyBaseDefense(world, dt);
+  applyPassiveBaseDefense(world, dt);
   resolveBaseHits(world);
   resolveTurretHits(world);
 }

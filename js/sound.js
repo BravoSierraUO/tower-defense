@@ -147,6 +147,14 @@ export const Sound = {
 // ---- browser-only: unlock the context on the first real user gesture (autoplay
 // policies suspend a freshly created AudioContext until one arrives) ----
 if (typeof window !== 'undefined') {
-  const unlock = () => { const ctx = getCtx(); try { if (ctx && ctx.state === 'suspended' && ctx.resume) ctx.resume(); } catch (e) {} };
-  ['pointerdown', 'touchstart', 'keydown'].forEach((ev) => window.addEventListener(ev, unlock, { passive: true }));
+  const GESTURES = ['pointerdown', 'touchstart', 'keydown'];
+  // Once any one gesture unlocks the context there's nothing left to unlock, so tear
+  // down all three listeners rather than keep re-running getCtx()/resume() on every
+  // later keystroke and pointer press for the rest of the session.
+  const unlock = () => {
+    const ctx = getCtx();
+    try { if (ctx && ctx.state === 'suspended' && ctx.resume) ctx.resume(); } catch (e) {}
+    GESTURES.forEach((ev) => window.removeEventListener(ev, unlock));
+  };
+  GESTURES.forEach((ev) => window.addEventListener(ev, unlock, { passive: true }));
 }

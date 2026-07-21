@@ -4,6 +4,10 @@ import { drawStarfield } from './starfield.js';
 import { findTarget } from './combat.js';
 import { ENEMY_CLASSES } from './enemyClasses.js';
 
+// Phase 15: tierId -> body shape, built once at module load so drawEnemies() does an
+// object lookup per enemy instead of an ENEMY_CLASSES.find() scan every frame.
+const SHAPE_BY_TIER = Object.fromEntries(ENEMY_CLASSES.map(c => [c.id, c.shape]));
+
 // Phase 15: fills the given shape centered at (x, y) with "radius" r — 'circle' is the
 // pre-existing look (unclassed/easy enemies), 'square'/'triangle' are new. Kept as a
 // free function (not a Renderer method) since it has no `this` needs of its own.
@@ -333,7 +337,7 @@ export class Renderer {
       // Phase 15: body shape reads difficulty tier at a glance (circle/square/triangle,
       // easy/medium/hard) — falls back to 'circle' for an unclassed enemy (tierId null,
       // e.g. directly test-constructed) so nothing existing changes look.
-      const shape = ENEMY_CLASSES.find(c => c.id === enemy.tierId)?.shape ?? 'circle';
+      const shape = SHAPE_BY_TIER[enemy.tierId] ?? 'circle';
       ctx.fillStyle = CONFIG.ENEMY_COLOR;
       fillEnemyShape(ctx, shape, p.x, p.y, r);
 

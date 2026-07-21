@@ -354,32 +354,38 @@
       "date": "07-20",
       "cum": 13472,
       "subject": "v2.32 - Primitives page: light-mode fix, 3 new primitives, mockup audit, 2 roadmap ideas"
+    },
+    {
+      "hash": "4ada495",
+      "date": "07-20",
+      "cum": 13624,
+      "subject": "v2.33 - Phase 15: Enemy-class shapes + a bestiary \"database\" seed, plus a favicon"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5035,
+      "value": 5081,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3599,
+      "value": 3650,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2266,
+      "value": 2269,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 2572,
+      "value": 2624,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 26.6,
+    "activeHours": 27,
     "sessionCount": 6,
     "activeDays": 5,
     "sessionGapHours": 5
