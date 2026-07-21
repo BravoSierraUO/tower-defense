@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-20",
+  "generatedAt": "2026-07-21",
   "growth": [
     {
       "hash": "c488b9d",
@@ -336,6 +336,12 @@
       "date": "07-20",
       "cum": 12985,
       "subject": "Promote observability page to landing; add portfolio README"
+    },
+    {
+      "hash": "b7fead8",
+      "date": "07-20",
+      "cum": 12998,
+      "subject": "Reframe hero as simulation engine; scrub sister-project name"
     }
   ],
   "categories": [
@@ -346,7 +352,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 3421,
+      "value": 3434,
       "tone": "special"
     },
     {

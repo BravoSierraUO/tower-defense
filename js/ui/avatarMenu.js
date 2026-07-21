@@ -1,5 +1,7 @@
 // Top-right avatar menu: entry point for Profile/About/Settings/Report-bug/Reset-progress.
 // Closes on any outside click via the document-level listener below.
+import { Sound } from '../sound.js';
+
 export class AvatarMenu {
   constructor({ onToggleCore, onToggleProfile, onToggleAbout, onToggleSettings, onReportBug, onOpenResetConfirm } = {}) {
     this.btn = document.getElementById('avatar-btn');
@@ -21,6 +23,7 @@ export class AvatarMenu {
   }
 
   setOpen(open) {
+    if (open !== !this.menu.hidden) Sound.play(open ? 'open' : 'back');
     this.menu.hidden = !open;
     this.btn.setAttribute('aria-expanded', String(open));
   }

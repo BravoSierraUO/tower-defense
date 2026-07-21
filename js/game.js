@@ -8,6 +8,7 @@ import { UI } from './ui.js';
 import { CommandCore } from './commandcore.js';
 import { Profile } from './profile.js';
 import { MissionTracker } from './missions.js';
+import { Sound } from './sound.js';
 
 export class Game {
   constructor(canvas) {
@@ -36,7 +37,7 @@ export class Game {
       onOpenWaveMenu: () => { this.waveMenuOpen = !this.waveMenuOpen; },
       onSelectWave: (n, isReplay) => {
         const started = isReplay ? this.world.spawner.triggerReplay(n) : this.world.spawner.triggerWave();
-        if (started) this.waveMenuOpen = false;
+        if (started) { Sound.play('tap'); this.waveMenuOpen = false; }
       },
       onOpenMissionMenu: () => { this.missionMenuOpen = !this.missionMenuOpen; },
       onTrackMission: id => this.missions.track(id),
@@ -62,7 +63,7 @@ export class Game {
       onCloseMenuModal: () => { this.menuModalOpen = false; },
       onResetProgress: () => { this.profile.hardReset(); this.restart(); },
       onReportBug: () => this.reportBug(),
-      onUseAbility: id => this.world.useAbility(id)
+      onUseAbility: id => { const used = this.world.useAbility(id); if (used) Sound.play('ability'); return used; }
     });
     this.lastTime = 0;
     this.fps = 0;
@@ -370,9 +371,11 @@ export class Game {
         } else if (this.fieldBuildType === 'scavenger') {
           this.selectedScavenger = this.world.placeScavenger(worldPos.x, worldPos.y);
           this.selectedTower = null;
+          Sound.play(this.selectedScavenger ? 'build' : 'nope');
         } else if (CONFIG.DAMAGE_TYPES[this.fieldBuildType]) {
           this.selectedTower = this.world.placeTower(worldPos.x, worldPos.y, this.fieldBuildType);
           this.selectedScavenger = null;
+          Sound.play(this.selectedTower ? 'build' : 'nope');
         } else {
           // Nothing armed and nothing to interact with — pop the radial menu
           // open right here instead of the old default-to-Tower placement.
@@ -382,7 +385,10 @@ export class Game {
         const cell = this.renderer.screenToCoreCell(click.x, click.y);
         if (cell && this.selectedRoomType) {
           if (this.world.buildRoom(this.selectedRoomType, cell.gx, cell.gy)) {
+            Sound.play('build');
             this.selectedRoomType = null;
+          } else {
+            Sound.play('nope');
           }
         } else if (cell && this.commandCore.getRoomAt(cell.gx, cell.gy)) {
           this.world.upgradeRoom(cell.gx, cell.gy);
@@ -398,7 +404,7 @@ export class Game {
       if (this.view === 'field') {
         const worldPos = this.camera.screenToWorld(click.x, click.y);
         // Phase 4c: try Tower first, fall back to Scavenger Turret — whichever's actually there.
-        if (!this.world.sellTowerAt(worldPos.x, worldPos.y)) this.world.sellScavengerAt(worldPos.x, worldPos.y);
+        if (this.world.sellTowerAt(worldPos.x, worldPos.y) || this.world.sellScavengerAt(worldPos.x, worldPos.y)) Sound.play('sell');
       } else {
         const cell = this.renderer.screenToCoreCell(click.x, click.y);
         if (cell) {
@@ -464,6 +470,7 @@ export class Game {
     if (world.kills > this.lastKills) {
       this.profile.emit('kill', { count: world.kills - this.lastKills });
       this.lastKills = world.kills;
+      Sound.play('explode');
     }
     if (world.spawner.wavesCleared > this.lastWavesCleared) {
       this.profile.emit('waveClear', { wave: world.spawner.waveNumber });

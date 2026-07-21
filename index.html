@@ -14,7 +14,7 @@
     --info:#9aa8e8; --idle:#8a93a3; --special:#c79ae8;
     --phase-1:#4A90E2; --phase-2a:#2ECC71; --phase-2b:#F39C12; --phase-3:#9B59B6;
     --phase-4:#E74C3C; --phase-4b:#C0392B; --phase-4c:#C97B3C; --phase-4d:#D9A441; --phase-5:#8B9AB2;
-    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393; --phase-9:#5BC8FF; --phase-11:#E0A458;
+    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393; --phase-9:#5BC8FF; --phase-11:#E0A458; --phase-13:#FF8FA3;
     --body:Inter,system-ui,"Segoe UI",sans-serif;
     --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
     color-scheme:dark;
@@ -769,7 +769,17 @@ const ROADMAP = [
       'Reframes the affix as "your equipped gear supports base construction" — the same reach Hangar/Shield already make between the field grid and the Core (a field-placed room\'s stats affecting field combat), just running the other direction this time.'
     ],
     depends:'Phase 11 (Materials & Itemization) — the affix already existed, this only wires it up',
-    note:'Bundled into the same wrap-up session as Phase 12 above (2026-07-20), the user\'s own pairing — "phase 11\'s dead feature" alongside base self-defense. 5 new tests (tests/phase12.test.mjs): no-op with nothing equipped, picked up from either a Tower or a Scavenger, best-of (not summed) across multiple equipped items, and buildRoom() dividing buildTimeTotal by the multiplier — plus a regression check that an unequipped run\'s build time is bit-for-bit unchanged from before this fix. Full node --test pass: 203/203. Verified statically only, continuing the standing no-Playwright-on-this-project rule.' }
+    note:'Bundled into the same wrap-up session as Phase 12 above (2026-07-20), the user\'s own pairing — "phase 11\'s dead feature" alongside base self-defense. 5 new tests (tests/phase12.test.mjs): no-op with nothing equipped, picked up from either a Tower or a Scavenger, best-of (not summed) across multiple equipped items, and buildRoom() dividing buildTimeTotal by the multiplier — plus a regression check that an unequipped run\'s build time is bit-for-bit unchanged from before this fix. Full node --test pass: 203/203. Verified statically only, continuing the standing no-Playwright-on-this-project rule.' },
+  { id:'p13', num:'13', title:'Sound Design — Synthesized SFX Engine', status:'DONE', color:'--phase-13',
+    desc:'This game has had zero audio since v0.1. The sister project (RMUV) already solved it — a zero-asset, zero-dependency synth engine (oscillator/noise "steps" rendered live, no audio files to host) that fits this project\'s own zero-dependency rule exactly. Ported as a real ES module rather than copied verbatim.',
+    items:[
+      'js/sound.js: the engine (lazy shared AudioContext, master gain, renderSteps()) carried over from RMUV/rmuv-sound.js unchanged, plus a mute facade (Sound.enabled/setEnabled/toggle, persisted to localStorage[\'td.sound\']) — same Node-safe trick as the original: no AudioContext in scope means play() is a silent no-op, so the registry and even the render path stay unit-testable via a mock context.',
+      'Palette trimmed to this game (RMUV\'s board/card/dice/party groups dropped) plus a new td group (build/sell/wave/ability/badge) authored fresh; ui/combat/econ groups reuse RMUV\'s exact tuned steps.',
+      'Wired at the DOM/UI boundary, not inside world.js/combat.js — those stay pure and untouched. Build/sell/nope on placement, ability use, wave-trigger tap, kill (via the existing watchProfileEvents diff-watch), achievement-unlock and wave-end-chest toasts, and avatar-menu/menu-modal open/back on real transitions only.',
+      'New sound-toggle row in the Settings panel, right next to the existing theme toggle — same markup/localStorage shape, zero new CSS.'
+    ],
+    depends:null,
+    note:'The user pointed out RMUV (kept in this repo\'s RMUV/ folder — also where achievements.js/profile.js were originally lifted from) already had a mature sound engine sitting unused, and asked for the "easy lift." 9 new tests (tests/sound.test.mjs, adapted from RMUV\'s own mock-AudioContext technique): registry shape, name coverage for everything actually wired, node-safety, the mute facade\'s gating, and the mock-ctx render path for both a tone step and a noise step. Full node --test pass: 212/212 (up from 203). Verified statically only, continuing the standing no-Playwright-on-this-project rule — the actual audio isn\'t machine-verifiable here any more than RMUV\'s own is.' }
 ];
 
 function renderRoadmap(){
@@ -1569,6 +1579,32 @@ const FLOWS = [
       { from: 'rings', to: 'label', tone: 'idle' }
     ]
   },
+  {
+    id: 'soundplays', group: 'Getting better',
+    title: 'A sound plays',
+    summary: "Phase 13: a zero-asset synth engine ported from the sister project — every sound is a short oscillator/noise sequence rendered live, gated by a persisted mute toggle, called from the DOM/UI boundary rather than world.js/combat.js.",
+    lanes: ['Trigger', 'Facade', 'Engine', 'Output'],
+    nodes: [
+      { id: 'trigger', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Sound.play(name)\ncalled from game.js/ui.js/ui/*.js',
+        code_ref: 'js/game.js, js/ui.js, js/ui/hudPanel.js, js/ui/avatarMenu.js',
+        detail: "Never called from world.js/combat.js — those stay pure and DOM-free, same separation profile.js's own event-emit bridge already established. Build/sell/nope on placement, ability use, wave-trigger tap, kill (via the existing watchProfileEvents diff-watch), achievement-unlock/wave-end-chest toasts, and avatar-menu/menu-modal open/back on real transitions only, not every frame." },
+      { id: 'facade', col: 1, row: 0.5, kind: 'decision', tone: 'warn', label: 'enabled?\ngate on the mute toggle',
+        code_ref: 'js/sound.js (Sound.play)',
+        detail: "Sound.enabled is persisted to localStorage['td.sound'], same key convention as settingsPanel.js's existing 'td.theme'. Guarded behind a typeof localStorage check rather than assumed-browser, so the gating logic itself stays covered by node --test, not just verified by ear." },
+      { id: 'render', col: 2, row: 0.5, kind: 'process', tone: 'ok', label: 'renderSteps()\noscillator/noise nodes on a lazy shared AudioContext',
+        code_ref: 'js/sound.js (getCtx, renderSteps)',
+        detail: "Ported from the sister project's RMUV_SFX unchanged — no AudioContext in scope (Node, or a browser before the first user gesture) means this is a silent no-op, which is what keeps the registry and even this render path unit-testable via a mock context (tests/sound.test.mjs)." },
+      { id: 'output', col: 3, row: 0.5, kind: 'terminal', tone: 'special', label: 'Master gain → speakers',
+        code_ref: 'js/sound.js (_master)',
+        detail: "Toggling the Settings-panel sound switch cuts/restores this gain instantly (setMasterNow), silencing anything mid-flight, not just gating future play() calls." }
+    ],
+    edges: [
+      { from: 'trigger', to: 'facade' },
+      { from: 'facade', to: 'render', tone: 'ok' },
+      { from: 'facade', to: 'output', dashed: true, tone: 'idle' },
+      { from: 'render', to: 'output', tone: 'special' }
+    ]
+  },
 
   // ================================ REMEMBERING ================================
   {
@@ -2229,6 +2265,12 @@ const STATS = {
       "date": "07-20",
       "cum": 12985,
       "subject": "Promote observability page to landing; add portfolio README"
+    },
+    {
+      "hash": "b7fead8",
+      "date": "07-20",
+      "cum": 12998,
+      "subject": "Reframe hero as simulation engine; scrub sister-project name"
     }
   ],
   "categories": [
@@ -2239,7 +2281,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 3421,
+      "value": 3434,
       "tone": "special"
     },
     {

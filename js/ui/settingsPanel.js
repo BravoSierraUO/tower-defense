@@ -11,6 +11,7 @@
 // camera.update() actually reads each frame (see js/keybindings.js and game.js).
 import { CONFIG } from '../config.js';
 import { KEYBIND_ACTIONS, loadKeybindings, saveKeybindings } from '../keybindings.js';
+import { Sound } from '../sound.js';
 
 export class SettingsPanel {
   constructor({ onOpenResetConfirm } = {}) {
@@ -25,6 +26,17 @@ export class SettingsPanel {
     this.applyTheme(localStorage.getItem('td.theme') || 'dark');
     this.themeToggle.addEventListener('click', () => {
       this.applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+    });
+
+    // Phase 13: mute toggle for the new synth SFX engine (js/sound.js) — same
+    // localStorage-backed on/off shape as the theme toggle above, reusing its
+    // exact `.theme-toggle` markup/CSS rather than inventing a second switch style.
+    this.soundToggle = document.getElementById('sound-toggle');
+    this.soundToggleLabel = document.getElementById('sound-toggle-label');
+    this.applySoundToggleUI(Sound.enabled);
+    this.soundToggle.addEventListener('click', () => {
+      Sound.toggle();
+      this.applySoundToggleUI(Sound.enabled);
     });
 
     // Phase 8g: rebindable hotkeys. Single physical keys only, no modifier chords
@@ -100,6 +112,11 @@ export class SettingsPanel {
     const light = theme === 'light';
     this.themeToggle.setAttribute('aria-checked', String(light));
     this.themeToggleLabel.textContent = light ? 'Light' : 'Dark';
+  }
+
+  applySoundToggleUI(on) {
+    this.soundToggle.setAttribute('aria-checked', String(on));
+    this.soundToggleLabel.textContent = on ? 'On' : 'Off';
   }
 
   hideJsonViewer() {

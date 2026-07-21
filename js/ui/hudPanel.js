@@ -4,6 +4,7 @@
 // which side panel (core/profile/about/settings) is open.
 import { CONFIG } from '../config.js';
 import { Toast } from './toast.js';
+import { Sound } from '../sound.js';
 
 export class HudPanel {
   constructor({ onRestart, onRepairBase, onOpenWaveMenu, onUseAbility } = {}) {
@@ -77,7 +78,7 @@ export class HudPanel {
     this.avatarLevelBadge.textContent = level;
 
     // Achievement-unlock toast: queued so a fixpoint burst of unlocks shows one at a time.
-    for (const a of profile.drainUnlocks()) this.achievementToast.push(a);
+    for (const a of profile.drainUnlocks()) { Sound.play('badge'); this.achievementToast.push(a); }
     this.achievementToast.update(performance.now(), (a, el) => {
       el.textContent = `${a.icon} Achievement Unlocked: ${a.name}`;
       el.className = `achievement-toast tier-${a.tier}`;
@@ -87,6 +88,7 @@ export class HudPanel {
     // full-clear or wipe-chest the instant finalizeWave() runs.
     if (spawner.waveEndSeq !== this.lastWaveEndSeq) {
       this.lastWaveEndSeq = spawner.waveEndSeq;
+      Sound.play('wave');
       const tier = spawner.lastChestTier;
       const pct = Math.round((spawner.lastWavePct ?? 1) * 100);
       this.chestToast.push(tier

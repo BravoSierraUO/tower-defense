@@ -13,6 +13,7 @@ import { WavePanel } from './ui/wavePanel.js';
 import { MissionPanel } from './ui/missionPanel.js';
 import { InventoryPanel } from './ui/inventoryPanel.js';
 import { UpgradeModal } from './ui/upgradeModal.js';
+import { Sound } from './sound.js';
 
 // UI reads world state and writes to the DOM overlay. It never mutates
 // gameplay state and is never zoomed/panned by the camera (plain HTML,
@@ -55,6 +56,7 @@ export class UI {
     const onOpenResetConfirm = () => this.confirmModal.open(onResetProgress);
     this.settings = new SettingsPanel({ onOpenResetConfirm });
     this.avatarMenu = new AvatarMenu({ onToggleCore, onToggleProfile, onToggleAbout, onToggleSettings, onReportBug, onOpenResetConfirm });
+    this.lastMenuModalOpen = false; // diff-watch so the menuModal open/back sound fires once per transition, not every frame
   }
 
   update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, missions, waveMenuOpen, missionMenuOpen, menuModalOpen, menuModalTab, upgradeModalOpen) {
@@ -83,6 +85,10 @@ export class UI {
     this.core.el.hidden = !inCore;
     if (inCore) this.core.update(world, commandCore);
 
+    if (menuModalOpen !== this.lastMenuModalOpen) {
+      Sound.play(menuModalOpen ? 'open' : 'back');
+      this.lastMenuModalOpen = menuModalOpen;
+    }
     this.menuModal.overlay.hidden = !menuModalOpen;
     if (menuModalOpen) this.menuModal.setActiveTab(menuModalTab);
     this.profile.el.hidden = !inAccount;
