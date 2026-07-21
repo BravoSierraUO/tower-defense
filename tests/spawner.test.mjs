@@ -145,7 +145,9 @@ describe('Spawner: idle wave loop (Phase 8a)', () => {
     const spawner = new Spawner();
     spawner.waveNumber = 1; // below medium/hard unlockWave
     for (let i = 0; i < 50; i++) {
-      assert.equal(spawner.pickTier(), CONFIG.DIFFICULTY_TIERS.easy, 'only easy is unlocked at wave 1');
+      const tier = spawner.pickTier();
+      assert.equal(tier.id, 'easy', 'only easy is unlocked at wave 1');
+      assert.equal(tier.healthMult, CONFIG.DIFFICULTY_TIERS.easy.healthMult, 'still carries the real tier\'s stats');
     }
   });
 
@@ -153,8 +155,8 @@ describe('Spawner: idle wave loop (Phase 8a)', () => {
     const spawner = new Spawner();
     spawner.waveNumber = CONFIG.DIFFICULTY_TIERS.hard.unlockWave;
     const seen = new Set();
-    for (let i = 0; i < 200; i++) seen.add(spawner.pickTier());
-    assert.ok(seen.has(CONFIG.DIFFICULTY_TIERS.hard), 'hard tier turns up once unlocked (weighted random over 200 rolls)');
+    for (let i = 0; i < 200; i++) seen.add(spawner.pickTier().id);
+    assert.ok(seen.has('hard'), 'hard tier turns up once unlocked (weighted random over 200 rolls)');
   });
 });
 

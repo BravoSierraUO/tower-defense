@@ -9,7 +9,10 @@ export class Enemy {
   // Phase 7d: attackTarget defaults to null (base-bound, the only behavior that existed
   // before this phase) — World.spawnEnemy() passes a live Tower/Scavenger instance when
   // the aggro roll hits, with targetX/targetY already pointed at that turret's position.
-  constructor(x, y, targetX, targetY, healthMultiplier = 1, speedMultiplier = 1, armorType = null, attackTarget = null) {
+  // Phase 15: tierId defaults to null (unclassed, renders as the 'circle' fallback shape)
+  // — World.spawnEnemy() passes the real CONFIG.DIFFICULTY_TIERS key ('easy'/'medium'/'hard')
+  // for live-game spawns; renderer.js looks it up in ENEMY_CLASSES for a body shape.
+  constructor(x, y, targetX, targetY, healthMultiplier = 1, speedMultiplier = 1, armorType = null, attackTarget = null, tierId = null) {
     this.x = x;
     this.y = y;
     this.targetX = targetX;
@@ -21,6 +24,7 @@ export class Enemy {
     this.hasHitTarget = false; // combat.js flips this once contact damage is applied (base or turret)
     this.armorType = armorType; // 'kinetic' | 'plasma' | 'energy' | null, see CONFIG.DAMAGE_TYPES
     this.attackTarget = attackTarget; // Tower | ScavengerTurret | null (null = base-bound)
+    this.tierId = tierId; // 'easy' | 'medium' | 'hard' | null, see js/enemyClasses.js
     this.slowTimer = 0; // Phase 6: seconds remaining on World's EMP ability, ticked down in update()
     this.slowMult = 1;  // set alongside slowTimer by World.useAbility('emp'); irrelevant once slowTimer hits 0
   }

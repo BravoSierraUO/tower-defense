@@ -233,7 +233,10 @@ export class World {
   // Returns the enemy so Spawner can tally its maxHealth into the wave's value total.
   // Phase 7a: armorType defaults to null (neutral) here too — Spawner.pickArmorType()
   // is what actually assigns a real type for live-game spawns.
-  spawnEnemy(healthMultiplier = 1, speedMultiplier = 1, armorType = null) {
+  // Phase 15: tierId defaults to null (unclassed) too — Spawner.pickTier() is what
+  // actually assigns a real CONFIG.DIFFICULTY_TIERS key for live-game spawns, read back
+  // by renderer.js via ENEMY_CLASSES to pick a body shape.
+  spawnEnemy(healthMultiplier = 1, speedMultiplier = 1, armorType = null, tierId = null) {
     const angle = Math.random() * Math.PI * 2;
     const x = this.base.x + Math.cos(angle) * this.spawnRadius;
     const y = this.base.y + Math.sin(angle) * this.spawnRadius;
@@ -242,7 +245,7 @@ export class World {
     const targetX = aggroTarget ? aggroTarget.x : this.base.x;
     const targetY = aggroTarget ? aggroTarget.y : this.base.y;
 
-    const enemy = new Enemy(x, y, targetX, targetY, healthMultiplier, speedMultiplier, armorType, aggroTarget);
+    const enemy = new Enemy(x, y, targetX, targetY, healthMultiplier, speedMultiplier, armorType, aggroTarget, tierId);
     this.enemies.push(enemy);
     return enemy;
   }

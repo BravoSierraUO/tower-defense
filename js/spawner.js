@@ -21,17 +21,21 @@ export class Spawner {
     this.waveEndSeq = 0;       // bumped once per finalizeWave() — UI diffs this to know a new toast is due
   }
 
-  // Weighted pick among difficulty tiers unlocked at the current wave.
+  // Weighted pick among difficulty tiers unlocked at the current wave. Returns the tier
+  // object plus its own key (`id`, e.g. 'easy') — Phase 15 needs the id to look up
+  // ENEMY_CLASSES' shape/name at render/spawn time; CONFIG.DIFFICULTY_TIERS itself stays
+  // an id-keyed object rather than an array, so this is the one place that pairs them back up.
   pickTier() {
-    const unlocked = Object.values(CONFIG.DIFFICULTY_TIERS)
-      .filter(t => this.waveNumber >= t.unlockWave);
-    const totalWeight = unlocked.reduce((sum, t) => sum + t.weight, 0);
+    const unlocked = Object.entries(CONFIG.DIFFICULTY_TIERS)
+      .filter(([, t]) => this.waveNumber >= t.unlockWave);
+    const totalWeight = unlocked.reduce((sum, [, t]) => sum + t.weight, 0);
     let roll = Math.random() * totalWeight;
-    for (const tier of unlocked) {
+    for (const [id, tier] of unlocked) {
       roll -= tier.weight;
-      if (roll <= 0) return tier;
+      if (roll <= 0) return { ...tier, id };
     }
-    return unlocked[unlocked.length - 1];
+    const [id, tier] = unlocked[unlocked.length - 1];
+    return { ...tier, id };
   }
 
   // Phase 7a: equal-weight random pick, deliberately independent of pickTier()
@@ -152,7 +156,7 @@ export class Spawner {
       this.spawnTimer -= dt;
       if (this.spawnTimer <= 0 && this.enemiesToSpawn > 0) {
         const tier = this.pickTier();
-        const enemy = world.spawnEnemy(tier.healthMult, tier.speedMult, this.pickArmorType());
+        const enemy = world.spawnEnemy(tier.healthMult, tier.speedMult, this.pickArmorType(), tier.id);
         this.waveValueTotal += enemy.maxHealth;
         this.enemiesToSpawn--;
         this.spawnTimer = CONFIG.ENEMY_SPAWN_INTERVAL;

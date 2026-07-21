@@ -348,6 +348,12 @@
       "date": "07-20",
       "cum": 13357,
       "subject": "v2.31 - Phase 13: Sound Design — synthesized SFX engine & event wiring"
+    },
+    {
+      "hash": "b7b3274",
+      "date": "07-20",
+      "cum": 13472,
+      "subject": "v2.32 - Primitives page: light-mode fix, 3 new primitives, mockup audit, 2 roadmap ideas"
     }
   ],
   "categories": [
@@ -358,7 +364,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 3484,
+      "value": 3599,
       "tone": "special"
     },
     {
@@ -373,7 +379,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 26.4,
+    "activeHours": 26.6,
     "sessionCount": 6,
     "activeDays": 5,
     "sessionGapHours": 5

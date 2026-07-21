@@ -2,6 +2,25 @@ import { CONFIG } from './config.js';
 import { drawGrid } from './grid.js';
 import { drawStarfield } from './starfield.js';
 import { findTarget } from './combat.js';
+import { ENEMY_CLASSES } from './enemyClasses.js';
+
+// Phase 15: fills the given shape centered at (x, y) with "radius" r — 'circle' is the
+// pre-existing look (unclassed/easy enemies), 'square'/'triangle' are new. Kept as a
+// free function (not a Renderer method) since it has no `this` needs of its own.
+function fillEnemyShape(ctx, shape, x, y, r) {
+  ctx.beginPath();
+  if (shape === 'square') {
+    ctx.rect(x - r, y - r, r * 2, r * 2);
+  } else if (shape === 'triangle') {
+    ctx.moveTo(x, y - r);
+    ctx.lineTo(x + r * 0.87, y + r * 0.5);
+    ctx.lineTo(x - r * 0.87, y + r * 0.5);
+    ctx.closePath();
+  } else {
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+  }
+  ctx.fill();
+}
 
 export class Renderer {
   constructor(canvas) {
@@ -311,10 +330,12 @@ export class Renderer {
       const p = camera.worldToScreen(enemy.x, enemy.y);
       const r = CONFIG.ENEMY_RADIUS * camera.zoom;
 
+      // Phase 15: body shape reads difficulty tier at a glance (circle/square/triangle,
+      // easy/medium/hard) — falls back to 'circle' for an unclassed enemy (tierId null,
+      // e.g. directly test-constructed) so nothing existing changes look.
+      const shape = ENEMY_CLASSES.find(c => c.id === enemy.tierId)?.shape ?? 'circle';
       ctx.fillStyle = CONFIG.ENEMY_COLOR;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      ctx.fill();
+      fillEnemyShape(ctx, shape, p.x, p.y, r);
 
       // Phase 7a: armorType ring — kept a separate outline rather than
       // recoloring the whole enemy, so it still reads as "enemy" (red) at a
