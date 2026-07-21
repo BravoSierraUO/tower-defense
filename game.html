@@ -52,6 +52,16 @@
                 <div id="ui-production-parts" class="hud-value">0</div>
             </div>
 
+            <div class="hud-divider"></div>
+
+            <!-- Reactor load gauge: power supplied vs. drawn by towers. Fill = % of demand
+                 covered; turns red on a brownout, when the readout below spells out the fix. -->
+            <div class="hud-stat" id="ui-power-stat" title="Reactor power supplied vs. drawn by your towers. Below 100% is a brownout — towers fire slower until you add or upgrade Reactors.">
+                <div class="hud-label">POWER</div>
+                <div id="ui-power" class="hud-value hud-value-sm">0 / 0</div>
+                <div class="ui-bar-track hud-power-gauge"><div id="ui-power-fill" class="ui-bar-fill"></div></div>
+            </div>
+
             <span id="ui-combo" class="hud-combo" hidden></span>
 
             <span id="ui-brownout" class="hud-brownout" hidden>⚡ BROWNOUT</span>

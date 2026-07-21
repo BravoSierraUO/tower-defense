@@ -86,7 +86,14 @@ export const CONFIG = {
 
   SPAWN_MARGIN: 150,
   TOWER_MAX_COUNT: 50,
-  TOWER_MIN_BASE_DISTANCE: 60, // keeps towers off/adjacent to the base
+  // Phase 16: the base "compound" — a SQUARE ring ±BASE_RING_HALF around the base (5 grid
+  // cells each way, so scavengers and future support objects have real room). Towers must
+  // be placed OUTSIDE the square (World.inTowerField); scavengers INSIDE it and off the
+  // base core (World.inBaseRing). renderer.js draws the square so the two zones read on
+  // sight. Half-extent = 5 * GRID_SIZE (40).
+  BASE_RING_HALF: 200,
+  // Phase 16: inner edge — scavengers stay at least this far (circular) off the base core.
+  SCAVENGER_MIN_BASE_DISTANCE: 40,
 
   MAX_WAVES: 20,
   WAVE_BASE_ENEMIES: 5,
@@ -113,6 +120,11 @@ export const CONFIG = {
   ROOM_TYPES: {
     reactor: {
       label: 'Reactor', color: '#F3C969', output: 'power',
+      // Phase 16.x: stackable — an idle/additive game should let you keep adding Reactors
+      // to grow power supply, not cap you at one. totals() already sums room stats, so N
+      // reactors give N× power for free. (Adjacency "reactors near each other work better"
+      // + moving rooms are filed for the base-building pass, not built yet.)
+      stackable: true,
       tiers: [{ power: 10 }, { power: 22 }, { power: 40 }]
     },
     // Phase 4c: reframed from a flat gold-reward booster into the AI Cycle
@@ -232,8 +244,10 @@ export const CONFIG = {
   // Phase 2b: Skeleton Economy. Command Core output now has a real effect —
   // Reactor(power) discounts tower cost, AI Core(compute) boosts gold
   // rewards, Storage(storageCap) raises the gold cap.
-  STARTING_GOLD: 100,
-  GOLD_CAP_BASE: 500,
+  // TESTING (v2.36): dev stash + raised caps so the user isn't resource-blocked while
+  // iterating on Phase 16 placement/UX. REVERT before real balance (was 100 / 500).
+  STARTING_GOLD: 10000,
+  GOLD_CAP_BASE: 100000,
   TOWER_COST: 40,
   TOWER_SELL_REFUND_PCT: 0.6,
   GOLD_PER_ENEMY_HEALTH: 0.4,
@@ -294,8 +308,11 @@ export const CONFIG = {
   // ~4.5 min of starter-Scavenger accrual before the very first action was
   // affordable — invisible to the player as anything but a silently-broken
   // click, and directly blocked Phase 8b's "Place a Tower" tutorial mission.
-  STARTING_METAL: 40,
-  METAL_CAP_BASE: 300,
+  // TESTING (v2.36): dev stash + raised cap, same as STARTING_GOLD above. REVERT before
+  // real balance (was 40 / 300) — note the metal cap must stay >= STARTING_METAL or the
+  // idle mining tick clamps the stash straight back down.
+  STARTING_METAL: 10000,
+  METAL_CAP_BASE: 100000,
   BASE_CYCLES_PER_MIN: 3, // always-on AI bandwidth floor, even with zero AI Core built — keeps
                           // the starter Scavenger Turret "already producing" true from minute one
   SCAVENGER_COST: 25,
@@ -303,14 +320,33 @@ export const CONFIG = {
   // Phase 7d: a Scavenger has no way to defend itself, so it's the more
   // fragile of the two exterior placeables tier-for-tier (see TOWER_HEALTH).
   SCAVENGER_HEALTH: 40,
+  // Phase 16: `tractorRadius` is the Scavenger's *active* reach — how far it can pull an
+  // enemy corpse in and convert it to metal during a fight (see World.updateSalvage).
+  // Deliberately much larger than TOWER_RANGE (150): a Scavenger is locked inside the
+  // base ring, so it needs long reach to salvage kills happening out in the tower field.
+  // Upgrading grows the reach (cover more of the field) on top of `metalPerCycle` (the
+  // passive idle-mining rate, unchanged from Phase 4c).
   SCAVENGER_TIERS: [
-    { metalPerCycle: 3,  healthMult: 1 },
-    { metalPerCycle: 8,  healthMult: 1.4 },
-    { metalPerCycle: 18, healthMult: 2 }
+    { metalPerCycle: 3,  healthMult: 1,   tractorRadius: 300 },
+    { metalPerCycle: 8,  healthMult: 1.4, tractorRadius: 380 },
+    { metalPerCycle: 18, healthMult: 2,   tractorRadius: 470 }
   ],
   SCAVENGER_UPGRADE_COST_BASE: 20,
   SCAVENGER_UPGRADE_COST_GROWTH: 1.8,
   SCAVENGER_COLOR: '#D9A441',
+
+  // Phase 16: enemy corpses — the active-salvage loop. Every kill drops a corpse worth
+  // metal proportional to the enemy's maxHealth (same enemy.maxHealth basis GOLD_PER_-
+  // ENEMY_HEALTH/DEFENDER_BONUS already use). A corpse decays if no Scavenger's tractor
+  // reaches it in time — positioning matters (a future drone could ferry distant ones
+  // in; unbuilt). Pulled corpses are converted on contact, scaled by the collecting
+  // Scavenger's own metalYieldMult item affix, so scavenger loadout matters here too.
+  CORPSE_METAL_PER_ENEMY_HEALTH: 0.2, // a basic 50-hp enemy -> 10 metal, same scale as the aggro defender bonus
+  CORPSE_DECAY_SECONDS: 6,            // uncollected corpses fade after this
+  CORPSE_TRACTOR_SPEED: 220,          // px/s a corpse is reeled in — > ENEMY_SPEED (100) so it actually catches up
+  CORPSE_COLLECT_DISTANCE: 18,        // reel-in distance at which a corpse converts to metal
+  CORPSE_COLOR: '#9AA6B2',            // dim/desaturated — a spent husk, not a live (red) enemy
+  TRACTOR_BEAM_COLOR: '#D9A441',      // matches SCAVENGER_COLOR — the beam reads as "that scavenger's doing this"
 
   // Phase 11 skeleton: Materials, Crafting & Itemization — "Ultima Online in
   // space." Two deliberately different acquisition shapes for the same item

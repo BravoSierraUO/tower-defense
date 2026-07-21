@@ -360,17 +360,23 @@
       "date": "07-20",
       "cum": 13624,
       "subject": "v2.33 - Phase 15: Enemy-class shapes + a bestiary \"database\" seed, plus a favicon"
+    },
+    {
+      "hash": "4c026bd",
+      "date": "07-20",
+      "cum": 13639,
+      "subject": "v2.34 - Code-quality/perf tightening pass (no behavior change)"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5081,
+      "value": 5083,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3650,
+      "value": 3663,
       "tone": "special"
     },
     {
@@ -385,7 +391,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 27,
+    "activeHours": 27.1,
     "sessionCount": 6,
     "activeDays": 5,
     "sessionGapHours": 5

@@ -62,7 +62,7 @@ describe('Phase 11 fix: buildSpeedMult affix now shortens Command Core room cons
     assert.equal(world.buildSpeedMult(), 1);
 
     world.placeTower(200, 200);
-    world.placeScavenger(400, 400);
+    world.placeScavenger(100, 100);
     assert.equal(world.buildSpeedMult(), 1, 'placed but nothing equipped');
   });
 
@@ -75,7 +75,7 @@ describe('Phase 11 fix: buildSpeedMult affix now shortens Command Core room cons
 
   test('an equipped buildSpeedMult item on a Scavenger is picked up too', () => {
     const { world } = freshGame(100000);
-    const scavenger = world.placeScavenger(400, 400);
+    const scavenger = world.placeScavenger(100, 100);
     scavenger.equippedItem = { affixes: [{ stat: 'buildSpeedMult', value: 0.15 }] };
     assert.equal(world.buildSpeedMult(), 1.15);
   });

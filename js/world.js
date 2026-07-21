@@ -5,6 +5,7 @@ import { Enemy } from './enemy.js';
 import { Base } from './base.js';
 import { Spawner } from './spawner.js';
 import { Profile } from './profile.js';
+import { Corpse } from './corpse.js';
 import { Inventory, rollDroppedOre, affixMultiplier } from './inventory.js';
 
 export class World {
@@ -18,9 +19,11 @@ export class World {
     this.scavengers = []; // Phase 4c: passive metal-mining exterior placeables
     this.enemies = [];
     this.projectiles = [];
+    this.corpses = []; // Phase 16: enemy husks awaiting a Scavenger's tractor beam (updateSalvage)
     this.score = 0;
     this.kills = 0;
     this.towersPlaced = 0;
+    this.scavengersPlaced = 0; // Phase 16: player-placed only (starter excluded) — drives the tutorial mission
     this.gold = CONFIG.STARTING_GOLD;
     this.metal = CONFIG.STARTING_METAL; // Phase 4c: funds Tower/Scavenger Turret cost, not gold
     this.moduleCharges = 0;     // Phase 8a: wave-clear salvage — spends as a free module install
@@ -306,6 +309,9 @@ export class World {
         }
         this.spawner.waveValueKilled += enemy.maxHealth; // Phase 8a: raw value, feeds finalizeWave()'s chest-tier %
         this.rollKillDrops(); // Phase 11 skeleton: tower-defensish material path
+        // Phase 16: drop a salvageable corpse where it fell — a Scavenger's tractor
+        // reels it in for metal (updateSalvage), or it decays if none reaches it.
+        this.corpses.push(new Corpse(enemy.x, enemy.y, Math.round(enemy.maxHealth * CONFIG.CORPSE_METAL_PER_ENEMY_HEALTH)));
       }
     }
     // Frame order is spawning -> combat (resolveBaseHits/resolveTurretHits) -> here. An
@@ -314,6 +320,41 @@ export class World {
     // sees it, so base/turret damage would never actually apply. Keep it one extra frame
     // until hasHitTarget flips.
     this.enemies = this.enemies.filter(e => !e.isDead() && !(e.reachedTarget && e.hasHitTarget));
+  }
+
+  // Phase 16: the Scavenger's *active* income. Each corpse decays on its own clock and,
+  // if the nearest Scavenger whose tractorRadius covers it isn't null, gets reeled toward
+  // that Scavenger; on contact it converts to metal (scaled by that Scavenger's own
+  // metalYieldMult item affix, same affix its idle mining already honors). A corpse no
+  // Scavenger can reach just decays and is dropped — coverage/positioning is the whole
+  // point of the long radius. Runs after updateEnemies(), so this frame's fresh kills are
+  // already in this.corpses.
+  updateSalvage(dt) {
+    for (const corpse of this.corpses) {
+      corpse.update(dt);
+
+      let puller = null;
+      let pullerDist = Infinity;
+      for (const s of this.scavengers) {
+        const d = Math.hypot(s.x - corpse.x, s.y - corpse.y);
+        if (d <= s.tractorRadius && d < pullerDist) { puller = s; pullerDist = d; }
+      }
+      corpse.pulledBy = puller;
+      if (!puller) continue;
+
+      // Reel in by up to CORPSE_TRACTOR_SPEED*dt; once the step covers the gap down to
+      // collect range (or it was already there), bank it as metal — never overshoot the
+      // scavenger on a big dt.
+      const step = CONFIG.CORPSE_TRACTOR_SPEED * dt;
+      if (step >= pullerDist - CONFIG.CORPSE_COLLECT_DISTANCE) {
+        this.addMetal(corpse.metalValue * affixMultiplier(puller.equippedItem, 'metalYieldMult'));
+        corpse.collected = true;
+      } else {
+        corpse.x += ((puller.x - corpse.x) / pullerDist) * step;
+        corpse.y += ((puller.y - corpse.y) / pullerDist) * step;
+      }
+    }
+    this.corpses = this.corpses.filter(c => !c.collected && !c.isExpired());
   }
 
   // Phase 6: ticks every ability's cooldown down, independent of whether commsAccess
@@ -394,14 +435,30 @@ export class World {
     return this.towers.some(t => t.x === x && t.y === y) || this.scavengers.some(s => s.x === x && s.y === y);
   }
 
+  // Phase 16: the base "compound" is a square ±BASE_RING_HALF around the base. A point is
+  // inside the ring if it's within that square AND off the base core (SCAVENGER_MIN_BASE_-
+  // DISTANCE, circular); it's out in the tower field if it's beyond the square in x or y.
+  // The two zones are complementary — a cell is one or the other, never both.
+  inBaseRing(x, y) {
+    const dx = Math.abs(x - this.base.x);
+    const dy = Math.abs(y - this.base.y);
+    const dist = Math.hypot(x - this.base.x, y - this.base.y);
+    return dist >= CONFIG.SCAVENGER_MIN_BASE_DISTANCE && dx <= CONFIG.BASE_RING_HALF && dy <= CONFIG.BASE_RING_HALF;
+  }
+
+  inTowerField(x, y) {
+    const dx = Math.abs(x - this.base.x);
+    const dy = Math.abs(y - this.base.y);
+    return dx > CONFIG.BASE_RING_HALF || dy > CONFIG.BASE_RING_HALF;
+  }
+
   placeTower(x, y, damageType = 'kinetic') {
 	if (this.towers.length >= CONFIG.TOWER_MAX_COUNT) return null;
 
 	const snapped = this.snapToGrid(x, y);
 	if (!this.isInsideWorld(snapped.x, snapped.y)) return null;
 
-	const distToBase = Math.hypot(snapped.x - this.base.x, snapped.y - this.base.y);
-	if (distToBase < CONFIG.TOWER_MIN_BASE_DISTANCE) return null;
+	if (!this.inTowerField(snapped.x, snapped.y)) return null; // Phase 16: towers only outside the ring
 
 	if (this.exteriorOccupiedAt(snapped.x, snapped.y)) return null;
 
@@ -439,14 +496,22 @@ export class World {
     return scavenger;
   }
 
+  // Phase 16: the inverse of placeTower's zone — a Scavenger goes *inside* the base ring
+  // (inBaseRing), never out in the tower field. Its long tractorRadius is what lets it
+  // still salvage kills happening outside the ring, so it doesn't need to be near the
+  // action, just inside the wall. Kept as a named method so renderer.js's ghost can ask
+  // the same question for its validity tint.
+  scavengerPlacementAllowed(x, y) {
+    return this.inBaseRing(x, y);
+  }
+
   placeScavenger(x, y) {
     if (this.scavengers.length >= CONFIG.SCAVENGER_MAX_COUNT) return null;
 
     const snapped = this.snapToGrid(x, y);
     if (!this.isInsideWorld(snapped.x, snapped.y)) return null;
 
-    const distToBase = Math.hypot(snapped.x - this.base.x, snapped.y - this.base.y);
-    if (distToBase < CONFIG.TOWER_MIN_BASE_DISTANCE) return null;
+    if (!this.scavengerPlacementAllowed(snapped.x, snapped.y)) return null;
 
     if (this.exteriorOccupiedAt(snapped.x, snapped.y)) return null;
 
@@ -456,6 +521,7 @@ export class World {
 
     const scavenger = new ScavengerTurret(snapped.x, snapped.y, cost);
     this.scavengers.push(scavenger);
+    this.scavengersPlaced++;
     return scavenger;
   }
 

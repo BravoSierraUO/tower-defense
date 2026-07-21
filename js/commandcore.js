@@ -37,7 +37,9 @@ export class CommandCore {
   placeRoom(type, gx, gy) {
     if (!CONFIG.ROOM_TYPES[type]) return null;
     if (!this.isRoomUnlocked(type)) return null;
-    if (this.isBuilt(type)) return null;
+    // One of each type — unless the type is `stackable` (Reactor), which can be built
+    // as many times as there are free cells and gold to pay for them.
+    if (this.isBuilt(type) && !CONFIG.ROOM_TYPES[type].stackable) return null;
     if (!this.isInsideGrid(gx, gy)) return null;
     if (this.getRoomAt(gx, gy)) return null;
 

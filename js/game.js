@@ -106,7 +106,9 @@ export class Game {
   // never routed through the normal buildRoom/placeTower gold/metal gates.
   placeStarters() {
     this.commandCore.placeStarterRoom('reactor', 0, 0);
-    this.world.placeStarterScavenger(CONFIG.BASE_X + CONFIG.TOWER_MIN_BASE_DISTANCE + CONFIG.GRID_SIZE, CONFIG.BASE_Y);
+    // Phase 16: the starter Scavenger now sits *inside* the base ring (where scavengers
+    // live) rather than out in the tower field — same zone the player will place theirs.
+    this.world.placeStarterScavenger(CONFIG.BASE_X + CONFIG.SCAVENGER_MIN_BASE_DISTANCE + CONFIG.GRID_SIZE, CONFIG.BASE_Y);
   }
 
   // Diff-watch markers for the profile-event observer in update() — reset
@@ -157,7 +159,9 @@ export class Game {
   // view has used since Phase 4b.
   selectRoomType(type) {
     if (!type || !this.commandCore.isRoomUnlocked(type)) return;
-    this.selectedRoomType = this.commandCore.isBuilt(type) ? null : type;
+    // A stackable type (Reactor) stays armable even once one exists — you can place more.
+    const stackable = !!CONFIG.ROOM_TYPES[type]?.stackable;
+    this.selectedRoomType = (this.commandCore.isBuilt(type) && !stackable) ? null : type;
   }
 
   // Phase 9b: click-to-open radial context menu, replacing the old always-on
@@ -214,11 +218,12 @@ export class Game {
     const roomFlyout = Object.keys(CONFIG.ROOM_TYPES).map((type, i) => {
       const def = CONFIG.ROOM_TYPES[type];
       const unlocked = this.commandCore.isRoomUnlocked(type);
-      const built = this.commandCore.isBuilt(type);
+      // A stackable type (Reactor) is never "already built"-locked — you can keep adding.
+      const builtLock = this.commandCore.isBuilt(type) && !def.stackable;
       const cost = this.commandCore.buildCost(type);
       const afford = this.world.gold >= cost;
       let reason = null;
-      if (built) {
+      if (builtLock) {
         reason = `${def.label} already built — click it on the grid to upgrade instead`;
       } else if (!unlocked) {
         const techNode = CONFIG.TECH_TREE.find(n => n.unlocksRoom === type);
@@ -231,8 +236,8 @@ export class Game {
         digit: keyOrder[i],
         label: def.label,
         color: def.color,
-        cost: built ? null : `${cost}g`,
-        locked: !unlocked || built || !afford,
+        cost: builtLock ? null : `${cost}g`,
+        locked: !unlocked || builtLock || !afford,
         reason
       };
     });
@@ -353,7 +358,7 @@ export class Game {
           // now that the B hotkey is gone, this (plus the avatar menu) is the way
           // in. Wins over anything armed; nothing else meaningful happens from a
           // click on the base tile, and towers/scavengers can never occupy this
-          // spot anyway (TOWER_MIN_BASE_DISTANCE keeps them off it).
+          // spot anyway (the base ring keeps towers/scavengers off it).
           this.view = 'core';
           this.selectedRoomType = null;
         } else if (existingTower) {
@@ -371,11 +376,16 @@ export class Game {
         } else if (this.fieldBuildType === 'scavenger') {
           this.selectedScavenger = this.world.placeScavenger(worldPos.x, worldPos.y);
           this.selectedTower = null;
-          Sound.play(this.selectedScavenger ? 'build' : 'nope');
+          // Phase 16 UX: a successful drop disarms the cursor (place one, then you're back
+          // to neutral) instead of staying armed for repeat placement — re-arm to place
+          // another. A failed drop keeps it armed so you can just click a legal spot.
+          if (this.selectedScavenger) { Sound.play('build'); this.fieldBuildType = null; }
+          else Sound.play('nope');
         } else if (CONFIG.DAMAGE_TYPES[this.fieldBuildType]) {
           this.selectedTower = this.world.placeTower(worldPos.x, worldPos.y, this.fieldBuildType);
           this.selectedScavenger = null;
-          Sound.play(this.selectedTower ? 'build' : 'nope');
+          if (this.selectedTower) { Sound.play('build'); this.fieldBuildType = null; }
+          else Sound.play('nope');
         } else {
           // Nothing armed and nothing to interact with — pop the radial menu
           // open right here instead of the old default-to-Tower placement.
@@ -430,6 +440,7 @@ export class Game {
       this.world.updateSpawning(dt);
       updateCombat(this.world, dt);
       this.world.updateEnemies(dt);
+      this.world.updateSalvage(dt); // Phase 16: after updateEnemies, so this frame's corpses are already dropped
       this.world.updateAbilities(dt);
       this.commandCore.update(dt);
       this.world.updatePassiveIncome(dt, this.profile.level());
@@ -441,6 +452,7 @@ export class Game {
       // watchProfileEvents() above already uses for other run events.
       for (const m of this.missions.update({
         towersPlaced: this.world.towersPlaced,
+        scavengersPlaced: this.world.scavengersPlaced,
         waveNumber: this.world.spawner.waveNumber,
         roomsBuilt: this.commandCore.rooms.length,
         view: this.view
@@ -492,7 +504,7 @@ export class Game {
 
   render() {
     if (this.view === 'field') {
-      this.renderer.draw(this.world, this.camera, this.fieldBuildType, this.input.mouse, this.ui.settings.showGrid);
+      this.renderer.draw(this.world, this.camera, this.fieldBuildType, this.input.mouse, this.ui.settings.showGrid, this.selectedTower, this.selectedScavenger);
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType, this.input.mouse);
     }

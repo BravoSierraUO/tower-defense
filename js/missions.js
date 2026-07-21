@@ -14,7 +14,12 @@ export const MISSIONS = [
   // first action is "click empty space" rather than a specific persistent button.
   // Phase 7a: the flyout no longer has a single "Tower" leaf — it's 3 typed
   // attackers (Railgun/Laser/Missile) plus Scavenger — hint updated to match.
-  { id: 'place-tower', text: 'Place a Tower', hint: 'Click anywhere on the field to open the build menu, then pick Railgun, Laser, or Missile.', target: '#game', check: s => s.towersPlaced >= 1, reward: { metal: 10 } },
+  { id: 'place-tower', text: 'Place a Tower', hint: 'Click anywhere in the field (outside the base ring) to open the build menu, then pick Railgun, Laser, or Missile. Towers kill enemies — and every kill drops a metal corpse for a Scavenger to salvage.', target: '#game', check: s => s.towersPlaced >= 1, reward: { metal: 10 } },
+  // Phase 16: the scavenger step, taught right after towers so the kill -> corpse ->
+  // salvage loop lands as one idea. `scavengersPlaced` is player-placed only (the free
+  // starter is excluded, so this never auto-completes at run start). Larger reach than a
+  // tower, but locked inside the base ring — tuck it near where your towers are killing.
+  { id: 'place-scavenger', text: 'Place a Scavenger Turret', hint: 'From the build menu pick Scavenger, then place it inside the base ring. It has a much larger reach — its tractor beam reels in enemy corpses out in the field and turns them into metal.', target: '#game', check: s => s.scavengersPlaced >= 1, reward: { metal: 10 } },
   { id: 'trigger-wave', text: 'Trigger a Wave', hint: 'Open the Wave Menu and start Wave 1 once your defenses are ready.', target: '#trigger-wave-btn', check: s => s.waveNumber >= 1, reward: { gold: 15 } },
   // Phase 8g: the B hotkey is gone (collided with WASD panning) — clicking the
   // base itself (or the avatar menu's Command Core item) opens it now, so the

@@ -177,11 +177,30 @@ html,body{
 }
 
 .hud-brownout{
-    font-size:13px;
+    font-size:12px;
     font-weight:700;
-    letter-spacing:.5px;
+    letter-spacing:.3px;
     color:#FF7070;
+    max-width:230px;
+    line-height:1.25;
 }
+
+/* Reactor load gauge (POWER stat) --------------------------------------- */
+.hud-value-sm{ font-size:19px; }
+
+#ui-power{ color:#F3C969; }            /* reactor amber while supply covers demand */
+.hud-power-gauge{
+    width:60px;
+    height:5px;
+    margin-top:6px;
+}
+#ui-power-fill{
+    background:linear-gradient(90deg,#C9932F,#F3C969);   /* amber, matching the Reactor */
+    width:100%;
+}
+/* Brownout: reactors don't cover demand — value + gauge go red together. */
+#ui-power-stat.short #ui-power{ color:#FF7070; }
+#ui-power-stat.short #ui-power-fill{ background:linear-gradient(90deg,#B83A3A,#FF7A7A); }
 
 .hud-center{
     width:420px;

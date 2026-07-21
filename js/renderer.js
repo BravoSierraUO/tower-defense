@@ -164,18 +164,32 @@ export class Renderer {
     const r = base.radius * camera.zoom;
     const healthPct = base.health / base.maxHealth;
 
-    ctx.fillStyle = CONFIG.BG_COLOR;
-    ctx.strokeStyle = healthPct > 0.3 ? CONFIG.BASE_COLOR : CONFIG.BASE_DAMAGE_COLOR;
-    ctx.lineWidth = 3 * camera.zoom;
+    // Phase 16.x: the base reads as a hollow ring (matching the station/compound-ring
+    // language) with its health shown as an arc sweeping the ring from the top, plus a
+    // small core dot so it still reads as a station rather than an empty hole.
+    const healthColor = healthPct > 0.3 ? CONFIG.BASE_COLOR : CONFIG.BASE_DAMAGE_COLOR;
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 4 * camera.zoom;
+
+    ctx.globalAlpha = 0.22; // faint full ring (the track behind the health arc)
+    ctx.strokeStyle = CONFIG.BASE_COLOR;
     ctx.beginPath();
     ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-    ctx.fill();
     ctx.stroke();
 
+    ctx.globalAlpha = 1; // health arc, clockwise from the top
+    ctx.strokeStyle = healthColor;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, r * 0.55 * healthPct, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, r, -Math.PI / 2, -Math.PI / 2 + healthPct * Math.PI * 2);
+    ctx.stroke();
+
+    ctx.globalAlpha = 0.9; // core dot
     ctx.fillStyle = CONFIG.BASE_COLOR;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r * 0.2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
 
     this.drawStationRings(p, r, camera, world.profile.stationTier());
   }
@@ -381,33 +395,128 @@ export class Renderer {
   // build bar as the visible reminder of what a click will place. Screen-space
   // already (this.input.mouse is never world-transformed), so no
   // camera.screenToWorld round trip needed.
-  drawFieldGhost(camera, fieldBuildType, mouse) {
+  // Phase 16: the base "no-tower ring" — towers must be placed outside it, Scavengers
+  // inside it. A faint dashed boundary so the two placement zones read at a glance;
+  // brightened while a build type is armed (that's when the boundary actually matters).
+  drawPlacementRing(world, camera, fieldBuildType) {
+    const ctx = this.ctx;
+    const H = CONFIG.BASE_RING_HALF;
+    // Phase 16: the compound is a square ±BASE_RING_HALF — draw it from its two opposite
+    // world-space corners so camera pan/zoom are handled by worldToScreen.
+    const a = camera.worldToScreen(world.base.x - H, world.base.y - H);
+    const b = camera.worldToScreen(world.base.x + H, world.base.y + H);
+    ctx.save();
+    ctx.strokeStyle = CONFIG.SCAVENGER_COLOR;
+    ctx.globalAlpha = fieldBuildType ? 0.55 : 0.22;
+    ctx.lineWidth = 2.5 * camera.zoom;
+    ctx.setLineDash([7 * camera.zoom, 7 * camera.zoom]);
+    ctx.strokeRect(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+    ctx.restore();
+  }
+
+  // Phase 16: the "damage zone" ring — a placed Tower's fire range or a Scavenger's
+  // tractor reach, drawn faint around the currently selected unit (the one you just
+  // placed or clicked), so its coverage is visible after the build cursor clears.
+  drawSelectionRanges(world, camera, selectedTower, selectedScavenger) {
+    const ctx = this.ctx;
+    const ring = (x, y, radius, color) => {
+      const p = camera.worldToScreen(x, y);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.3;
+      ctx.lineWidth = 1.5 * camera.zoom;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius * camera.zoom, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    };
+    if (selectedTower && world.towers.includes(selectedTower)) {
+      ring(selectedTower.x, selectedTower.y, selectedTower.effectiveRange(),
+        CONFIG.DAMAGE_TYPES[selectedTower.damageType]?.color ?? CONFIG.TOWER_COLOR);
+    }
+    if (selectedScavenger && world.scavengers.includes(selectedScavenger)) {
+      ring(selectedScavenger.x, selectedScavenger.y, selectedScavenger.tractorRadius, CONFIG.TRACTOR_BEAM_COLOR);
+    }
+  }
+
+  // Phase 16: enemy corpses and the tractor beam reeling them in. A corpse being pulled
+  // (corpse.pulledBy set by World.updateSalvage) draws a beam back to its Scavenger;
+  // one just decaying draws dimmer the closer it is to fading out.
+  drawCorpses(world, camera) {
+    const ctx = this.ctx;
+    const r = CONFIG.ENEMY_RADIUS * 0.6 * camera.zoom;
+    for (const corpse of world.corpses) {
+      const p = camera.worldToScreen(corpse.x, corpse.y);
+      if (corpse.pulledBy) {
+        const s = camera.worldToScreen(corpse.pulledBy.x, corpse.pulledBy.y);
+        ctx.save();
+        ctx.strokeStyle = CONFIG.TRACTOR_BEAM_COLOR;
+        ctx.globalAlpha = 0.5;
+        ctx.lineWidth = 2 * camera.zoom;
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.globalAlpha = corpse.pulledBy ? 0.9 : Math.max(0.25, corpse.life / CONFIG.CORPSE_DECAY_SECONDS);
+      ctx.fillStyle = CONFIG.CORPSE_COLOR;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  drawFieldGhost(world, camera, fieldBuildType, mouse) {
     if (!fieldBuildType || !mouse) return;
     const ctx = this.ctx;
     const isScavenger = fieldBuildType === 'scavenger';
     const r = CONFIG.TOWER_RADIUS * camera.zoom * (isScavenger ? 0.8 : 1);
+
+    // Phase 16: is this spot a legal drop for what's armed? Scavengers only inside the
+    // ring, towers only outside it — tint the ghost red where it can't go.
+    const wp = camera.screenToWorld(mouse.x, mouse.y);
+    const valid = isScavenger
+      ? world.scavengerPlacementAllowed(wp.x, wp.y)
+      : world.inTowerField(wp.x, wp.y);
+
     ctx.save();
+    // Phase 16: preview the unit's zone-of-effect at the cursor before you commit — a
+    // Scavenger's (large) tractor reach, or a Tower's fire range. Tier-1 values.
+    const previewRadius = isScavenger ? CONFIG.SCAVENGER_TIERS[0].tractorRadius : CONFIG.TOWER_RANGE;
+    ctx.strokeStyle = isScavenger ? CONFIG.TRACTOR_BEAM_COLOR : (CONFIG.DAMAGE_TYPES[fieldBuildType]?.color ?? CONFIG.TOWER_COLOR);
+    ctx.globalAlpha = 0.25;
+    ctx.lineWidth = 1 * camera.zoom;
+    ctx.beginPath();
+    ctx.arc(mouse.x, mouse.y, previewRadius * camera.zoom, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.globalAlpha = 0.45;
     // Phase 7a: fieldBuildType is now a damageType key ('kinetic'/'plasma'/
     // 'energy') for the 3 typed attackers, or 'scavenger' — ghost color
-    // matches whichever's armed.
-    ctx.fillStyle = isScavenger ? CONFIG.SCAVENGER_COLOR : (CONFIG.DAMAGE_TYPES[fieldBuildType]?.color ?? CONFIG.TOWER_COLOR);
+    // matches whichever's armed. Phase 16: red when the drop is illegal here.
+    ctx.fillStyle = !valid ? CONFIG.BASE_DAMAGE_COLOR
+      : (isScavenger ? CONFIG.SCAVENGER_COLOR : (CONFIG.DAMAGE_TYPES[fieldBuildType]?.color ?? CONFIG.TOWER_COLOR));
     ctx.beginPath();
     ctx.arc(mouse.x, mouse.y, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
-  draw(world, camera, fieldBuildType, mouse, showGrid) {
+  draw(world, camera, fieldBuildType, mouse, showGrid, selectedTower, selectedScavenger) {
     this.clear();
     drawStarfield(this.ctx, camera);
     if (showGrid) drawGrid(this.ctx, camera);
+    this.drawPlacementRing(world, camera, fieldBuildType);
+    this.drawSelectionRanges(world, camera, selectedTower, selectedScavenger);
     this.drawBase(world, camera);
     this.drawTowers(world, camera);
     this.drawScavengers(world, camera);
     this.drawProjectiles(world, camera);
+    this.drawCorpses(world, camera);
     this.drawEnemies(world, camera);
-    this.drawFieldGhost(camera, fieldBuildType, mouse);
+    this.drawFieldGhost(world, camera, fieldBuildType, mouse);
     // future layers: terrain, effects
   }
 }

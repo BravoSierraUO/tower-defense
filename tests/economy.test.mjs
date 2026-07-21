@@ -4,7 +4,11 @@ import { CONFIG } from '../js/config.js';
 import { Enemy } from '../js/enemy.js';
 import { freshGame, finishBuild } from './helpers.mjs';
 
-const AWAY_FROM_BASE = 200; // > TOWER_MIN_BASE_DISTANCE, inside world bounds
+const AWAY_FROM_BASE = 200; // snaps to cell-center 220 — out past the base ring, the tower field
+// Phase 16: scavengers live *inside* the square base ring (±BASE_RING_HALF), so their test
+// coords have to snap to a cell within it (and off the base core). Two distinct in-ring cells.
+const SCAV_SPOT = 100;  // (100,100) -> dist ~141, inside the ring
+const SCAV_SPOT2 = 60;  // (60,60)   -> dist ~85, a second distinct ring cell
 
 describe('World: tower economy', () => {
   test('placeTower charges exactly towerCost() (metal) and refuses when metal is short', () => {
@@ -319,10 +323,10 @@ describe('World: tower upgrades (Phase 4b)', () => {
 describe('World: Scavenger Turret economy (Phase 4c)', () => {
   test('placeScavenger charges exactly scavengerCost() (metal) and refuses when metal is short', () => {
     const { world } = freshGame(CONFIG.SCAVENGER_COST - 1);
-    assert.equal(world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE), null, 'refused: not enough metal');
+    assert.equal(world.placeScavenger(SCAV_SPOT, SCAV_SPOT), null, 'refused: not enough metal');
 
     world.metal = CONFIG.SCAVENGER_COST;
-    const scavenger = world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    const scavenger = world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
     assert.ok(scavenger, 'placement succeeds with exact metal');
     assert.equal(world.metal, 0);
     assert.equal(scavenger.cost, CONFIG.SCAVENGER_COST);
@@ -330,15 +334,15 @@ describe('World: Scavenger Turret economy (Phase 4c)', () => {
 
   test('sellScavengerAt refunds TOWER_SELL_REFUND_PCT of what was actually paid', () => {
     const { world } = freshGame(CONFIG.SCAVENGER_COST);
-    world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
-    assert.equal(world.sellScavengerAt(AWAY_FROM_BASE, AWAY_FROM_BASE), true);
+    world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
+    assert.equal(world.sellScavengerAt(SCAV_SPOT, SCAV_SPOT), true);
     assert.equal(world.metal, Math.round(CONFIG.SCAVENGER_COST * CONFIG.TOWER_SELL_REFUND_PCT));
     assert.equal(world.scavengers.length, 0);
   });
 
   test('upgradeScavenger charges metal, raises metalPerCycle, and refuses past the max tier', () => {
     const { world } = freshGame(100000);
-    const scavenger = world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    const scavenger = world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
     const baseOutput = scavenger.metalPerCycle;
     while (scavenger.canUpgrade()) {
       const cost = world.scavengerUpgradeCost(scavenger);
@@ -350,13 +354,16 @@ describe('World: Scavenger Turret economy (Phase 4c)', () => {
     assert.equal(world.upgradeScavenger(scavenger), false, 'refused: already at max tier');
   });
 
-  test('Tower and Scavenger Turret share the exterior grid — neither can occupy the other\'s cell', () => {
+  test('Phase 16: Tower and Scavenger occupy disjoint zones — neither can take the other\'s cell', () => {
     const { world } = freshGame(100000);
+    // A scavenger can't drop out in the tower field (outside the ring)...
     world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
-    assert.equal(world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE), null, 'refused: cell has a tower');
-
-    world.placeScavenger(AWAY_FROM_BASE + 200, AWAY_FROM_BASE);
-    assert.equal(world.placeTower(AWAY_FROM_BASE + 200, AWAY_FROM_BASE), null, 'refused: cell has a scavenger');
+    assert.equal(world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE), null, 'refused: out in the tower field, past the ring');
+    // ...and a tower can't drop inside the base ring where scavengers go.
+    world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
+    assert.equal(world.placeTower(SCAV_SPOT, SCAV_SPOT), null, 'refused: inside the base ring');
+    // exteriorOccupiedAt still blocks a same-type stack on an occupied ring cell.
+    assert.equal(world.placeScavenger(SCAV_SPOT, SCAV_SPOT), null, 'refused: cell already has a scavenger');
   });
 });
 
@@ -368,16 +375,16 @@ describe('World: Mine room and the AI Cycle Budget scheduler (Phase 4c)', () => 
 
   test('BASE_CYCLES_PER_MIN gives a lone Scavenger Turret nonzero output with zero AI Core built', () => {
     const { world } = freshGame(CONFIG.SCAVENGER_COST);
-    world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
     assert.ok(world.metalPerSecond() > 0, 'the always-on cycle floor should feed a lone producer');
   });
 
   test('more active producers dilutes each one\'s share (fixed cycle budget, split evenly)', () => {
     const { world } = freshGame(100000);
-    world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
     const oneProducerTotal = world.metalPerSecond(); // one producer -> total IS its share
 
-    world.placeScavenger(AWAY_FROM_BASE + 200, AWAY_FROM_BASE);
+    world.placeScavenger(SCAV_SPOT2, SCAV_SPOT2);
     const twoProducerTotal = world.metalPerSecond();
     const twoProducerShare = twoProducerTotal / 2; // same-tier scavengers split the budget evenly
 
@@ -397,7 +404,7 @@ describe('World: Mine room and the AI Cycle Budget scheduler (Phase 4c)', () => 
 
   test('AI Core cyclesPerMin raises cyclesPerSecond() and therefore metalPerSecond()', () => {
     const { world } = freshGame(100000);
-    world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
     const baseRate = world.metalPerSecond();
 
     const aiCore = world.buildRoom('aiCore', 1, 0);

@@ -170,7 +170,7 @@ describe('balance: Phase 4b costs never get cheaper the more you buy', () => {
 describe('balance: Phase 4c metal economy stays structurally sane', () => {
   test('World.scavengerUpgradeCost() strictly increases with tier', () => {
     const { world } = freshGame(100000);
-    const scavenger = world.placeScavenger(200, 200);
+    const scavenger = world.placeScavenger(100, 100); // Phase 16: inside the base ring
     let prevCost = -Infinity;
     while (scavenger.canUpgrade()) {
       const cost = world.scavengerUpgradeCost(scavenger);
@@ -183,7 +183,7 @@ describe('balance: Phase 4c metal economy stays structurally sane', () => {
   test('metalPerSecond() is never negative at any producer count or Command Core investment', () => {
     const { world } = freshGame(100000);
     assert.ok(world.metalPerSecond() >= 0, 'no producers');
-    for (let i = 0; i < 5; i++) world.placeScavenger(200 + i * 60, 200);
+    for (const [sx, sy] of [[60,60],[100,60],[140,60],[60,-60],[100,-60]]) world.placeScavenger(sx, sy); // Phase 16: 5 distinct in-ring cells
     assert.ok(world.metalPerSecond() >= 0, 'several scavengers');
     const mine = world.buildRoom('mine', 0, 0);
     finishBuild(mine);

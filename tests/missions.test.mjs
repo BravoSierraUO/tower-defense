@@ -11,15 +11,15 @@ describe('MissionTracker (Phase 8b)', () => {
 
   test('a satisfied check completes that mission and advances current() to the next one', () => {
     const t = new MissionTracker();
-    t.update({ towersPlaced: 1, waveNumber: 0, roomsBuilt: 1, view: 'field' });
+    t.update({ towersPlaced: 1, scavengersPlaced: 0, waveNumber: 0, roomsBuilt: 1, view: 'field' });
     assert.equal(t.completed.has(MISSIONS[0].id), true);
     assert.equal(t.current().id, MISSIONS[1].id);
   });
 
   test('stays completed even if the underlying state later regresses (sticky, like achievements)', () => {
     const t = new MissionTracker();
-    t.update({ towersPlaced: 1, waveNumber: 0, roomsBuilt: 1, view: 'field' });
-    t.update({ towersPlaced: 0, waveNumber: 0, roomsBuilt: 1, view: 'field' }); // e.g. the tower got sold
+    t.update({ towersPlaced: 1, scavengersPlaced: 0, waveNumber: 0, roomsBuilt: 1, view: 'field' });
+    t.update({ towersPlaced: 0, scavengersPlaced: 0, waveNumber: 0, roomsBuilt: 1, view: 'field' }); // e.g. the tower got sold
     assert.equal(t.completed.has(MISSIONS[0].id), true, 'still counts once earned');
     assert.equal(t.current().id, MISSIONS[1].id);
   });
@@ -33,7 +33,7 @@ describe('MissionTracker (Phase 8b)', () => {
 
   test('isDone() flips true once every mission is satisfied in one pass', () => {
     const t = new MissionTracker();
-    t.update({ towersPlaced: 1, waveNumber: 1, roomsBuilt: 2, view: 'core' });
+    t.update({ towersPlaced: 1, scavengersPlaced: 1, waveNumber: 1, roomsBuilt: 2, view: 'core' });
     assert.equal(t.isDone(), true);
     assert.equal(t.current(), null);
   });
@@ -42,28 +42,28 @@ describe('MissionTracker (Phase 8b)', () => {
     const t = new MissionTracker();
     // Only the LAST mission's condition is true — checks are independent (no prereq chain),
     // so it completes on its own, but current() should still surface mission #1 as next-up.
-    t.update({ towersPlaced: 0, waveNumber: 0, roomsBuilt: 2, view: 'field' });
-    assert.equal(t.completed.has(MISSIONS[3].id), true);
+    t.update({ towersPlaced: 0, scavengersPlaced: 0, waveNumber: 0, roomsBuilt: 2, view: 'field' });
+    assert.equal(t.completed.has(MISSIONS[4].id), true); // build-room (roomsBuilt>=2), the last in the chain
     assert.equal(t.completed.has(MISSIONS[0].id), false);
     assert.equal(t.current().id, MISSIONS[0].id);
   });
 
   test('update() returns exactly the missions that newly completed this call, empty otherwise', () => {
     const t = new MissionTracker();
-    const first = t.update({ towersPlaced: 1, waveNumber: 0, roomsBuilt: 1, view: 'field' });
+    const first = t.update({ towersPlaced: 1, scavengersPlaced: 0, waveNumber: 0, roomsBuilt: 1, view: 'field' });
     assert.deepEqual(first.map(m => m.id), [MISSIONS[0].id]);
 
-    const second = t.update({ towersPlaced: 1, waveNumber: 0, roomsBuilt: 1, view: 'field' }); // nothing new
+    const second = t.update({ towersPlaced: 1, scavengersPlaced: 0, waveNumber: 0, roomsBuilt: 1, view: 'field' }); // nothing new
     assert.deepEqual(second, []);
   });
 
   test('track() overrides current() to the picked mission, but only while it stays unmet', () => {
     const t = new MissionTracker();
-    t.track(MISSIONS[2].id);
-    assert.equal(t.current().id, MISSIONS[2].id, 'tracked pick wins over the earliest-unmet default');
+    t.track(MISSIONS[3].id); // open-core
+    assert.equal(t.current().id, MISSIONS[3].id, 'tracked pick wins over the earliest-unmet default');
 
-    t.update({ towersPlaced: 0, waveNumber: 0, roomsBuilt: 0, view: 'core' }); // completes MISSIONS[2] (open-core)
-    assert.equal(t.completed.has(MISSIONS[2].id), true);
+    t.update({ towersPlaced: 0, scavengersPlaced: 0, waveNumber: 0, roomsBuilt: 0, view: 'core' }); // completes MISSIONS[3] (open-core)
+    assert.equal(t.completed.has(MISSIONS[3].id), true);
     assert.equal(t.current().id, MISSIONS[0].id, 'falls back to earliest-unmet once the tracked one completes');
   });
 

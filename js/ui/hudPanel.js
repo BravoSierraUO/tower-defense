@@ -17,6 +17,9 @@ export class HudPanel {
     this.productionPartsEl = document.getElementById('ui-production-parts');
     this.comboEl = document.getElementById('ui-combo');
     this.brownoutEl = document.getElementById('ui-brownout');
+    this.powerStat = document.getElementById('ui-power-stat');
+    this.powerEl = document.getElementById('ui-power');
+    this.powerFill = document.getElementById('ui-power-fill');
     this.waveEl = document.getElementById('ui-wave');
     this.tierEl = document.getElementById('ui-tier');
     this.levelEl = document.getElementById('ui-level');
@@ -109,7 +112,20 @@ export class HudPanel {
     this.productionPartsEl.textContent = world.productionParts;
     this.comboEl.hidden = world.comboStreak < 2;
     if (!this.comboEl.hidden) this.comboEl.textContent = `🔥 x${world.comboStreak}`;
-    this.brownoutEl.hidden = world.powerFactor() >= 1;
+
+    // Reactor load gauge: supply vs. demand, always visible so a brownout is never a
+    // mystery. Gauge fills to the % of demand the Reactors cover; both the readout and
+    // the fill go red on a shortfall, and the brownout line spells out the actual fix.
+    const supply = world.powerSupply();
+    const demand = world.powerConsumption();
+    const factor = world.powerFactor();
+    this.powerEl.textContent = `${supply} / ${demand}`;
+    const coverage = demand > 0 ? Math.min(1, supply / demand) : 1;
+    this.powerFill.style.width = `${coverage * 100}%`;
+    const short = factor < 1;
+    this.powerStat.classList.toggle('short', short);
+    this.brownoutEl.hidden = !short;
+    if (short) this.brownoutEl.textContent = `⚡ BROWNOUT — towers firing at ${Math.round(factor * 100)}%. Build or upgrade Reactors.`;
     // maxWave (real progress), not waveNumber (whichever wave is currently active) —
     // this stat should hold steady at your true frontier even mid-replay.
     this.waveEl.textContent = `${spawner.maxWave} / ${CONFIG.MAX_WAVES}`;

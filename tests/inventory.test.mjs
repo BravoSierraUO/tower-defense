@@ -125,7 +125,7 @@ describe('World: Phase 11 skeleton wiring', () => {
     const { world } = freshGame(100000);
     assert.equal(world.orePerSecond('fancyMetal'), 0);
 
-    world.placeScavenger(200, 200);
+    world.placeScavenger(100, 100); // Phase 16: inside the base ring
     const scavenger = world.scavengers[0];
     const expected = world.cyclesPerSecond() * scavenger.metalPerCycle
       * (CONFIG.ORE_LOOT_TABLE[0].fancyMetal / 100);
@@ -134,7 +134,7 @@ describe('World: Phase 11 skeleton wiring', () => {
 
   test('updateOreAccrual(dt) feeds Inventory.ore, never World.metal', () => {
     const { world } = freshGame(100000);
-    world.placeScavenger(200, 200);
+    world.placeScavenger(100, 100); // Phase 16: inside the base ring
     const metalBefore = world.metal;
     world.updateOreAccrual(10);
     assert.equal(world.metal, metalBefore, 'metal is untouched by ore accrual');

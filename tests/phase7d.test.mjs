@@ -41,7 +41,7 @@ describe('Phase 7d: Tower/Scavenger health', () => {
 
   test('a ScavengerTurret has its own (more fragile) health curve', () => {
     const { world } = freshGame(100000);
-    const scavenger = world.placeScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
+    const scavenger = world.placeScavenger(100, 100); // Phase 16: scavengers live inside the base ring now
     assert.equal(scavenger.maxHealth, CONFIG.SCAVENGER_HEALTH * CONFIG.SCAVENGER_TIERS[0].healthMult);
     assert.ok(CONFIG.SCAVENGER_HEALTH < CONFIG.TOWER_HEALTH, 'sanity: Scavenger is the more fragile placeable tier-for-tier');
 
@@ -60,7 +60,7 @@ describe('Phase 7d: World.pickAggroTarget()', () => {
 
   test('over many rolls, aggroes roughly ENEMY_AGGRO_CHANCE of the time and always picks the nearer candidate', () => {
     const { world } = freshGame(100000);
-    const near = world.placeTower(100, 0);
+    const near = world.placeTower(200, 0);
     const far = world.placeTower(900, 0);
     const spawnX = 0, spawnY = 0; // near is closer to the spawn point than far
 
@@ -78,7 +78,7 @@ describe('Phase 7d: World.pickAggroTarget()', () => {
 
   test('spawnEnemy() wires an aggro hit into a real Enemy: attackTarget set, targetX/Y at the turret', () => {
     const { world } = freshGame(100000);
-    const tower = world.placeTower(150, 0);
+    const tower = world.placeTower(200, 0);
 
     let aggroedEnemy = null;
     for (let i = 0; i < 500 && !aggroedEnemy; i++) {

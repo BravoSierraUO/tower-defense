@@ -17,7 +17,7 @@
     --info:#9aa8e8; --idle:#8a93a3; --special:#c79ae8;
     --phase-1:#4A90E2; --phase-2a:#2ECC71; --phase-2b:#F39C12; --phase-3:#9B59B6;
     --phase-4:#E74C3C; --phase-4b:#C0392B; --phase-4c:#C97B3C; --phase-4d:#D9A441; --phase-5:#8B9AB2;
-    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393; --phase-9:#5BC8FF; --phase-11:#E0A458; --phase-13:#FF8FA3; --phase-15:#6BCB77;
+    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393; --phase-9:#5BC8FF; --phase-11:#E0A458; --phase-13:#FF8FA3; --phase-15:#6BCB77; --phase-16:#4FD1C5; --phase-17:#F3C969;
     --body:Inter,system-ui,"Segoe UI",sans-serif;
     --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
     color-scheme:dark;
@@ -891,7 +891,28 @@ const ROADMAP = [
       'renderer.js\'s drawEnemies() gained fillEnemyShape() (circle/square/triangle) driven by an ENEMY_CLASSES lookup, falling back to \'circle\' for an unclassed enemy — the existing armorType ring and aggro ring needed zero changes.'
     ],
     depends:null,
-    note:'pickTier()\'s new return shape broke two of its own existing tests in spawner.test.mjs, which had relied on reference equality against CONFIG.DIFFICULTY_TIERS.easy/.hard — fixed by asserting on .id instead, arguably a more meaningful check than an incidental object reference anyway. Favicon is a simple inline data:image/svg+xml turret glyph (triangle barrel + circular mount) — no new binary asset, keeps the zero-dependency rule intact. 5 new tests (tests/enemyClasses.test.mjs). Full node --test pass: 217/217 (up from 212). Verified statically only, continuing the standing no-Playwright-on-this-project rule — could not screenshot-verify the shapes actually render correctly on canvas in this environment (no chromium binary here), flagged rather than claimed.' }
+    note:'pickTier()\'s new return shape broke two of its own existing tests in spawner.test.mjs, which had relied on reference equality against CONFIG.DIFFICULTY_TIERS.easy/.hard — fixed by asserting on .id instead, arguably a more meaningful check than an incidental object reference anyway. Favicon is a simple inline data:image/svg+xml turret glyph (triangle barrel + circular mount) — no new binary asset, keeps the zero-dependency rule intact. 5 new tests (tests/enemyClasses.test.mjs). Full node --test pass: 217/217 (up from 212). Verified statically only, continuing the standing no-Playwright-on-this-project rule — could not screenshot-verify the shapes actually render correctly on canvas in this environment (no chromium binary here), flagged rather than claimed.' },
+  { id:'p16', num:'16', title:'Corpse Salvage & the Base Ring — Scavenger\'s Active Role', status:'DONE', color:'--phase-16',
+    desc:'The user\'s design: a "ring" around the base where towers can\'t go but Scavenger Turrets can, and a real active job for the Scavenger during a fight — a tractor beam that reels in the corpses your towers leave behind and turns them into metal, on top of its existing idle mining. Kills used to just vanish once looted; now every kill drops a salvageable husk.',
+    items:[
+      'Two placement zones: TOWER_MIN_BASE_DISTANCE raised 60→160 and re-cast as the base "no-tower ring". Towers place at/beyond it (outside); Scavengers place inside it (SCAVENGER_MIN_BASE_DISTANCE..ring). The zones are disjoint — renderer.js draws the dashed boundary, and the field ghost tints red where a drop is illegal.',
+      'New js/corpse.js: a killed enemy drops a Corpse worth metal ∝ its maxHealth (CORPSE_METAL_PER_ENEMY_HEALTH, same maxHealth basis the gold/defender payouts use). It decays after CORPSE_DECAY_SECONDS if nothing salvages it — positioning matters (a future ferry-drone could reach the far ones; unbuilt).',
+      'World.updateSalvage(): each corpse is reeled toward the nearest Scavenger whose tractorRadius covers it (much larger than TOWER_RANGE — a Scavenger is walled inside the ring, so it needs long reach), converted to metal on contact, scaled by that Scavenger\'s own metalYieldMult item affix. tractorRadius grows per tier, so upgrading = more coverage.',
+      'Tutorial extended: a new "Place a Scavenger Turret" mission slots in right after "Place a Tower" (which now teaches kills→corpses), so the kill→corpse→salvage loop lands as one idea. scavengersPlaced counts player placements only — the free starter never auto-completes it.'
+    ],
+    depends:'Phase 4c (Scavenger Turret + metal), Phase 8b (mission system)',
+    note:'Filed as its own phase, distinct from Phase 7b\'s 9-class satellite lift (this is scavenger economy, not attacker classes). Follow-up UX (v2.34-v2.37, from live play-testing): the base ring became a square ±5-cell compound; the field ghost previews range/reach and a placed unit keeps a coverage ring; placing disarms the build cursor; and a reactor "load gauge" in the HUD makes brownouts self-explaining (see Phase 17). Idle income is unchanged — the existing AI-Cycle-Budget mining stays the "idle value"; the tractor beam is a new active layer on top. Corpse-decay was the user\'s explicit call ("decay — but one day a drone could bring it closer"), as was reusing existing mining. Deferred by the user, noted not built: enemies dropping different metal types by class, and salvage-boost items ("robot bee antenna" to keep farming a chosen wave). First-pass numbers (ring 160, corpse 0.2×maxHealth, tractor 300/380/470, decay 6s), not tuned — same ship-velocity-over-polish convention this codebase already carries. Zoning legitimately moved several existing test placements (towers/scavengers had shared coords that now fall in different zones) — updated to the new zones, a more accurate check than the old shared-grid assumption. 12 new tests (tests/salvage.test.mjs); full node --test pass: 225/225 (up from 217). Verified statically only (node --check on every touched file, full suite) — no chromium here to screenshot the ring/beam render, flagged not claimed.' },
+  { id:'p17', num:'17', title:'Base Building — Additive Reactors, Power Visibility & Adjacency', status:'BACKLOG · PARTIAL', color:'--phase-17',
+    desc:'From live play-testing: the player browned out with no idea why (nothing on any screen named the cause), and couldn\'t build a second Reactor — nonsensical for an idle/additive game. First slice shipped; the deeper base-building layer is filed here.',
+    items:[
+      'Reactor power visibility — DONE (v2.37). A HUD "load gauge" shows Reactor supply vs. tower demand as a bar (amber when covered, red when short), always visible, and the BROWNOUT line now names the consequence + fix ("towers firing at N% — build or upgrade Reactors") instead of a bare red word. The Core panel already had the raw numbers; this surfaces them where you actually feel the problem.',
+      'Additive Reactors — DONE (v2.37). A `stackable` room-type flag (Reactor only) lifts the one-of-each cap; totals() already sums room stats, so N reactors give N× power. placeRoom/selectRoomType/the radial Build flyout all respect the flag.',
+      'Adjacency bonus — BACKLOG. "Reactors near each other should work better" — a neighbour-aware multiplier on power, so base layout becomes a real optimization, not just a count.',
+      'Moving rooms — BACKLOG. Relocate a placed room (needed once adjacency + Lab-crafted efficiency modules make layout matter).',
+      'Lab efficiency modules — BACKLOG. Lab produces craftable modules (e.g. reactor efficiency) — ties the existing research/Factory crafting economy into the power layer.'
+    ],
+    depends:'Phase 3 (room framework), Phase 4d (energy system)',
+    note:'Surfaced 2026-07-21 mid-playtest. The visibility + additive-reactor slice shipped immediately (it was an active blocker — browning out with no way to add supply); adjacency/moving/modules are the base-building pass the user explicitly deferred ("we will get to it in base building"). Full node --test pass: 226/226. Verified statically only — no chromium here to screenshot the new HUD gauge or the ring-shaped base, flagged rather than claimed.' }
 ];
 
 function renderRoadmap(){
@@ -1229,6 +1250,39 @@ const FLOWS = [
       { from: 'approach', to: 'shotdown', dashed: true, tone: 'special' },
       { from: 'approach', to: 'contact', tone: 'sig' },
       { from: 'contact', to: 'destroyed', tone: 'alert' }
+    ]
+  },
+  {
+    id: 'salvage', group: 'Defending',
+    title: 'A corpse gets salvaged',
+    summary: "Phase 16: the Scavenger Turret's active role. Every kill drops a metal corpse where it fell; a Scavenger — locked inside the base ring, so towers can't have that space — reels in any corpse its (long) tractorRadius covers and banks it as metal, on top of its unchanged idle mining. A corpse no Scavenger reaches just decays. See A tower fires for where the kill comes from.",
+    lanes: ['Kill', 'Corpse', 'Tractor', 'Reel-in', 'Metal'],
+    nodes: [
+      { id: 'kill', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'Enemy dies\nupdateEnemies() kill block',
+        code_ref: 'world.js (updateEnemies)',
+        detail: "Reuses the exact kill block that already pays gold, rolls loot drops, and tallies wave value — one more line pushes a Corpse, so there's no second 'is it dead?' pass." },
+      { id: 'drop', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'Corpse dropped where it fell\nvalue = round(maxHealth × 0.2)',
+        code_ref: 'corpse.js · world.js (updateEnemies)',
+        detail: "CORPSE_METAL_PER_ENEMY_HEALTH is 0.2 — the same enemy.maxHealth basis GOLD_PER_ENEMY_HEALTH and the Phase 7d defender bonus already use, so a tougher enemy is worth more salvage, no separate stat invented. A husk renders dim/desaturated (CORPSE_COLOR), not enemy-red." },
+      { id: 'covered', col: 2, row: 0.5, kind: 'decision', tone: 'warn', label: 'a Scavenger\'s tractorRadius\ncovers it?',
+        code_ref: 'world.js (updateSalvage)',
+        detail: "The nearest Scavenger whose tractorRadius reaches the corpse claims it. That radius (300/380/470 by tier) is deliberately far larger than TOWER_RANGE (150): a Scavenger is walled inside the base ring, so it has to reach out into the tower field to be useful. Upgrading a Scavenger grows its coverage, not its per-corpse value." },
+      { id: 'decay', col: 2, row: 1.75, kind: 'terminal', tone: 'idle', label: 'Out of reach → decays\nfades after CORPSE_DECAY_SECONDS (6s)',
+        code_ref: 'corpse.js (update / isExpired)',
+        detail: "Uncollected corpses fade and are filtered out — coverage/positioning is the whole point of the long radius, not free money that piles up. A future ferry-drone to reach distant husks was the user's idea, noted and not built." },
+      { id: 'reel', col: 3, row: 0.5, kind: 'process', tone: 'sig', label: 'Reeled toward the Scavenger\nCORPSE_TRACTOR_SPEED (220) per frame',
+        code_ref: 'world.js (updateSalvage) · renderer.js (drawCorpses)',
+        detail: "Pulled at 220 px/s (> ENEMY_SPEED 100, so it actually closes the gap), never overshooting the Scavenger on a big frame. A tractor beam (TRACTOR_BEAM_COLOR, the Scavenger's own hue) draws from turret to husk so the salvage reads on screen." },
+      { id: 'convert', col: 4, row: 0.5, kind: 'process', tone: 'special', label: 'On contact → metal\n× that Scavenger\'s metalYieldMult affix',
+        code_ref: 'world.js (updateSalvage)',
+        detail: "Banked via addMetal (clamped to the metal cap like any other gain), scaled by the collecting Scavenger's own equipped-item metalYieldMult affix — the same affix its idle mining already honors, so a salvage-tuned loadout helps both jobs. Idle mining itself is untouched: this is a new active layer, not a replacement." }
+    ],
+    edges: [
+      { from: 'kill', to: 'drop' },
+      { from: 'drop', to: 'covered' },
+      { from: 'covered', to: 'decay', dashed: true, tone: 'idle' },
+      { from: 'covered', to: 'reel', tone: 'ok' },
+      { from: 'reel', to: 'convert', tone: 'special' }
     ]
   },
   {
@@ -2425,17 +2479,23 @@ const STATS = {
       "date": "07-20",
       "cum": 13624,
       "subject": "v2.33 - Phase 15: Enemy-class shapes + a bestiary \"database\" seed, plus a favicon"
+    },
+    {
+      "hash": "4c026bd",
+      "date": "07-20",
+      "cum": 13639,
+      "subject": "v2.34 - Code-quality/perf tightening pass (no behavior change)"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5081,
+      "value": 5083,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3650,
+      "value": 3663,
       "tone": "special"
     },
     {
@@ -2450,7 +2510,7 @@ const STATS = {
     }
   ],
   "velocity": {
-    "activeHours": 27,
+    "activeHours": 27.1,
     "sessionCount": 6,
     "activeDays": 5,
     "sessionGapHours": 5

@@ -20,14 +20,26 @@ describe('CommandCore: room placement & tiers', () => {
     }
   });
 
-  test('placeRoom refuses a locked type, an already-built type, and out-of-grid/occupied cells', () => {
+  test('placeRoom refuses a locked type, a duplicate non-stackable type, and out-of-grid/occupied cells', () => {
     const core = new CommandCore();
     assert.equal(core.placeRoom('factory', 0, 0), null, 'locked type refused');
     const reactor = core.placeRoom('reactor', 0, 0);
     assert.ok(reactor, 'first reactor placement succeeds');
-    assert.equal(core.placeRoom('reactor', 1, 1), null, 'second reactor refused (one-of-each-type)');
     assert.equal(core.placeRoom('aiCore', 0, 0), null, 'occupied cell refused');
+    const aiCore = core.placeRoom('aiCore', 2, 0);
+    assert.ok(aiCore, 'a different (unlocked) type places fine');
+    assert.equal(core.placeRoom('aiCore', 3, 0), null, 'second AI Core refused — non-stackable, one of each');
     assert.equal(core.placeRoom('aiCore', CONFIG.CORE_GRID_SIZE, 0), null, 'out-of-grid refused');
+  });
+
+  test('a stackable type (Reactor) can be built more than once, and each adds its power', () => {
+    const core = new CommandCore();
+    core.placeStarterRoom('reactor', 0, 0); // active immediately
+    const onePower = core.totals().power;
+    assert.ok(onePower > 0);
+    const second = core.placeStarterRoom('reactor', 1, 0);
+    assert.ok(second, 'a second reactor is allowed');
+    assert.equal(core.totals().power, onePower * 2, 'two same-tier reactors supply double the power');
   });
 
   test('a newly placed room is inactive until its build timer elapses, and contributes 0 to totals()', () => {
