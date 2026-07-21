@@ -192,24 +192,35 @@
   @media(max-width:800px){.pgrid{grid-template-columns:1fr}}
   .glass-demo{
     backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-    background:linear-gradient(rgba(32,42,58,.82),rgba(14,18,28,.90));
-    border:1px solid rgba(255,255,255,.06);
+    background:linear-gradient(180deg,var(--glass-1),var(--glass-2));
+    border:1px solid var(--line-soft);
     box-shadow:inset 0 1px rgba(255,255,255,.05),0 18px 40px rgba(0,0,0,.35);
-    border-radius:18px;padding:18px;color:#F2F8FF;font-family:var(--body)}
+    border-radius:18px;padding:18px;color:var(--ink);font-family:var(--body)}
   .glass-demo .gl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
-  .glass-demo .gv{font-size:22px;font-weight:700;color:#7ED9FF;margin-top:4px}
+  .glass-demo .gv{font-size:22px;font-weight:700;color:var(--accent);margin-top:4px}
   .swatchrow{display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap}
-  .swatch{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.12);flex-shrink:0}
+  .swatch{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);flex-shrink:0}
   .usedin{font-size:11px;color:var(--ink-3);line-height:1.6;margin-top:10px}
-  .demo-btn{font:600 12px/1 var(--body);color:#F2F8FF;background:rgba(255,255,255,.04);
-    border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;
+  .demo-btn{font:600 12px/1 var(--body);color:var(--ink);background:var(--line-soft);
+    border:1px solid var(--line);border-radius:8px;padding:8px 12px;
     cursor:default;transition:.15s;display:inline-block;margin:4px 6px 0 0}
-  .demo-btn.hover{border-color:#7ED9FF;background:rgba(126,217,255,.08)}
+  .demo-btn.hover{border-color:var(--accent);background:rgba(126,217,255,.08)}
   .demo-btn.disabled{opacity:.35}
   .demo-btn.maxed{color:#6EF2A3;border-color:rgba(110,242,163,.4)}
   .found-note{background:rgba(126,217,255,.06);border:1px solid var(--line);border-left:2px solid var(--sig);
     border-radius:8px;padding:12px 14px;margin-top:22px;font-size:12.5px;color:var(--ink-2);line-height:1.6}
   .found-note b{color:var(--ink)}
+  .bar-demo-track{height:14px;overflow:hidden;border-radius:999px;background:var(--panel-2);margin-top:14px}
+  .bar-demo-fill{height:100%;background:linear-gradient(90deg,#48B8FF,#82E2FF);border-radius:999px;box-shadow:0 0 18px rgba(130,226,255,.35)}
+  .ring-demo{width:64px;height:64px;border-radius:50%;margin-top:14px;position:relative;
+    background:conic-gradient(var(--accent) 0 68%,var(--panel-2) 0)}
+  .ring-demo::before{content:'';position:absolute;inset:7px;border-radius:50%;background:var(--panel)}
+  .ring-demo span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font:700 13px/1 var(--mono);color:var(--ink)}
+  .spinner-demo{width:32px;height:32px;margin-top:14px;border-radius:50%;
+    border:3px solid var(--panel-2);border-top-color:var(--accent);
+    animation:spin-demo .9s linear infinite}
+  @keyframes spin-demo{to{transform:rotate(360deg)}}
 
   /* ── roadmap ──────────────────────────────────────── */
   .rmap-grid{display:flex;flex-direction:column;gap:18px;margin-top:30px}
@@ -238,6 +249,7 @@
   @media(prefers-reduced-motion:reduce){
     .ring{animation:none}
     .epath{animation:none !important}
+    .spinner-demo{animation:none}
     html{scroll-behavior:auto}
   }
 </style>
@@ -393,6 +405,43 @@
         middle — so the profile, About, and Settings panels each get two fixed exits regardless of
         scroll position, from two existing button looks instead of a new one.</div>
     </div>
+    <div class="vcard">
+      <h4>One bar pattern</h4>
+      <div class="bar-demo-track"><div class="bar-demo-fill" style="width:72%"></div></div>
+      <div class="usedin">The base health bar and the profile XP bar
+        (<code style="font-family:var(--mono)">.ui-bar-track</code>/<code style="font-family:var(--mono)">.ui-bar-fill</code>,
+        <code style="font-family:var(--mono)">game.html</code>) share one track+fill shape —
+        same height, radius, gradient, and glow, values reproduced above. The ability-cooldown
+        overlay (<code style="font-family:var(--mono)">.ability-cooldown-fill</code>,
+        js/ui/hudPanel.js) is the same idea turned 90° — it drains by height from the bottom of
+        a square icon button instead of by width from the left of a strip, since it's overlaid
+        on a button rather than a lane.</div>
+    </div>
+    <div class="vcard">
+      <h4>One tab pattern</h4>
+      <nav class="tabs" style="margin-top:0"><span class="tab">Overview</span><span class="tab on">Upgrades</span><span class="tab">Lifetime</span></nav>
+      <div class="usedin">The exact <code style="font-family:var(--mono)">.tab</code>/<code style="font-family:var(--mono)">.tab.on</code>
+        CSS already driving this page's own WhatHow group/flow navigation above — not a new
+        component. Proposed (not yet built) as the shape for a real tabbed Tower/Scavenger
+        Upgrade Modal; see the found-note below and the Roadmap.</div>
+    </div>
+    <div class="vcard">
+      <h4>Proposed: one ring pattern</h4>
+      <div class="ring-demo"><span>68%</span></div>
+      <div class="usedin">Not built anywhere in the game yet — a pure <code style="font-family:var(--mono)">conic-gradient</code>
+        ring, zero new dependencies, same one-accent-color rule as every other primitive here.
+        Proposed home: an idle hero-mission countdown (Roadmap's Phase 8h) — the circular
+        counterpart to the bar pattern above, for a timer instead of a strip.</div>
+    </div>
+    <div class="vcard">
+      <h4>Proposed: one spinner pattern</h4>
+      <div class="spinner-demo"></div>
+      <div class="usedin">Also not built yet — a rotating-border spinner for a real async wait
+        with no known duration (a future save-sync moment, say), distinct from the ring above
+        (which always has a known percentage). Respects
+        <code style="font-family:var(--mono)">prefers-reduced-motion</code>, same as this page's
+        own WhatHow diagram edges.</div>
+    </div>
   </div>
 
   <div class="found-note">
@@ -410,6 +459,37 @@
     <i>no</i> close affordance at all — only the same hotkey (P/O/S) that opened them, which isn't
     discoverable, so a player could get stuck looking at one. Fixed by adding the pattern above as
     a shared primitive rather than patching the one panel that got reported.
+  </div>
+
+  <div class="found-note">
+    <b>Found auditing 3 independently AI-generated Turret Upgrade Modal mockups (2026-07-20,
+    kept at the repo root — gemini_modal.html/gpt_modal.html/grok_modal.html, not merged into
+    the app):</b> given the same brief and no sight of each other's work, all three converged on
+    the same underlying structure — a tabbed panel (Overview / Upgrades / Lifetime stats) — while
+    disagreeing on literally everything else (palette, type, even whether the tabs actually
+    switched). That's the one primitive above worth taking seriously, and it's not new — this
+    page's own <code style="font-family:var(--mono)">.tab</code> already proves it out. Rejected
+    outright: one mockup pulled in Tailwind + Font Awesome + a Google Font over a CDN, breaking
+    this whole project's zero-dependency rule for a modal; all three mockups' absolute stat
+    numbers (DPS/HP/sell-value) were invented independently, mutually inconsistent, and unrelated
+    to this game's real <code style="font-family:var(--mono)">CONFIG</code> balance — not
+    portable as-is, same standing caveat as the difficulty-curve note below. No game code changed
+    this pass on purpose; see the Roadmap for what a real build would need.
+  </div>
+
+  <div class="found-note">
+    <b>Found via a user screenshot in light mode (2026-07-20):</b> the "One button-state pattern"
+    and "Shared glass recipe" cards above were themselves the exact drift this section exists to
+    catch — <code style="font-family:var(--mono)">.glass-demo</code>/<code style="font-family:var(--mono)">.demo-btn</code>
+    hardcoded dark-mode hex values (<code style="font-family:var(--mono)">#F2F8FF</code>,
+    <code style="font-family:var(--mono)">#7ED9FF</code>, raw white-based
+    <code style="font-family:var(--mono)">rgba()</code> borders) instead of
+    <code style="font-family:var(--mono)">var(--ink)</code>/<code style="font-family:var(--mono)">var(--accent)</code>/<code style="font-family:var(--mono)">var(--line)</code>
+    like every other card on this page — in light mode that's near-white text on a near-white
+    card, invisible. Fixed by switching both to the same CSS vars the rest of the page already
+    uses. Left alone on purpose: the "Maxed" state's green and the tab/found-note accent tints —
+    semantic status colors and colored (not white-based) translucent tints read fine unchanged in
+    either theme, same standing convention noted in changelog.md.
   </div>
 </section>
 
@@ -779,7 +859,26 @@ const ROADMAP = [
       'New sound-toggle row in the Settings panel, right next to the existing theme toggle — same markup/localStorage shape, zero new CSS.'
     ],
     depends:null,
-    note:'The user pointed out RMUV (kept in this repo\'s RMUV/ folder — also where achievements.js/profile.js were originally lifted from) already had a mature sound engine sitting unused, and asked for the "easy lift." 9 new tests (tests/sound.test.mjs, adapted from RMUV\'s own mock-AudioContext technique): registry shape, name coverage for everything actually wired, node-safety, the mute facade\'s gating, and the mock-ctx render path for both a tone step and a noise step. Full node --test pass: 212/212 (up from 203). Verified statically only, continuing the standing no-Playwright-on-this-project rule — the actual audio isn\'t machine-verifiable here any more than RMUV\'s own is.' }
+    note:'The user pointed out RMUV (kept in this repo\'s RMUV/ folder — also where achievements.js/profile.js were originally lifted from) already had a mature sound engine sitting unused, and asked for the "easy lift." 9 new tests (tests/sound.test.mjs, adapted from RMUV\'s own mock-AudioContext technique): registry shape, name coverage for everything actually wired, node-safety, the mute facade\'s gating, and the mock-ctx render path for both a tone step and a noise step. Full node --test pass: 212/212 (up from 203). Verified statically only, continuing the standing no-Playwright-on-this-project rule — the actual audio isn\'t machine-verifiable here any more than RMUV\'s own is.' },
+  { id:'p14', num:'14', title:'Frontend Overhaul, Round 1 — Turret Modal Ideas (3 AI Mockups Audited)', status:'BACKLOG · NOT SCOPED', color:'--phase-5',
+    desc:'The user had three outside AI assistants (Gemini/GPT/Grok) each independently mock up a Tower/Scavenger Upgrade Modal redesign with no sight of each other\'s work, then asked for an honest audit before any real UI changes — what\'s worth lifting, what to ignore. No game code touched this pass on purpose.',
+    items:[
+      'Converged on independently, by all three: a tabbed panel (Overview / Upgrades / Lifetime stats). The strongest, most portable idea of the three — see the Primitives section above, which already proves the .tab CSS out on this very page (it\'s not new, just never pointed at a game panel).',
+      'Worth a real design pass later, not built here: a targeting-priority selector (First/Last/Strongest/Weakest — Tower always targets nearest today, no player choice exists); branching multi-choice upgrades instead of today\'s one linear path; per-turret lifetime stats (kills/damage dealt by that specific turret, distinct from the profile-wide lifetime counters profile.js already tracks).',
+      'Rejected outright: gpt_modal.html pulls in Tailwind + Font Awesome + a Google Font over a CDN — breaks the zero-dependency rule this whole project is built on. All three mockups\' absolute stat numbers (DPS/HP/sell-value) were invented independently, don\'t agree with each other, and don\'t relate to this game\'s actual CONFIG balance — not portable as-is, same standing caveat as the difficulty-curve note below.',
+      'grok_modal.html\'s tab markup was never actually wired to switch content on click — a reminder that "looks like a pattern" and "is a working pattern" aren\'t the same claim.'
+    ],
+    depends:null,
+    note:'User\'s own framing: overhaul the front end, but "we don\'t even need to do the game yet" — this pass is the audit and the Primitives-section write-up only (the two new found-notes above), deliberately not a real UpgradeModal rework. Also filed separately this same session, deliberately not fixed: the avatar/Player-Menu-Shell modal opening behind the Core Panel in build mode — github.com/BravoSierraUO/tower-defense/issues/2, tracked, not fixed, on the user\'s own request.' },
+  { id:'p8h', num:'8h', title:'Idle Hero Missions — Seasonal Send-Out Loop', status:'BACKLOG · NOT SCOPED', color:'--phase-8',
+    desc:'User\'s own reframing (2026-07-20): the game\'s real core is an idle game with a tower-defense gate on top of it, not the other way around. The concrete idea: send a recruited hero out on a timed idle mission — queue it, wait, collect a reward — possibly on a seasonal rotation. Distinct from Phase 8d\'s Patrols (an active, on-screen combat mode); "send hero away and wait" and "hero fights on-screen" are different mechanics that could both exist.',
+    items:[
+      'Hard dependency: Phase 8c\'s persistent, leveling hero has to exist before there\'s anything to send anywhere.',
+      'Unscoped on purpose, none decided yet: mission length/reward curve, whether multiple heroes can be away at once, and what "seasonal" actually means here — a rotating mission pool, time-limited rewards, or both.',
+      'Presentation now has two real candidates, both new Primitives cards above: the ring pattern (a known-percentage countdown) or the bar pattern (track+fill, same as the base/XP bars) — spinner ruled out for this specific use since it\'s for unknown-duration waits, and a mission countdown always has a known end time.'
+    ],
+    depends:'Phase 8c (Hero — Recruitment & Persistent Leveling)',
+    note:'Raised in the same conversation as the frontend-mockup audit (Phase 14) and the light-mode CSS fix above — the user\'s framing was explicit: the Primitives page is "lacking" for an idle-game core, not just the tower-defense gate on top of it. No numbers, no UI, no code this pass — filed at the same "real idea, zero design yet" stage Phase 6\'s orbital abilities and Phase 8d\'s patrols both started at. A third "spinny wheel" reading — a literal prize/gacha spin wheel for a seasonal reward moment — was raised and explicitly deferred further out than this whole card by the user themself ("it would be a later update... maybe"); noted here rather than given its own card since nothing about it is decided, not even whether it happens.' }
 ];
 
 function renderRoadmap(){
@@ -2271,33 +2370,39 @@ const STATS = {
       "date": "07-20",
       "cum": 12998,
       "subject": "Reframe hero as simulation engine; scrub sister-project name"
+    },
+    {
+      "hash": "4c273fa",
+      "date": "07-20",
+      "cum": 13357,
+      "subject": "v2.31 - Phase 13: Sound Design — synthesized SFX engine & event wiring"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4848,
+      "value": 5035,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3434,
+      "value": 3484,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2258,
+      "value": 2266,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 2458,
+      "value": 2572,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 26.1,
-    "sessionCount": 5,
+    "activeHours": 26.4,
+    "sessionCount": 6,
     "activeDays": 5,
     "sessionGapHours": 5
   }

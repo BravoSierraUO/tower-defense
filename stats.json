@@ -342,33 +342,39 @@
       "date": "07-20",
       "cum": 12998,
       "subject": "Reframe hero as simulation engine; scrub sister-project name"
+    },
+    {
+      "hash": "4c273fa",
+      "date": "07-20",
+      "cum": 13357,
+      "subject": "v2.31 - Phase 13: Sound Design — synthesized SFX engine & event wiring"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 4848,
+      "value": 5035,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3434,
+      "value": 3484,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2258,
+      "value": 2266,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 2458,
+      "value": 2572,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 26.1,
-    "sessionCount": 5,
+    "activeHours": 26.4,
+    "sessionCount": 6,
     "activeDays": 5,
     "sessionGapHours": 5
   }
