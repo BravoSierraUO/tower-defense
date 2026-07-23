@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-21",
+  "generatedAt": "2026-07-23",
   "growth": [
     {
       "hash": "c488b9d",
@@ -366,32 +366,38 @@
       "date": "07-20",
       "cum": 13639,
       "subject": "v2.34 - Code-quality/perf tightening pass (no behavior change)"
+    },
+    {
+      "hash": "5a8a824",
+      "date": "07-20",
+      "cum": 14135,
+      "subject": "v2.35-v2.37 - Phase 16 (corpse salvage + base ring) & Phase 17 first slice"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5083,
+      "value": 5357,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3663,
+      "value": 3732,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2269,
+      "value": 2298,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 2624,
+      "value": 2748,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 27.1,
+    "activeHours": 28.2,
     "sessionCount": 6,
     "activeDays": 5,
     "sessionGapHours": 5
