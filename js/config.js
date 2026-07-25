@@ -387,25 +387,44 @@ export const CONFIG = {
   // out of it, so this can't regress the existing economy. First-pass
   // numbers throughout, not tuned — same standing caveat every other
   // constant block in this file already carries.
+  // Phase 20: `fancyMetal` is gone. It was a placeholder standing in for "the
+  // mid-tier metals" before they had names — the user's words: "fancy metal was my
+  // previous attempt at describing iron-bronze-steel". Replaced by the real named
+  // set, which is idle-side only: ore is collected while away and refined into
+  // components, and NONE of it is spendable during a TD run (that's scrap — see
+  // docs/economy-redesign.md).
+  //
+  // `metal` stays keyed as-is for now on purpose. It's the bulk-currency roll that
+  // pays World.metal rather than entering Inventory.ore, and it becomes `iron` in
+  // the same commit that splits World.metal into iron (prep) and scrap (run-only) —
+  // renaming it here first would mean touching ~half of the 386 metal references
+  // twice, since many of them are headed for scrap, not iron.
   ORE_TYPES: {
-    metal:      { label: 'Metal',       color: '#8FA6B8' },
-    fancyMetal: { label: 'Fancy Metal', color: '#4CD97B' },
-    platinum:   { label: 'Platinum',    color: '#F3C969' },
-    diamonds:   { label: 'Diamonds',    color: '#8FE3FF' }
+    metal:    { label: 'Metal',    color: '#8FA6B8' },
+    tin:      { label: 'Tin',      color: '#C9D6DF' },
+    bronze:   { label: 'Bronze',   color: '#C98F5B' },
+    steel:    { label: 'Steel',    color: '#7E93A8' },
+    shadow:   { label: 'Shadow',   color: '#6B5B9A' },
+    platinum: { label: 'Platinum', color: '#F3C969' },
+    diamonds: { label: 'Diamonds', color: '#8FE3FF' }
   },
   // Weighted odds a Scavenger's cycle payout rolls, index = tier - 1. Sums to
   // 100 per tier; better tiers shift weight toward the rarer end, same
   // "upgrading makes the good stuff more likely, not just more" feel the
   // rarity-bonus Foundry tiers below go for.
+  // Phase 20: fancyMetal's single 15/20/25 band split across the four named
+  // mid-tier ores, weighted so tin is common and shadow is the scarce one. Still
+  // sums to 100 per tier, and better tiers still shift weight toward the rare end.
+  // First-pass numbers, not tuned — the standing caveat this whole file carries.
   ORE_LOOT_TABLE: [
-    { metal: 80, fancyMetal: 15,   platinum: 4.99, diamonds: 0.01 },
-    { metal: 72, fancyMetal: 20,   platinum: 7.97, diamonds: 0.03 },
-    { metal: 65, fancyMetal: 25,   platinum: 9.95, diamonds: 0.05 }
+    { metal: 80, tin: 9,  bronze: 4,   steel: 1.5, shadow: 0.5, platinum: 4.99, diamonds: 0.01 },
+    { metal: 72, tin: 11, bronze: 5.5, steel: 2.5, shadow: 1,   platinum: 7.97, diamonds: 0.03 },
+    { metal: 65, tin: 13, bronze: 7,   steel: 3.5, shadow: 1.5, platinum: 9.95, diamonds: 0.05 }
   ],
   // Combat's own table — deliberately excludes plain Metal (wreck salvage
   // reads as a distinct, richer reward than background mining, not a copy of
   // it) and is checked once per kill, not blended into the continuous rate above.
-  ENEMY_ORE_DROP_TABLE: { fancyMetal: 70, platinum: 27, diamonds: 3 },
+  ENEMY_ORE_DROP_TABLE: { tin: 34, bronze: 20, steel: 12, shadow: 4, platinum: 27, diamonds: 3 },
   ENEMY_ORE_DROP_CHANCE: 0.12,       // per kill
   ENEMY_COMPONENT_DROP_CHANCE: 0.03, // per kill — skips straight to a rolled component, no recipe cost
 
@@ -413,9 +432,14 @@ export const CONFIG = {
   // materials into components — reuses the one room rather than adding a
   // second (see Factory's own comment above). Every key here is an
   // Inventory.ore/refined field name.
+  // Phase 20: inputs repointed off fancyMetal onto the named ores, chosen so the
+  // recipe reads as the thing it makes rather than arbitrarily: bronze IS an alloy,
+  // tin is the classic wire/solder metal, and the prismatic coil stays on the two
+  // rarest inputs. Same quantities as before — this is a rename with intent, not a
+  // rebalance.
   REFINED_RECIPES: {
-    alloy:         { label: 'Alloy',          fancyMetal: 3 },
-    circuitWire:   { label: 'Circuit Wire',   fancyMetal: 2, platinum: 1 },
+    alloy:         { label: 'Alloy',          bronze: 3 },
+    circuitWire:   { label: 'Circuit Wire',   tin: 2, platinum: 1 },
     prismaticCoil: { label: 'Prismatic Coil', platinum: 2, diamonds: 1 }
   },
   // Every craft (paid, at an active Factory) or drop (free, combat) independently

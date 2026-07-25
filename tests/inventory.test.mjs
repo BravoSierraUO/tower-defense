@@ -21,7 +21,7 @@ describe('inventory.js: weighted rolls', () => {
   test('rollOre(3) turns up every ore type over enough rolls, including the ultra-rare diamonds', () => {
     const seen = new Set();
     for (let i = 0; i < 20000; i++) seen.add(rollOre(3));
-    assert.deepEqual(seen, new Set(['metal', 'fancyMetal', 'platinum', 'diamonds']));
+    assert.deepEqual(seen, new Set(['metal', 'tin', 'bronze', 'steel', 'shadow', 'platinum', 'diamonds']));
   });
 
   test('rollDroppedOre() never returns metal — combat salvage is a distinct table from mining', () => {
@@ -79,12 +79,12 @@ describe('inventory.js: Inventory class', () => {
 
   test('refine() charges exactly the recipe\'s ore cost and refuses (no-op) when short', () => {
     const inv = new Inventory();
-    assert.equal(inv.refine('alloy'), false, 'refused: no fancyMetal at all');
-    assert.deepEqual(inv.ore, { fancyMetal: 0, platinum: 0, diamonds: 0 });
+    assert.equal(inv.refine('alloy'), false, 'refused: no bronze at all');
+    assert.deepEqual(inv.ore, { tin: 0, bronze: 0, steel: 0, shadow: 0, platinum: 0, diamonds: 0 });
 
-    inv.addOre('fancyMetal', 3);
+    inv.addOre('bronze', 3);
     assert.equal(inv.refine('alloy'), true);
-    assert.equal(inv.ore.fancyMetal, 0);
+    assert.equal(inv.ore.bronze, 0);
     assert.equal(inv.refined.alloy, 1);
   });
 
@@ -92,7 +92,7 @@ describe('inventory.js: Inventory class', () => {
     const inv = new Inventory();
     assert.equal(inv.craft('armorPlate'), null, 'refused: no alloy at all');
 
-    inv.addOre('fancyMetal', 9);
+    inv.addOre('bronze', 9);
     inv.refine('alloy');
     inv.refine('alloy');
     inv.refine('alloy');
@@ -108,7 +108,7 @@ describe('inventory.js: Inventory class', () => {
 
   test('two crafts of the same recipe are not guaranteed identical — rarity/affixes roll independently', () => {
     const inv = new Inventory();
-    inv.addOre('fancyMetal', 300); // 60 alloy (3 fancyMetal each) = exactly enough for 20 armorPlate (3 alloy each)
+    inv.addOre('bronze', 300); // 60 alloy (3 bronze each) = exactly enough for 20 armorPlate (3 alloy each)
     for (let i = 0; i < 60; i++) inv.refine('alloy');
     for (let i = 0; i < 20; i++) inv.craft('armorPlate');
     const rarities = new Set(inv.items.map(i => i.rarity));
@@ -123,13 +123,13 @@ describe('inventory.js: Inventory class', () => {
 describe('World: Phase 11 skeleton wiring', () => {
   test('orePerSecond() is zero with no Scavengers, and scales with a placed Scavenger\'s tier odds', () => {
     const { world } = freshGame(100000);
-    assert.equal(world.orePerSecond('fancyMetal'), 0);
+    assert.equal(world.orePerSecond('bronze'), 0);
 
     world.placeScavenger(100, 100); // Phase 16: inside the base ring
     const scavenger = world.scavengers[0];
     const expected = world.cyclesPerSecond() * scavenger.metalPerCycle
-      * (CONFIG.ORE_LOOT_TABLE[0].fancyMetal / 100);
-    assert.ok(Math.abs(world.orePerSecond('fancyMetal') - expected) < 1e-9);
+      * (CONFIG.ORE_LOOT_TABLE[0].bronze / 100);
+    assert.ok(Math.abs(world.orePerSecond('bronze') - expected) < 1e-9);
   });
 
   test('updateOreAccrual(dt) feeds Inventory.ore, never World.metal', () => {
@@ -138,14 +138,14 @@ describe('World: Phase 11 skeleton wiring', () => {
     const metalBefore = world.metal;
     world.updateOreAccrual(10);
     assert.equal(world.metal, metalBefore, 'metal is untouched by ore accrual');
-    assert.ok(world.inventory.ore.fancyMetal > 0, 'fancyMetal accrued over 10 simulated seconds');
+    assert.ok(world.inventory.ore.bronze > 0, 'bronze accrued over 10 simulated seconds');
   });
 
   test('refineMaterial()/craftComponent() refuse without an active Factory, succeed once one is built', () => {
     const { world, commandCore } = freshGame(100000);
-    world.inventory.addOre('fancyMetal', 10);
+    world.inventory.addOre('bronze', 10);
     assert.equal(world.refineMaterial('alloy'), false, 'no Factory built yet');
-    assert.equal(world.inventory.ore.fancyMetal, 10, 'refused refine touches nothing');
+    assert.equal(world.inventory.ore.bronze, 10, 'refused refine touches nothing');
 
     commandCore.research = 1000;
     commandCore.unlockTech('factoryAccess');

@@ -81,15 +81,15 @@ let nextItemId = 1;
 // Torn/Mafia "5 guns, 5 different guns" feel from one recipe.
 export class Inventory {
   constructor() {
-    this.ore = { fancyMetal: 0, platinum: 0, diamonds: 0 };
+    this.ore = { tin: 0, bronze: 0, steel: 0, shadow: 0, platinum: 0, diamonds: 0 };
     this.refined = { alloy: 0, circuitWire: 0, prismaticCoil: 0 };
     this.items = [];
     // Permanent totals, never spent down — same "life stats vs. spendable
     // pool" split profile.js already uses for CP vs. badges. Mined is a
     // continuous accrual sum (fractional); salvaged is a discrete per-kill
     // count. Both are pure stats-screen flex, gate nothing.
-    this.lifetimeOreMined = { fancyMetal: 0, platinum: 0, diamonds: 0 };
-    this.lifetimeOreSalvaged = { fancyMetal: 0, platinum: 0, diamonds: 0 };
+    this.lifetimeOreMined = { tin: 0, bronze: 0, steel: 0, shadow: 0, platinum: 0, diamonds: 0 };
+    this.lifetimeOreSalvaged = { tin: 0, bronze: 0, steel: 0, shadow: 0, platinum: 0, diamonds: 0 };
   }
 
   // Called continuously by World.updateOreAccrual() — 'metal' is never

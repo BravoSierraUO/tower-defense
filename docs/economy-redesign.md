@@ -264,16 +264,9 @@ Needs the user's call. Listed roughly in the order they block work.
    die, or flee/cancel.** See [Section G](#g-the-td-session-answered) — this has
    more consequences than it looks, including one new mechanic and one direct
    conflict with `MAX_WAVES`.
-3. **Name of the third resource**, and what the HUD calls it. This is what
-   unblocks Phase 18b's promoted-stat question, which is where this all started.
-   Also the last thing blocking the currency half of the `addMetal()` split —
-   routing is decided (B1's table), but the destination pool has no name. And it
-   is now bigger than a label: [J3](#j3--three-different-things-would-be-called-metal)
-   found **three distinct things that would all be called "metal"** (the existing
-   currency, `ORE_LOOT_TABLE`'s common-roll key, and the new run-only salvage),
-   plus the design's own "idle gets metal" which actually maps to the rare-ore
-   stream. Cheap to rename now; expensive once the HUD, chest table and upgrade
-   costs all reference them.
+3. ~~**Name of the third resource?**~~ **ANSWERED 2026-07-25 — the naming is
+   closed.** See [Section K](#k-the-resource-model-settled). This also unblocks
+   Phase 18b's promoted-stat question, which is where this whole thing started.
 9. ~~**Does salvage carry into prep?**~~ **RESOLVED 2026-07-25 — neither reading
    was right.** The in-run spend is salvage (temporary ×1.10); the *prep* spend is
    **gold / manufactured parts** and raises the permanent base. So salvage never
@@ -361,6 +354,38 @@ Three ways out, not decided:
 
 This is the one item in Section G that blocks code: whether `finalizeWave()`
 still has a terminal branch changes its shape.
+
+> **Decided 2026-07-25: option 3, with a caveat the user raised themselves.**
+> `MAX_WAVES` stays as a terminal branch (so `finalizeWave()` keeps its shape and
+> the `'won'` state survives) but the number goes high enough to be effectively
+> endless — 999 was the figure, "no one will get there any time soon." Crucially
+> the user framed it as wanting it *"unlimited but not just unlimited —
+> structured."*
+>
+> **That caveat is doing real work, because the scaling is currently unstructured
+> past wave 8.** Measured:
+>
+> | wave | enemies | hardest enemy available |
+> |---|---|---|
+> | 1 | 5 | Scout (healthMult 1) |
+> | 8 | 19 | **Juggernaut (healthMult 3)** |
+> | 20 | 43 | Juggernaut |
+> | 100 | 203 | Juggernaut |
+> | 999 | **2001** | Juggernaut — unchanged since wave 8 |
+>
+> Enemy **count** is linear and unbounded (`WAVE_BASE_ENEMIES + (n-1) *
+> WAVE_ENEMY_GROWTH`), but **difficulty is hard-capped**: `DIFFICULTY_TIERS` has
+> exactly three entries and the last unlocks at wave 8. There are three
+> `ENEMY_CLASSES`, one per tier. So raising the cap to 999 as-is buys 991 waves of
+> the identical fight with more bodies — and at ~50 towers, 2001 enemies is
+> ~100k distance checks per frame, a performance wall before it's a difficulty one.
+>
+> **So `MAX_WAVES` stays at 20 until structured scaling exists.** 999 without it
+> advertises depth the waves don't have, which is worse than 20, not better.
+> Candidates, all partly built: more `DIFFICULTY_TIERS` entries at higher
+> `unlockWave`s; a wave-scaled multiplier stacking on top of the tier one; or new
+> `ENEMY_CLASSES` introduced in bands — which is what Phase 7b's parked 9-class
+> lift was for. Filed as its own item rather than smuggled into the cap change.
 
 ---
 
@@ -559,6 +584,72 @@ Worth noting the cap is softer than it was: Phase 18a's drawer is a scrollable
 list, so displaying 10+ entries no longer depends on digit keys. The limit is now
 only about keyboard shortcuts. Raising it is a deliberate decision with a test to
 update, not a silent break.
+
+---
+
+## K. The resource model (settled)
+
+The naming is decided. This closes F3, which was blocking both the currency split
+and Phase 18b's HUD question.
+
+| resource | scope | source | spent on |
+|---|---|---|---|
+| **gold** | persistent | Command Core economy | rooms — unchanged |
+| **iron** | idle / prep | the common ore roll | **turrets** (today's `world.metal`) |
+| tin · bronze · steel · shadow | idle / prep | ore rolls, weighted by Scavenger tier | refining into components |
+| platinum · diamonds | idle / prep | rare ore rolls | the top-end refined recipes |
+| **scrap** | **run-only** | salvage during a TD run | temporary in-run upgrades (×1.10) |
+
+No resource is called "metal" any more, which was the whole point — J3 found four
+uses across three meanings.
+
+### K1 — Ore → scrap conversion
+
+Ore can be turned into scrap, at per-metal ratios: **1 iron → 1 scrap**, **1
+platinum → 10 scrap**. Rarer metal yields more scrap per unit, so the conversion
+is a real decision rather than a formality (spending platinum on scrap means not
+spending it on a prismatic coil). The intermediate ores sit between those two
+endpoints; exact ratios are a tuning pass, not a design question.
+
+Note the direction: this converts **prep material into run currency**, never the
+reverse. Scrap still cannot become ore, so the run economy still can't feed the
+persistent one — the property the whole two-economy split exists to protect.
+
+### K2 — Built 2026-07-25 (`0.1.67`): the ore taxonomy
+
+`fancyMetal` is gone. It was a placeholder standing in for the mid-tier metals
+before they had names — the user's own words: *"fancy metal was my previous attempt
+at describing iron-bronze-steel."* Replaced by `tin`/`bronze`/`steel`/`shadow`
+alongside the existing `platinum`/`diamonds`.
+
+- `ORE_TYPES` gains four entries; its single 15/20/25 `fancyMetal` band split
+  across them, tin common through shadow scarce. Every tier still sums to exactly
+  100.
+- `REFINED_RECIPES` inputs repointed so a recipe reads as the thing it makes:
+  `alloy ← bronze` (bronze *is* an alloy), `circuitWire ← tin + platinum` (tin
+  being the classic wire/solder metal). Same quantities — a rename with intent, not
+  a rebalance.
+- `ENEMY_ORE_DROP_TABLE` redistributed across the new set, still summing to 100.
+- **7 new guard tests** in `balance.test.mjs`: every loot tier sums to 100, every
+  rollable ore has an `ORE_TYPES` entry with a label and a valid colour, every
+  `ORE_TYPES` entry is reachable from some table (no dead config), recipes only
+  consume keys that exist, and — the one that matters for what's next — `'metal'`
+  is a loot-table roll but is **never** an `Inventory.ore` field.
+
+That last test pins the invariant K3 depends on.
+
+### K3 — Why `world.metal` was NOT renamed to `iron` in the same pass
+
+`metal` appears **386 times** across `js/` and `tests/`, and roughly half of those
+call sites are headed for **scrap**, not iron — every in-run accrual, the wave
+payout, the defender bonus. Renaming them all to `iron` first and then re-splitting
+half of them to `scrap` would touch the same lines twice and double the review
+surface for no benefit.
+
+So `metal` keeps its name until the commit that actually splits it, where each of
+the eight `addMetal()` callers (B1's table) is routed to `iron` or `scrap` exactly
+once. The ore taxonomy above was worth doing separately because it's purely
+idle-side: the split doesn't touch `Inventory.ore` at all.
 
 ---
 

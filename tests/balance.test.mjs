@@ -2,6 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { CONFIG } from '../js/config.js';
 import { CommandCore } from '../js/commandcore.js';
+import { Inventory } from '../js/inventory.js';
 import { freshGame, finishBuild } from './helpers.mjs';
 
 // These aren't "does the code do what it does" tests (that's the other
@@ -270,5 +271,80 @@ describe('balance: Phase 7a Damage Triangle stays a well-formed 3-cycle', () => 
   test('ADVANTAGE_MULT > 1, DISADVANTAGE_MULT is between 0 and 1 (never free/negative damage)', () => {
     assert.ok(CONFIG.DAMAGE_TYPE_ADVANTAGE_MULT > 1);
     assert.ok(CONFIG.DAMAGE_TYPE_DISADVANTAGE_MULT > 0 && CONFIG.DAMAGE_TYPE_DISADVANTAGE_MULT < 1);
+  });
+});
+
+describe('balance: the ore taxonomy stays internally consistent', () => {
+  // Phase 20 replaced the `fancyMetal` placeholder with the real named ore set
+  // (tin/bronze/steel/shadow alongside platinum/diamonds). These are the guards
+  // that make a future ore added or renamed in one place fail loudly instead of
+  // silently — the same class of bug as v1.5's ROOM_TYPES key-order break, where
+  // inserting `mine` left Dock unreachable and nothing caught it.
+
+  test('every ORE_LOOT_TABLE tier sums to exactly 100', () => {
+    CONFIG.ORE_LOOT_TABLE.forEach((tier, i) => {
+      const sum = Object.values(tier).reduce((a, b) => a + b, 0);
+      assert.ok(Math.abs(sum - 100) < 1e-9, `tier ${i + 1} sums to ${sum}, not 100`);
+    });
+  });
+
+  test('ENEMY_ORE_DROP_TABLE sums to 100', () => {
+    const sum = Object.values(CONFIG.ENEMY_ORE_DROP_TABLE).reduce((a, b) => a + b, 0);
+    assert.ok(Math.abs(sum - 100) < 1e-9, `sums to ${sum}, not 100`);
+  });
+
+  test('every ore key in any table has an ORE_TYPES entry with a label and colour', () => {
+    // ORE_TYPES drives the stats-screen odds display; a key present in a loot
+    // table but missing here renders as undefined rather than failing.
+    const keys = new Set();
+    for (const tier of CONFIG.ORE_LOOT_TABLE) Object.keys(tier).forEach(k => keys.add(k));
+    Object.keys(CONFIG.ENEMY_ORE_DROP_TABLE).forEach(k => keys.add(k));
+    for (const key of keys) {
+      const meta = CONFIG.ORE_TYPES[key];
+      assert.ok(meta, `ORE_TYPES is missing '${key}'`);
+      assert.ok(meta.label, `ORE_TYPES.${key} has no label`);
+      assert.ok(/^#[0-9A-Fa-f]{6}$/.test(meta.color), `ORE_TYPES.${key} has no valid colour`);
+    }
+  });
+
+  test('every ORE_TYPES entry is actually reachable from some table', () => {
+    // The reverse direction: a defined ore nothing can ever roll is dead config.
+    const reachable = new Set();
+    for (const tier of CONFIG.ORE_LOOT_TABLE) Object.keys(tier).forEach(k => reachable.add(k));
+    Object.keys(CONFIG.ENEMY_ORE_DROP_TABLE).forEach(k => reachable.add(k));
+    for (const key of Object.keys(CONFIG.ORE_TYPES)) {
+      assert.ok(reachable.has(key), `ORE_TYPES.${key} can never be rolled`);
+    }
+  });
+
+  test('REFINED_RECIPES only consume real ore keys', () => {
+    // Recipe inputs are Inventory.ore field names. A stale input (fancyMetal,
+    // say) makes the recipe permanently unaffordable and silently uncraftable.
+    const oreKeys = new Set(Object.keys(CONFIG.ORE_TYPES));
+    for (const [id, recipe] of Object.entries(CONFIG.REFINED_RECIPES)) {
+      for (const input of Object.keys(recipe)) {
+        if (input === 'label') continue;
+        assert.ok(oreKeys.has(input), `REFINED_RECIPES.${id} consumes unknown ore '${input}'`);
+      }
+    }
+  });
+
+  test('COMPONENT_RECIPES only consume real refined keys', () => {
+    const refinedKeys = new Set(Object.keys(CONFIG.REFINED_RECIPES));
+    for (const [id, recipe] of Object.entries(CONFIG.COMPONENT_RECIPES)) {
+      for (const input of Object.keys(recipe)) {
+        if (input === 'label') continue;
+        assert.ok(refinedKeys.has(input), `COMPONENT_RECIPES.${id} consumes unknown material '${input}'`);
+      }
+    }
+  });
+
+  test("'metal' is a loot-table roll but never an Inventory.ore field", () => {
+    // The distinction Phase 20's spec turns on: the `metal` roll pays the bulk
+    // World.metal currency, it does not enter Inventory.ore. It becomes `iron` in
+    // the commit that splits that currency into iron (prep) and scrap (run-only);
+    // this pins the invariant until then so the two can't quietly merge.
+    assert.ok('metal' in CONFIG.ORE_LOOT_TABLE[0], 'metal is still the common roll');
+    assert.ok(!('metal' in new Inventory().ore), 'metal must not be an ore field');
   });
 });

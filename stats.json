@@ -396,6 +396,12 @@
       "date": "07-25",
       "cum": 18902,
       "subject": "0.1.65 - Phase 20 stage gate (unwired) + docs-stats correction"
+    },
+    {
+      "hash": "bcda5d2",
+      "date": "07-25",
+      "cum": 19058,
+      "subject": "0.1.66 - Phase 20 design pass 2: itemization + the multiplicative stat chain"
     }
   ],
   "categories": [
@@ -406,7 +412,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 6730,
+      "value": 6886,
       "tone": "special"
     },
     {
@@ -421,7 +427,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 29.2,
+    "activeHours": 29.4,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5
