@@ -579,6 +579,16 @@
                 <div id="upgrade-modal-cost-line" class="mission-row-hint"></div>
                 <button id="upgrade-modal-upgrade-btn" class="settings-btn-sm">Upgrade</button>
 
+                <!-- Phase 20: the two per-stat ladders. One row per
+                     CONFIG.UPGRADABLE_STATS, built in js/ui/upgradeModal.js since the
+                     stat list is data-driven. Each row's single button follows the
+                     STAGE — permanent (iron) in prep, temporary (scrap) during a run —
+                     the same "one control, one meaning per stage" shape the bottom
+                     bar's Base slot uses. Towers only; hidden for scavengers, whose
+                     stats are yield/reach rather than damage/fireRate/range. -->
+                <div class="inventory-section-heading" id="upgrade-modal-stats-heading">Stats</div>
+                <div id="upgrade-modal-stats" class="wave-panel-list"></div>
+
                 <div class="inventory-section-heading">Equipped</div>
                 <div id="upgrade-modal-equipped" class="wave-panel-list"></div>
 

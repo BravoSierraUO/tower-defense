@@ -8,7 +8,20 @@ export class Tower {
   constructor(x, y, cost = CONFIG.TOWER_COST, damageType = 'kinetic') {
     this.x = x;
     this.y = y;
-    this.tier = 1; // 1-3, see CONFIG.TOWER_TIERS
+    this.tier = 1; // 1-3, see CONFIG.TOWER_TIERS — the BUNDLED upgrade (all stats + health + power draw)
+    // Phase 20: the two per-stat upgrade ladders (docs/economy-redesign.md §I).
+    // Both are stored as integer COUNTS rather than multipliers: floats drift when
+    // repeatedly multiplied, the iron cost curve wants to scale off the count anyway,
+    // and resetting the run ladder is `= 0` instead of recomputing a product.
+    //
+    //   permUpgrades — bought in PREP with iron. Permanent; survives a run.
+    //   runUpgrades  — bought DURING a run with scrap. Temporary; wiped at run end.
+    //
+    // Both compound multiplicatively at CONFIG.STAT_UPGRADE_MULT per step, so the
+    // user's worked example holds: base 5, one run boost -> 5.5; die; buy a permanent
+    // step so the base reads 6; next run one boost -> 6.6.
+    this.permUpgrades = { damage: 0, fireRate: 0, range: 0 };
+    this.runUpgrades = { damage: 0, fireRate: 0, range: 0 };
     this.cooldown = 0;
     this.cost = cost; // what was actually paid — sell refund is a % of this
     this.damageType = damageType; // 'kinetic' | 'plasma' | 'energy', see CONFIG.DAMAGE_TYPES
@@ -41,18 +54,45 @@ export class Tower {
     return this.health <= 0;
   }
 
+  // Phase 20: the multiplicative chain, in one place.
+  //
+  //   effective = BASE x tierMult x permMult x runMult x itemAffixMult
+  //
+  // `this.damage`/`fireRate`/`range` already carry BASE x tierMult (applyTier above).
+  // The two new factors slot in beside the Phase 11 affix multiplier that was already
+  // here — which is the point: this is one more factor in an existing chain, not a
+  // new mechanism.
+  permMult(stat) {
+    return Math.pow(CONFIG.STAT_UPGRADE_MULT, this.permUpgrades[stat] || 0);
+  }
+
+  runMult(stat) {
+    return Math.pow(CONFIG.STAT_UPGRADE_MULT, this.runUpgrades[stat] || 0);
+  }
+
+  statMult(stat) {
+    return this.permMult(stat) * this.runMult(stat);
+  }
+
+  // The single line that makes the run ladder temporary. Called for every tower by
+  // World.endTdRun() — no snapshot, no restore, nothing to unwind, and therefore no
+  // path by which a scrap-bought boost becomes permanent power.
+  resetRunUpgrades() {
+    for (const stat of Object.keys(this.runUpgrades)) this.runUpgrades[stat] = 0;
+  }
+
   // Base stat * whatever the equipped item's matching affix rolled (1 = no
   // effect, no item equipped or none of its affixes match this stat).
   effectiveRange() {
-    return this.range * affixMultiplier(this.equippedItem, 'rangeMult');
+    return this.range * this.statMult('range') * affixMultiplier(this.equippedItem, 'rangeMult');
   }
 
   effectiveDamage() {
-    return this.damage * affixMultiplier(this.equippedItem, 'damageMult');
+    return this.damage * this.statMult('damage') * affixMultiplier(this.equippedItem, 'damageMult');
   }
 
   effectiveFireRate() {
-    return this.fireRate * affixMultiplier(this.equippedItem, 'fireRateMult');
+    return this.fireRate * this.statMult('fireRate') * affixMultiplier(this.equippedItem, 'fireRateMult');
   }
 
   // Cooldown affixes (CONFIG.AFFIX_POOL's 'cooldown' entry) roll negative

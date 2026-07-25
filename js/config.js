@@ -491,6 +491,26 @@ export const CONFIG = {
   // Only Towers consume power (Scavenger Turret is passive, never fires; Command
   // Core rooms aren't power consumers). A brownout always throttles, never fully
   // stops, a tower — floored the same way Shield/Fortification cap well under 100%.
+  // Phase 20: the two per-stat upgrade ladders (docs/economy-redesign.md §I).
+  // Both step the same multiplier, which is what makes them compose — a permanent
+  // step raises the base a later temporary step multiplies.
+  STAT_UPGRADE_MULT: 1.10,
+  // Which stats either ladder can touch. Deliberately NOT health: health is what the
+  // bundled `tier` ladder raises (and a tier upgrade full-heals), so putting it here
+  // would give two unrelated systems a claim on the same number.
+  UPGRADABLE_STATS: ['damage', 'fireRate', 'range'],
+  // PERMANENT ladder — bought in prep with iron, and escalating, so stacking one stat
+  // forever costs more each time. Growth keeps the curve monotonic, which
+  // balance.test.mjs asserts for every purchase curve in this file.
+  STAT_UPGRADE_IRON_COST_BASE: 30,
+  STAT_UPGRADE_IRON_COST_GROWTH: 1.35,
+  // TEMPORARY ladder — bought during a run with scrap. FLAT cost (the user's "spend 10
+  // salvage"), which is safe from inflation because scrap is wiped at run end, with a
+  // stack cap so a very long run can't compound a stat without limit. Both numbers are
+  // first-pass, not tuned — the standing caveat this file carries throughout.
+  STAT_BOOST_SCRAP_COST: 10,
+  STAT_BOOST_MAX_STACKS: 10,
+
   TOWER_POWER_CONSUMPTION: [2, 3.5, 5], // per tier, index = tier - 1
   BROWNOUT_MIN_FIRE_RATE_MULT: 0.25,
 

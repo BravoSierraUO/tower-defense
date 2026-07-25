@@ -526,10 +526,12 @@ export class World {
 
   endTdRun() {
     this.tdRunActive = false;
-    // The single line that makes scrap run-only. No unwinding, no snapshot — the
-    // pool simply doesn't survive, which is why scrap can never fund permanent
-    // power however much of it a long run produces.
+    // The two lines that make the run economy genuinely temporary: the scrap pool
+    // doesn't survive, and neither does anything it bought. No unwinding, no
+    // snapshot — which is why scrap can never become permanent power however much
+    // of it a long run produces.
     this.scrap = 0;
+    for (const tower of this.towers) tower.resetRunUpgrades();
   }
 
   // Every build/sell path funnels through this one predicate rather than each
@@ -664,6 +666,54 @@ export class World {
   }
 
   // Phase 4b: same cost-growth shape as CommandCore.upgradeCost().
+  // ── Per-stat upgrade ladders (Phase 20, spec §I) ────────────────────────
+  // Two ladders, deliberately paid for from the two different pools, which is what
+  // makes them mean different things:
+  //
+  //   upgradeTowerStat — PREP only, costs IRON, permanent.
+  //   boostTowerStat   — RUN only, costs SCRAP, wiped when the run ends.
+  //
+  // Both are gated on the stage (canModifyDefenses / tdRunActive) rather than trusting
+  // the caller, for the same reason placeTower is: the gate belongs where the mutation
+  // happens. Both refuse silently and charge nothing, matching every other spend here.
+  //
+  // These layer ON TOP of the existing bundled `tier` ladder rather than replacing it.
+  // tier still drives max health, power draw (TOWER_POWER_CONSUMPTION is tier-indexed)
+  // and the upgrade-cost curve, none of which a per-stat DPS step should touch — see
+  // the spec's §I1 note on why the fuller "retire tier" refactor was not taken here.
+  towerStatUpgradeCost(tower, stat) {
+    if (!tower || !CONFIG.UPGRADABLE_STATS.includes(stat)) return null;
+    const bought = tower.permUpgrades[stat] || 0;
+    return Math.round(CONFIG.STAT_UPGRADE_IRON_COST_BASE * Math.pow(CONFIG.STAT_UPGRADE_IRON_COST_GROWTH, bought));
+  }
+
+  upgradeTowerStat(tower, stat) {
+    if (!this.canModifyDefenses()) return false; // prep-only: permanent power isn't bought mid-run
+    const cost = this.towerStatUpgradeCost(tower, stat);
+    if (cost === null || this.iron < cost) return false;
+    this.iron -= cost;
+    tower.permUpgrades[stat]++;
+    return true;
+  }
+
+  towerStatBoostCost() {
+    return CONFIG.STAT_BOOST_SCRAP_COST;
+  }
+
+  canBoostTowerStat(tower, stat) {
+    if (!this.tdRunActive) return false; // run-only: there is no scrap to spend in prep anyway
+    if (!tower || !CONFIG.UPGRADABLE_STATS.includes(stat)) return false;
+    if ((tower.runUpgrades[stat] || 0) >= CONFIG.STAT_BOOST_MAX_STACKS) return false;
+    return this.scrap >= this.towerStatBoostCost();
+  }
+
+  boostTowerStat(tower, stat) {
+    if (!this.canBoostTowerStat(tower, stat)) return false;
+    this.scrap -= this.towerStatBoostCost();
+    tower.runUpgrades[stat]++;
+    return true;
+  }
+
   towerUpgradeCost(tower) {
     return Math.round(CONFIG.TOWER_UPGRADE_COST_BASE * Math.pow(CONFIG.TOWER_UPGRADE_COST_GROWTH, tower.tier - 1));
   }

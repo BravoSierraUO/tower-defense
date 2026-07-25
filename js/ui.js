@@ -32,9 +32,9 @@ export class UI {
   // onToggleCore(), onReportBug(), onMenuAction(id), onOpenWaveMenu(), onSelectWave(n, isReplay),
   // onOpenMissionMenu(), onTrackMission(id), onOpenInventoryMenu(), onRefine(id), onCraft(id),
   // onCloseUpgradeModal(), onUpgradeSelected(), onEquipItem(id), onUnequipItem(), onCloseMenuModal(),
-  // onUseAbility(id), onZoom(factor), onCancelArmed() } —
+  // onUseAbility(id), onZoom(factor), onCancelArmed(), onUpgradeStat(stat), onBoostStat(stat) } —
   // UI only translates DOM clicks into these; it never mutates gameplay state directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyIron, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onCloseUpgradeModal, onUpgradeSelected, onEquipItem, onUnequipItem, onMenuAction, onCloseMenuModal, onUseAbility, onZoom, onCancelArmed } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyIron, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onCloseUpgradeModal, onUpgradeSelected, onEquipItem, onUnequipItem, onMenuAction, onCloseMenuModal, onUseAbility, onZoom, onCancelArmed, onUpgradeStat, onBoostStat } = {}) {
     this.hud = new HudPanel({ onRestart, onRepairBase, onOpenWaveMenu, onUseAbility });
     this.core = new CorePanel({ onUnlockTech, onDockTrade, onMarketBuyIron, onMarketBuyGold });
     this.field = new FieldPanel();
@@ -50,7 +50,7 @@ export class UI {
     this.waves = new WavePanel({ onSelectWave, onClose: onOpenWaveMenu });
     this.missionPanel = new MissionPanel({ onTrack: onTrackMission, onClose: onOpenMissionMenu });
     this.inventoryPanel = new InventoryPanel({ onRefine, onCraft });
-    this.upgradeModal = new UpgradeModal({ onUpgrade: onUpgradeSelected, onEquip: onEquipItem, onUnequip: onUnequipItem, onClose: onCloseUpgradeModal });
+    this.upgradeModal = new UpgradeModal({ onUpgrade: onUpgradeSelected, onEquip: onEquipItem, onUnequip: onUnequipItem, onClose: onCloseUpgradeModal, onUpgradeStat, onBoostStat });
     this.menuModal = new MenuModal({ onToggleProfile, onToggleSettings, onOpenInventoryMenu, onToggleAbout, onOpenCore: onToggleCore, onClose: onCloseMenuModal });
 
     // afterConfirm closes the JSON viewer regardless of which reset entry point

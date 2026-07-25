@@ -1008,6 +1008,9 @@ const ROADMAP = [
       'Renames that fell out, listed because they are the API surface anything downstream touches: STARTING_METAL→STARTING_IRON, METAL_CAP_BASE→IRON_CAP_BASE, `metalPerSecond()`→`ironPerSecond()`, MARKET_TRADE_METAL_COST→..._IRON_COST, WAVE_CLEAR_METAL_*→WAVE_CLEAR_SCRAP_*, DEFENDER_BONUS_METAL_*→..._SCRAP_*, CORPSE_METAL_*→CORPSE_SCRAP_*, `Corpse.metalValue`→`scrapValue`, `tradeGoldForMetal`/`tradeMetalForGold`→`tradeGoldForIron`/`tradeIronForGold`, and ORE_TYPES/ORE_LOOT_TABLE\'s `metal` key→`iron`. Mission rewards changed key from metal to iron; Supply Drop\'s from metal to scrap. The `metalYieldMult` AFFIX id is deliberately UNCHANGED — renaming affix ids would touch AFFIX_POOL plus every already-rolled item on every save, which is a migration, not a rename.',
       'Also shipped: the ore→scrap conversion (§K1), the one bridge between the two economies and deliberately one-way. `convertOreToScrap(oreType, amount)` handles both sources transparently — iron is the bulk currency (`world.iron`) while every other ore is a discrete `Inventory.ore` stack — and refuses without charging when you are short, the same silent-no-op convention every other spend in world.js uses. Ratios per `ORE_SCRAP_RATIOS`: iron 1, tin 2, bronze 3, steel 4, shadow 6, platinum 10, diamonds 25. The two endpoints are the user\'s; the middle is interpolated first-pass. A balance test asserts the ladder is strictly increasing, so rarer ore always pays more scrap.',
       'HUD: METAL became IRON, and a SCRAP stat was added that is HIDDEN in prep (where it is always 0 and unspendable) and unhidden during a run — the same conditional-stat pattern MODS/PARTS already use, chosen partly because the top bar is already too wide (18b). Verified live as well as by unit test: 12 browser checks covering labels, the show/hide behaviour, Fe-denominated build costs in the drawer, the wipe-on-run-end, the Market button text, and the conversion — plus the whole Phase 18 suite re-run at 51/51 to confirm the bottom bar reads the renamed pool correctly.',
+      'SHIPPED 2026-07-25 (0.1.69): THE TWO UPGRADE LADDERS, which finally gives scrap a sink. `Tower` carries two integer count maps over CONFIG.UPGRADABLE_STATS (damage/fireRate/range) — `permUpgrades` (prep, iron, permanent, escalating cost) and `runUpgrades` (run, scrap, flat cost, stack-capped, WIPED at run end). Counts rather than multipliers on purpose: floats drift when repeatedly multiplied, the cost curve wants to scale off the count anyway, and resetting is `= 0` instead of recomputing a product. `endTdRun()` now clears every tower\'s run ladder alongside the scrap pool — the run economy and everything it bought die together. Health is deliberately NOT upgradable: it belongs to the bundled `tier` ladder (which also full-heals), and two systems with a claim on one number is the bug that avoids. 23 new tests including the user\'s worked example verbatim — base 5 → boost 5.5 → die → back to 5 → permanent step → 6 → boost 6.6 — plus one proving five consecutive runs of boosting leave exactly zero permanent gain.',
+      'DEVIATION FROM THE SPEC, recorded rather than buried: §I1 said `Tower.tier` should BECOME the per-stat multipliers. It did not, and that should not be read as deferred work without re-pricing it. `tier` turned out load-bearing in five places the spec had not accounted for — `TOWER_POWER_CONSUMPTION[tier-1]` (power draw), `ORE_LOOT_TABLE[tier-1]` (a SCAVENGER\'s ore odds), both upgrade-cost curves, two UI panels that display "Tier I/II/III", and `applyTier()`\'s full-heal, which is a real gameplay effect. None are things a per-stat DPS step should touch, so the ladders layer ON TOP: `effective = BASE × tierMult × permMult × runMult × itemAffixMult`, with tests asserting the ladders leave tier/health/power-draw alone and that a tier upgrade cannot clobber either ladder. OPEN QUESTION this leaves, deliberately not resolved quietly: tier and the permanent per-stat ladder now overlap, since both are prep-bought permanent power. Either tier narrows to owning just health + power draw (its unique effects) while per-stat owns the combat numbers, or tier retires and those move elsewhere.',
+      'A REAL PRE-EXISTING BUG found while wiring the UI, and it had been shipped since Phase 11. The upgrade modal\'s `update()` runs EVERY FRAME while open and rebuilt its whole body with `innerHTML = \'\'` each time — destroying and recreating every button 60×/second. A browser only fires `click` when mousedown and mouseup land on the same element, so a button replaced mid-press swallows the click. That made the new stat buttons essentially unclickable and had been quietly doing the same to the shipped EQUIP/UNEQUIP buttons for nine phases. Fixed with the same `signature()` change-detection `js/ui/bottomBar.js` already uses. Found by a live click-through timing out with "element was detached from the DOM, retrying" 59 times — not findable by reading the file, and invisible in a screenshot, since the button looks perfect and merely fails to respond. A live check now covers both the new buttons and the old Equip path.',
       'STILL OPEN after the 2026-07-25 design sessions (six of the original eight got answered, plus MAX_WAVES): STRUCTURED WAVE SCALING, which is now the thing gating the MAX_WAVES bump; whether the gold-for-HP repair button survives or repoints at salvage as an in-run emergency heal; where the existing wave-clear gold+metal payout goes now that chests pay items; whether flee is allowed mid-wave or only between waves; how batteries cap idle time; and whether the prep currency gets a Storage-style cap. ANSWERED: XP-gate shape, the multi-wave session, what chests contain, and the salvage-into-prep contradiction (neither reading was right — in-run spends salvage for a temporary ×1.10, prep spends gold/manufactured parts to raise the permanent base, so salvage never leaves the run).'
     ],
     depends:'Nothing hard, but step 0 is reverting the v2.36 dev stash (`STARTING_GOLD`/`STARTING_METAL` at 10000 with 100k caps, both flagged REVERT in config.js) — economy work against a 10k stash is tuning against a fiction. Overlaps Phase 19 (both touch view/phase structure; sequence them together, not in parallel). Unblocks Phase 18b\'s promoted-stat decision.',
@@ -2633,32 +2636,38 @@ const STATS = {
       "date": "07-25",
       "cum": 19268,
       "subject": "0.1.67 - Phase 20: ore taxonomy + resource naming closed"
+    },
+    {
+      "hash": "0dc3341",
+      "date": "07-25",
+      "cum": 19683,
+      "subject": "0.1.68 - Phase 20: the two-pool currency split (iron / scrap)"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5976,
+      "value": 6064,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 6996,
+      "value": 7067,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2822,
+      "value": 2830,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 3474,
+      "value": 3722,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 29.7,
+    "activeHours": 30,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5

@@ -408,32 +408,38 @@
       "date": "07-25",
       "cum": 19268,
       "subject": "0.1.67 - Phase 20: ore taxonomy + resource naming closed"
+    },
+    {
+      "hash": "0dc3341",
+      "date": "07-25",
+      "cum": 19683,
+      "subject": "0.1.68 - Phase 20: the two-pool currency split (iron / scrap)"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5976,
+      "value": 6064,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 6996,
+      "value": 7067,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2822,
+      "value": 2830,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 3474,
+      "value": 3722,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 29.7,
+    "activeHours": 30,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5

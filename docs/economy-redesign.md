@@ -439,12 +439,61 @@ From the user, and explicitly *not* required immediately:
 - **In prep**, upgrade individual stats (DPS, fire rate) **permanently**, to
   prepare for the next run.
 
-`Tower` currently has a single `tier` (1-3, `CONFIG.TOWER_TIERS`) that
-`upgradeTower` bumps by spending metal (`world.js:564`). This model needs it split
-into a **persistent base** and a **run-scoped modifier that resets** — two tracks,
-not one ladder with a different price. That's the structural piece, and it's why
-upgrades are currently left ungated: gating them without the split would just
-disable in-run upgrading rather than make it temporary.
+**Built 2026-07-25 (`0.1.69`).** `Tower` now carries two integer count maps —
+`permUpgrades` (prep, iron, permanent) and `runUpgrades` (run, scrap, wiped) — over
+`CONFIG.UPGRADABLE_STATS` (`damage`, `fireRate`, `range`). Counts rather than
+multipliers: floats drift when repeatedly multiplied, the iron cost curve wants to
+scale off the count anyway, and resetting is `= 0` rather than recomputing a product.
+
+`World.upgradeTowerStat` (prep-only, escalating iron cost) and `World.boostTowerStat`
+(run-only, flat scrap cost, stack-capped) are the two entry points, each gated on the
+stage inside `World` rather than trusting the caller — same reason `placeTower` is.
+`endTdRun()` now calls `resetRunUpgrades()` on every tower alongside zeroing the
+scrap pool: the run economy and everything it bought die together.
+
+**Health is deliberately not upgradable.** It belongs to the bundled `tier` ladder
+(which also full-heals), and two systems with a claim on the same number is the bug
+this avoids. There's a test asserting it stays out.
+
+### H2a — `tier` was layered under, not replaced (deviation from §I1)
+
+§I1 said `Tower.tier` → per-stat multipliers. **That was not done, and shouldn't be
+read as deferred work without re-checking the price.** `tier` turned out to be
+load-bearing in five places §I1 didn't account for:
+
+- `CONFIG.TOWER_POWER_CONSUMPTION[tier - 1]` — power draw per tier
+- `CONFIG.ORE_LOOT_TABLE[tier - 1]` — a *Scavenger's* ore odds
+- `towerUpgradeCost`/`scavengerUpgradeCost` — the cost curves
+- `js/ui/fieldPanel.js` and `js/ui/upgradeModal.js` — both display "Tier I/II/III"
+- `applyTier()` also full-heals, which is a real gameplay effect
+
+None of those are things a per-stat DPS step should touch. So the two new ladders
+layer *on top*: `effective = BASE × tierMult × permMult × runMult × itemAffixMult`,
+with tests asserting the ladders leave tier, health and power draw alone, and that a
+tier upgrade doesn't clobber either ladder.
+
+**The open design question this leaves:** tier and the permanent per-stat ladder now
+overlap — both are prep-bought permanent power. Candidate resolutions: tier becomes
+purely the health/power-draw ladder (its unique effects) while per-stat owns the
+combat numbers; or tier is retired and power draw/ore odds move onto something else.
+Not decided, and deliberately not decided quietly.
+
+### H2b — a real bug found in the UI while wiring this
+
+The upgrade modal's `update()` runs **every frame** while open, and rebuilt its whole
+body via `innerHTML = ''` each time — destroying and recreating every button 60×/second.
+A browser only fires `click` when mousedown and mouseup land on the same element, so a
+button replaced mid-press swallows the click.
+
+That made the new stat buttons essentially unclickable, and had been quietly doing the
+same to the **shipped Equip/Unequip buttons since Phase 11**. Fixed with the same
+`signature()` change-detection `js/ui/bottomBar.js` already uses — rebuild only when
+something visible changed.
+
+Found by a live click-through timing out with *"element was detached from the DOM,
+retrying"* 59 times. Not findable by reading the file, and not visible in a
+screenshot: the button looks perfect, it just doesn't always respond. Another entry
+for the architecture doc's assert-computed-values-not-screenshots argument.
 
 ### H3 — Death has to be reintroduced · blocks H1's wiring
 
@@ -495,7 +544,7 @@ turret's `runMult` back to 1 at run end. No snapshot, no restore, no path by whi
 a temporary buff leaks into permanence. That property is the entire reason to
 model the temporary thing this way.
 
-### I1 — The one real refactor here
+### I1 — The one real refactor here (NOT taken — see §H2a)
 
 The persistent factor is currently a **discrete 3-entry tier table**, but the
 design wants per-stat upgrades (raise DPS specifically, or fire rate
@@ -731,7 +780,7 @@ Dependency-ordered, not by size.
 | 2 | ~~Audit `addMetal()`'s callers, split into two pools (B1)~~ | **DONE 0.1.68** — nine callers, not seven; see §K3 |
 | 3 | Move the prep currency onto `Profile` (B2) | Needs the seam decision; touches the observation boundary |
 | 4 | Base health per-session + upgradeable max (D) | Small, self-contained, needs F4 answered |
-| 5 | Chest ladder → one-time unlocks on `Profile` (C) | Follows the achievements precedent; needs F5 |
+| 5 | Chest ladder → one-time unlocks on `Profile` (C) | Follows the achievements precedent; F5 now answered (§J2) |
 | 6 | Missions grant CP + the first XP gate (B4, E) | Needs F1's unlock list to be worth anything |
 | 7 | Flee/cancel exit + session boundaries (G1) | Needs the mid-wave-vs-between-waves call; ConfirmModal already exists |
 | 8 | Offline accrual + batteries (B3) | Largest greenfield piece; nothing else depends on it |

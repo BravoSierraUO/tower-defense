@@ -50,6 +50,11 @@ export class Game {
         if (this.selectedTower) this.world.upgradeTower(this.selectedTower);
         else if (this.selectedScavenger) this.world.upgradeScavenger(this.selectedScavenger);
       },
+      // Phase 20: the two per-stat ladders. Only towers have them, and World enforces
+      // the stage gate itself (prep for permanent, run for temporary) — Game just
+      // forwards, same as every other callback here.
+      onUpgradeStat: stat => { if (this.selectedTower) this.world.upgradeTowerStat(this.selectedTower, stat); },
+      onBoostStat: stat => { if (this.selectedTower) this.world.boostTowerStat(this.selectedTower, stat); },
       onEquipItem: itemId => this.world.equipItem(this.selectedTower || this.selectedScavenger, itemId),
       onUnequipItem: () => this.world.unequipItem(this.selectedTower || this.selectedScavenger),
       onMenuAction: id => this.handleMenuAction(id),
