@@ -88,11 +88,25 @@ The central one. `world.metal` is fed by salvage (`world.js:350`,
 currency scavengers pull in during a wave is the currency you buy turrets with.
 The design needs these separate; today they are one field.
 
-`addMetal()` (`world.js:101`) currently has seven callers — idle mining
-(`:144`), defender bonus (`:308`), salvage (`:350`), mission rewards (`:396`),
-tower/scavenger sell refunds (`:482`, `:534`), and Market trade (`:684`). Each
-has to be assigned to exactly one of the two new pools, and they will not all go
-the same way. That audit *is* most of the work of this phase.
+`addMetal()` has **eight** callers, not seven — an earlier draft of this document
+said seven because it only grepped `world.js`. The eighth is in `spawner.js`.
+Correcting it here because an undercount is exactly what bites mid-refactor:
+
+| # | caller | what it is | routes to |
+|---|---|---|---|
+| 1 | `world.js:146` | idle mining / Cycle Budget accrual | **prep** — it's idle income |
+| 2 | `world.js:308` | defender bonus (kill reward) | **salvage** — earned in combat |
+| 3 | `world.js:350` | tractor-beam salvage | **salvage** — the definitional case |
+| 4 | `world.js:396` | tutorial mission rewards | **prep** — meta/onboarding, not in-run |
+| 5 | `world.js:482` | tower sell refund | **prep** — user's call, and selling is prep-only anyway |
+| 6 | `world.js:534` | scavenger sell refund | **prep** — same |
+| 7 | `world.js:684` | Market trade (gold→metal) | **prep** — gold-side, a Core room |
+| 8 | `spawner.js:121` | wave-clear reward metal | **open** — see F6; may be replaced by chests entirely |
+
+Seven of eight are settled. Only the wave-clear payout is open, and it's already
+F6. The sell-refund answer costs nothing in exploit terms **because selling is
+prep-only** (Section H) — there's no round-trip across the stage boundary to
+abuse.
 
 ### B2 — Neither currency persists · BLOCKER
 
@@ -252,6 +266,18 @@ Needs the user's call. Listed roughly in the order they block work.
    conflict with `MAX_WAVES`.
 3. **Name of the third resource**, and what the HUD calls it. This is what
    unblocks Phase 18b's promoted-stat question, which is where this all started.
+   Also the last thing blocking the currency half of the `addMetal()` split —
+   routing is decided (B1's table), but the destination pool has no name.
+9. **Does salvage carry into prep, or not?** ⚠️ **A direct contradiction to
+   resolve, not a gap.** The stated model is that salvage is run-only and "only
+   good for use during the tower defense game" — but H2's prep-side upgrades were
+   described as "same rule spend 10 salvage to upgrade to 1.10", which would mean
+   salvage survives the run. Two readings: (a) literally, salvage persists — which
+   collapses the two-economy split, since the run currency would fund permanent
+   power; or (b) "same rule" means the same *mechanic shape* (spend 10 → +10% to a
+   stat) with prep paying in the prep currency instead. (b) is consistent with
+   everything else in this document; (a) is what the words say. This one changes
+   what gets built, so it can't be assumed.
 4. **Does the base-repair button survive?** See D — retire it, or repoint it at
    salvage metal as an in-session emergency heal.
 5. **What do chests actually contain,** now that they're one-time? Today they
@@ -329,6 +355,73 @@ Three ways out, not decided:
 
 This is the one item in Section G that blocks code: whether `finalizeWave()`
 still has a terminal branch changes its shape.
+
+---
+
+## H. Stage separation — you touch nothing during a run
+
+Added 2026-07-25 from the user: **during a TD run there is no building and no
+selling.** The flow is prep → run → die/flee → prep. Their framing: "we're
+sneaking two games into one — idle has its own life, TD has its own life, but the
+variables for that life come from idle life."
+
+This is the constraint that makes the two economies real rather than cosmetic. It
+also does most of the work of preventing exploits: with no mid-run sell, a
+persistent-currency refund can't be laundered into a run, which is why F5's
+sell-refund answer is safe.
+
+### H1 — Built 2026-07-25 (`0.1.65`)
+
+`World.tdRunActive`, with `beginTdRun()` / `endTdRun()` and a single
+`canModifyDefenses()` predicate that `placeTower`, `placeScavenger`,
+`sellTowerAt` and `sellScavengerAt` all check. On `World`, not `Game`, so the
+gate is enforced where the mutation happens and no UI or input path can route
+around it. 14 tests (`tests/stageGate.test.mjs`).
+
+Deliberately **not** the same thing as `spawner.state`: a run spans many waves, so
+the spawner sitting at `'idle'` between wave 3 and wave 4 is still mid-run — the
+exact case a `spawner.state === 'idle'` check would get wrong. There's a test
+pinning that.
+
+Three things it deliberately does **not** gate, each with a test recording why:
+`placeStarterScavenger` (Game's onboarding guarantee, bypasses every gate by
+design), turret upgrades (pending H2's two-ladder model), and metal accrual —
+scavengers must keep pulling salvage in while you're locked out of building, or
+the run has no economy at all.
+
+### H2 — Turret upgrades are two separate ladders
+
+From the user, and explicitly *not* required immediately:
+
+- **In-run**, spend salvage → raise DPS / range / fire rate for **this run only**.
+  You die, they're gone.
+- **In prep**, upgrade individual stats (DPS, fire rate) **permanently**, to
+  prepare for the next run.
+
+`Tower` currently has a single `tier` (1-3, `CONFIG.TOWER_TIERS`) that
+`upgradeTower` bumps by spending metal (`world.js:564`). This model needs it split
+into a **persistent base** and a **run-scoped modifier that resets** — two tracks,
+not one ladder with a different price. That's the structural piece, and it's why
+upgrades are currently left ungated: gating them without the split would just
+disable in-run upgrading rather than make it temporary.
+
+### H3 — Death has to be reintroduced · blocks H1's wiring
+
+"Wave after wave until you die" requires dying, and **you currently cannot.**
+Phase 8a removed it deliberately: `spawner.finalizeWave()` heals a destroyed base
+back to full (`spawner.js:137`) and pays a lesser chest, and `game.js:449-454`
+states outright that the only run end is `MAX_WAVES`, always a win — `'lost'` is
+dead as a `Game.state` value.
+
+So Phase 20 reverses a Phase 8a design decision. Worth recording as a reversal
+rather than letting it look like a fix, and it resolves a dangling side effect
+that card already admits: `achievements.js`'s `lessons-learned` badge ("lose a
+run") has been **unearnable since Phase 8a** for exactly this reason. Putting
+death back makes it earnable again.
+
+This is why H1 ships unwired. Gating builds before a run can end would leave a
+player permanently unable to build after wave 1 — a hard regression. The gate,
+death, and flee all land together.
 
 ---
 

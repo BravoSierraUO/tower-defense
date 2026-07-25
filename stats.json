@@ -384,6 +384,12 @@
       "date": "07-25",
       "cum": 18140,
       "subject": "v2.38 - Phase 18a bottom action bar + 18c foundations; base ring square -> circle"
+    },
+    {
+      "hash": "77604a7",
+      "date": "07-25",
+      "cum": 18563,
+      "subject": "0.1.64 - Spec two-stage economy (Phase 20); switch to 0.MINOR.BUILD versioning"
     }
   ],
   "categories": [
@@ -394,7 +400,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 6199,
+      "value": 6622,
       "tone": "special"
     },
     {
@@ -409,7 +415,7 @@
     }
   ],
   "velocity": {
-    "activeHours": 28.7,
+    "activeHours": 29,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5

@@ -26,6 +26,8 @@ export class World {
     this.scavengersPlaced = 0; // Phase 16: player-placed only (starter excluded) — drives the tutorial mission
     this.gold = CONFIG.STARTING_GOLD;
     this.metal = CONFIG.STARTING_METAL; // Phase 4c: funds Tower/Scavenger Turret cost, not gold
+    // Phase 20 stage gate — see canModifyDefenses() below. false = Stage 1 (prep).
+    this.tdRunActive = false;
     this.moduleCharges = 0;     // Phase 8a: wave-clear salvage — spends as a free module install
     this.productionParts = 0;  // Phase 8a: wave-clear salvage — spends as a free build-timer rush
     this.inventory = new Inventory(); // Phase 11 skeleton: ore/refined/components, see js/inventory.js
@@ -435,6 +437,41 @@ export class World {
     return this.towers.some(t => t.x === x && t.y === y) || this.scavengers.some(s => s.x === x && s.y === y);
   }
 
+  // ── Stage gate (Phase 20) ───────────────────────────────────────────────
+  // The two-stage economy (docs/economy-redesign.md) splits play into Stage 1
+  // (idle/prep: build and sell freely) and Stage 2 (a TD run: wave after wave
+  // until you die or flee, and you touch NOTHING — no new turrets, no selling).
+  // `tdRunActive` is that distinction, and it lives on World rather than Game
+  // because the gate has to be enforced where the mutation happens, so neither
+  // the UI nor a future input path can route around it.
+  //
+  // Deliberately NOT the same thing as `spawner.state`. A run spans many waves,
+  // so the spawner sitting at 'idle' between wave 3 and wave 4 is still mid-run —
+  // that's exactly the case a `spawner.state === 'idle'` check would get wrong.
+  //
+  // NOT YET WIRED, on purpose: a run has no way to END until death is
+  // reintroduced (Phase 8a removed it — see game.js's note and spawner.js's
+  // finalizeWave, which currently heals a destroyed base back to full and pays a
+  // lesser chest instead of ending anything). Gating builds before a run can end
+  // would leave the player permanently unable to build after wave 1. So this
+  // defaults to false (prep), every gate below is a no-op today, and the wiring
+  // lands with the death/flee decision. The mechanism and its tests ship first
+  // so that decision is the only thing left to make.
+  beginTdRun() {
+    this.tdRunActive = true;
+  }
+
+  endTdRun() {
+    this.tdRunActive = false;
+  }
+
+  // Every build/sell path funnels through this one predicate rather than each
+  // testing the flag itself — one place to change if "prep-only" ever grows
+  // conditions (a mid-run emergency build unlock, say).
+  canModifyDefenses() {
+    return !this.tdRunActive;
+  }
+
   // Phase 16, corrected in Phase 18: the base "compound" is an ANNULUS around the base —
   // outer edge BASE_RING_RADIUS, inner edge SCAVENGER_MIN_BASE_DISTANCE, both radial. A
   // point is inside the ring if it falls between the two; it's out in the tower field if
@@ -454,6 +491,7 @@ export class World {
   }
 
   placeTower(x, y, damageType = 'kinetic') {
+	if (!this.canModifyDefenses()) return null; // Phase 20: prep-only
 	if (this.towers.length >= CONFIG.TOWER_MAX_COUNT) return null;
 
 	const snapped = this.snapToGrid(x, y);
@@ -475,6 +513,7 @@ export class World {
 
   // Right-click a placed tower to sell it back for a % refund of what was paid (metal).
   sellTowerAt(x, y) {
+    if (!this.canModifyDefenses()) return false; // Phase 20: prep-only
     const snapped = this.snapToGrid(x, y);
     const idx = this.towers.findIndex(t => t.x === snapped.x && t.y === snapped.y);
     if (idx === -1) return false;
@@ -507,6 +546,7 @@ export class World {
   }
 
   placeScavenger(x, y) {
+    if (!this.canModifyDefenses()) return null; // Phase 20: prep-only
     if (this.scavengers.length >= CONFIG.SCAVENGER_MAX_COUNT) return null;
 
     const snapped = this.snapToGrid(x, y);
@@ -527,6 +567,7 @@ export class World {
   }
 
   sellScavengerAt(x, y) {
+    if (!this.canModifyDefenses()) return false; // Phase 20: prep-only
     const snapped = this.snapToGrid(x, y);
     const idx = this.scavengers.findIndex(s => s.x === snapped.x && s.y === snapped.y);
     if (idx === -1) return false;

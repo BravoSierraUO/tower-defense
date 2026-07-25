@@ -273,7 +273,7 @@
   <div class="chips">
     <span class="chip">Vanilla JS · Canvas 2D · zero deps</span>
     <span class="chip">Deterministic state machines</span>
-    <span class="chip">203 tests · node --test</span>
+    <span class="chip">286 tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
@@ -656,7 +656,7 @@ const ROADMAP = [
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 183 tests across 9 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory/phase7d cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. 286 tests across 17 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory/phase7d cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
@@ -1970,11 +1970,11 @@ const FLOWS = [
   {
     id: 'balanceguards', group: 'Proving it',
     title: "A tuning pass can't silently break the economy",
-    summary: '183 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
+    summary: '286 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
     lanes: ['Change', 'Run', 'Stress', 'Checks', 'Verdict'],
     nodes: [
       { id: 'tune', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'A constant changes in config.js\ne.g. a tier-3 buff' },
-      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n183 tests, 9 files, zero deps',
+      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n286 tests, 17 files, zero deps',
         code_ref: 'package.json · tests/*.test.mjs',
         detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile/missions/inventory cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
       { id: 'maxed', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'maxOutRoom() helper\nfull tech chain, max tier, every module slot',
@@ -2596,6 +2596,12 @@ const STATS = {
       "date": "07-25",
       "cum": 18140,
       "subject": "v2.38 - Phase 18a bottom action bar + 18c foundations; base ring square -> circle"
+    },
+    {
+      "hash": "77604a7",
+      "date": "07-25",
+      "cum": 18563,
+      "subject": "0.1.64 - Spec two-stage economy (Phase 20); switch to 0.MINOR.BUILD versioning"
     }
   ],
   "categories": [
@@ -2606,7 +2612,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 6199,
+      "value": 6622,
       "tone": "special"
     },
     {
@@ -2621,7 +2627,7 @@ const STATS = {
     }
   ],
   "velocity": {
-    "activeHours": 28.7,
+    "activeHours": 29,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5
