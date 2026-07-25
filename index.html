@@ -273,7 +273,7 @@
   <div class="chips">
     <span class="chip">Vanilla JS · Canvas 2D · zero deps</span>
     <span class="chip">Deterministic state machines</span>
-    <span class="chip">286 tests · node --test</span>
+    <span class="chip">335 tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
@@ -656,7 +656,7 @@ const ROADMAP = [
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 286 tests across 17 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory/phase7d cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. 335 tests across 19 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory/phase7d cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
@@ -915,9 +915,9 @@ const ROADMAP = [
     depends:'Phase 3 (room framework), Phase 4d (energy system)',
     note:'Surfaced 2026-07-21 mid-playtest. The visibility + additive-reactor slice shipped immediately (it was an active blocker — browning out with no way to add supply); adjacency/moving/modules are the base-building pass the user explicitly deferred ("we will get to it in base building"). Full node --test pass: 226/226. Verified statically only — no chromium here to screenshot the new HUD gauge or the ring-shaped base, flagged rather than claimed.' },
   { id:'p18', num:'18', title:'Responsive & Touch — Playable Off a Desktop Mouse', status:'PARTIAL · 18a+18c SHIPPED', color:'--phase-18',
-    desc:'Umbrella card for the small-screen/touch pass. Triggered by a real complaint — a laptop player with no scroll wheel had no way to zoom, because `camera.js` has exactly one zoom input (`input.wheelDelta`) and `KEYBIND_ACTIONS` is pan-only. Auditing that turned up a broader truth the codebase had never had to face: `css/style.css` is 1710 lines with zero `@media` blocks, `game.html` has no viewport meta tag, and `js/input.js` binds only `wheel`/`mousemove`/`click`/`contextmenu`. The game has never been laid out for anything but a wide window and a three-button mouse. Full findings — every item file:line-cited, severity-rated, with a fix sketch and a dependency-ordered build order — live in `docs/mobile-audit.md`; the three cards below (18a/18b/18c) are the build slices.',
+    desc:'Umbrella card for the small-screen/touch pass. Triggered by a real complaint — a laptop player with no scroll wheel had no way to zoom, because `camera.js` has exactly one zoom input (`input.wheelDelta`) and `KEYBIND_ACTIONS` is pan-only. Auditing that turned up a broader truth the codebase had never had to face: `css/style.css` had 1710 lines and zero `@media` blocks (it now has 2182 and three, added by 18a/18c), `game.html` has no viewport meta tag, and `js/input.js` binds only `wheel`/`mousemove`/`click`/`contextmenu`. The game has never been laid out for anything but a wide window and a three-button mouse. Full findings — every item file:line-cited, severity-rated, with a fix sketch and a dependency-ordered build order — live in `docs/mobile-audit.md`; the three cards below (18a/18b/18c) are the build slices.',
     items:[
-      'BREAKS (feature unreachable): no viewport meta on game.html, so a phone renders at an assumed 980px width and scales down — every other fix here is invisible until it exists. Zoom is wheel-only. Sell-tower / rush-build / install-module exist ONLY behind right-click (`game.js:413-429`), with no touch path — and selling is the only way to undo a misplacement. The Command Core grid is a fixed 512px (8 × CORE_CELL_SIZE 64) that centres to a negative origin below ~520px wide, and the Core view has no pan or zoom on any device (`game.js:434` gates the camera on field view), so its edge columns are simply untappable.',
+      'BREAKS (feature unreachable) — AS FOUND 2026-07-24; three of these four have since shipped, see 18a/18c: no viewport meta on game.html, so a phone renders at an assumed 980px width and scales down — every other fix here is invisible until it exists. Zoom is wheel-only. Sell-tower / rush-build / install-module exist ONLY behind right-click (`game.js:413-429`), with no touch path — and selling is the only way to undo a misplacement. The Command Core grid is a fixed 512px (8 × CORE_CELL_SIZE 64) that centres to a negative origin below ~520px wide, and the Core view has no pan or zoom on any device (`game.js:434` gates the camera on field view), so its edge columns are simply untappable.',
       'DEGRADES: `.hud-top` is a no-wrap flex row whose minimum width computes to roughly 1600px — wider than a 1366×768 or 1440×900 laptop — and since nothing sets `flex-shrink:0` it fails by overlapping rather than overflowing. No devicePixelRatio handling (`main.js:5-8`), so canvas art is upscaled-blurry on every phone. The placement ghost, the range preview and Phase 16\'s red invalid-drop tint are all hover-dependent (`renderer.js:472`), so a touch player places blind.',
       'Found and worth fixing regardless of platform: `#ui-mode-hint` (`game.html:119`) is a hardcoded 62-character string ≈465px wide — the single largest contributor to the top bar — and `ui.js:37` grabs it but nothing ever writes to it. It is a dead element eating ~30% of the HUD\'s width.',
       'Two happy accidents that make this cheaper than it looks: `.tower-card`/`.core-panel` already sit at `bottom:130px`, clearance left behind by the Phase 9 build bar that 9b deleted — the new bottom bar drops into it without moving anything. And `renderer.coreLayout()` is already the shared source for both `drawCore()` and `screenToCoreCell()`, so making the cell size responsive fixes draw and hit-test in one edit.'
@@ -985,7 +985,7 @@ const ROADMAP = [
     desc:'The game splits into two STAGES with two separate economies — called stages, not phases, because \'Phase N\' already means a development phase in this repo. Stage 1 is idle/prep: you log back in, collect what accrued while away (battery-gated, batteries not in yet), and spend a NEW THIRD RESOURCE on turrets and turret upgrade pieces — it persists across sessions. Stage 2 starts when you press Wave 1: a separate economy where scavengers pull in salvage metal that is run-only and dies with the session. XP stays global across both. Gold is untouched and stays the Command Core room currency. Full spec, with every collision cited by file:line and the open decisions listed separately, in `docs/economy-redesign.md`. Designed with the user 2026-07-25; no code written.',
     items:[
       'WHY IT EXISTS: Phase 18b asked "which currency does the top HUD promote?" and the question turned out to be unanswerable — towers cost metal, rooms cost gold, and the two aren\'t cleanly scoped, so no arrangement of stat pills could be honest about them. Chasing that produced this. The split is store-vs-flow: prep currency survives so spending it is a decision you keep; salvage appears during a wave and dies with it, so spending it is tactical with no cross-session opportunity cost. Those reward different thinking, which is why merging them — what the code does today — makes neither read clearly.',
-      'BLOCKER 1: salvage metal and turret-purchase metal are literally the same variable. `world.metal` is fed by `updateSalvage()` (`world.js:350`) AND is what `placeTower()` spends. `addMetal()` (`world.js:101`) has seven callers — idle mining, defender bonus, salvage, mission rewards, two sell refunds, Market trade — and each has to be assigned to exactly one of the two new pools. They will not all go the same way. That audit is most of the work of this phase, and it is pure engine logic, fully unit-testable.',
+      'BLOCKER 1: salvage metal and turret-purchase metal are literally the same variable. `world.metal` is fed by `updateSalvage()` (`world.js:350`) AND is what `placeTower()` spends. `addMetal()` had NINE callers (this item originally said seven — see the routing-table correction below), and each had to be assigned to exactly one of the two new pools. They will not all go the same way. That audit is most of the work of this phase, and it is pure engine logic, fully unit-testable.',
       'BLOCKER 2: neither currency persists. `world.gold`/`world.metal` are initialised in the World constructor (`world.js:27-28`) and `restart()` builds a fresh World, so both die on restart. The prep currency has to live on `Profile` — the only thing that survives. That is a structural move that pushes on the one-way-observation rule harder than anything so far: engine files don\'t know about Profile, and today `game.js` diff-watches counters and translates deltas into `profile.emit()` rather than threading Profile through World. A persistent currency World must SPEND needs that seam decided before code.',
       'CHESTS INVERT on three axes, and this is a real design change rather than an extension. Today `chestTier` is non-null ONLY on a wipe (`spawner.js:101`) — a full clear pays `chestTier: null` and the full bundle; tier comes from how much you killed before the base fell (bronze 0%/silver 34%/gold 67%, `config.js:296`); multipliers scale payout DOWN (0.25/0.5/0.75) so a chest is always worse than clearing; and it repeats forever with no memory. Designed: awarded for COMPLETING a wave, tier by performance, and each tier is a ONE-TIME unlock — already have bronze on wave 1, clearing it at bronze again pays nothing. Lose and you get no chest at all; that is the punishment, and you return to idle mode to build and retry.',
       'Two things already in the codebase that make this cheaper than it looks. The one-time-unlock machinery exists in the right shape: `achievements.js` is a sticky registry run through a fixpoint loop so one unlock can cascade into another the same tick, with `profile.js:181` persisting timestamps — the chest ladder is achievement-shaped, not reward-shaped, and should follow that precedent instead of inventing state. And completion percentage is already an honest skill signal: `config.js:289-291` carries a deliberate note that chest `minPct` is raw `enemy.maxHealth` sums NEVER passed through `rewardMultiplier()`/combo/prestige, exactly so a future "+XP%" upgrade inflates payout but never completion. That property is what makes "better prep → better chest" mean something. Keep it.',
@@ -1145,7 +1145,7 @@ const FLOWS = [
         detail: "buildTimeTotal is ROOM_BUILD_TIME_BASE minus Factory's buildTimeReduction, then further divided by the Build Mastery prestige skill's buildMult(). Both can shrink it, neither can make a room build instantly — a ≥1s floor is enforced, and guarded by a balance test (see Proving It)." },
       { id: 'contributes', col: 4, row: 0.5, kind: 'terminal', tone: 'sig', label: 'Room goes active\nfeeds commandCore.totals()',
         code_ref: 'room.js (isActive) · commandcore.js (totals)',
-        detail: "Every frame, room.update(dt) ticks buildTimeRemaining toward 0. The instant isActive() flips true, the room's tier-scaled stats join the sum every economy formula reads — towerCost()/scavengerCost() (metal-denominated as of the metal economy), goldCap(), World.metalPerSecond(), shieldPct, dronePower, all of it. Before that moment, a half-built room contributes exactly nothing." }
+        detail: "Every frame, room.update(dt) ticks buildTimeRemaining toward 0. The instant isActive() flips true, the room's tier-scaled stats join the sum every economy formula reads — towerCost()/scavengerCost() (iron-denominated since Phase 20's currency split), goldCap(), World.ironPerSecond(), shieldPct, dronePower, all of it. Before that moment, a half-built room contributes exactly nothing." }
     ],
     edges: [
       { from: 'pick', to: 'valid' },
@@ -1384,7 +1384,7 @@ const FLOWS = [
         detail: "Pulled at 220 px/s (> ENEMY_SPEED 100, so it actually closes the gap), never overshooting the Scavenger on a big frame. A tractor beam (TRACTOR_BEAM_COLOR, the Scavenger's own hue) draws from turret to husk so the salvage reads on screen." },
       { id: 'convert', col: 4, row: 0.5, kind: 'process', tone: 'special', label: 'On contact → metal\n× that Scavenger\'s metalYieldMult affix',
         code_ref: 'world.js (updateSalvage)',
-        detail: "Banked via addMetal (clamped to the metal cap like any other gain), scaled by the collecting Scavenger's own equipped-item metalYieldMult affix — the same affix its idle mining already honors, so a salvage-tuned loadout helps both jobs. Idle mining itself is untouched: this is a new active layer, not a replacement." }
+        detail: "Banked via addScrap — Phase 20 made salvage the definitional source of SCRAP, the run-only pool, so it is deliberately NOT clamped (scrap is wiped at run end, so the run itself is the cap), scaled by the collecting Scavenger's own equipped-item metalYieldMult affix — the same affix its idle mining already honors, so a salvage-tuned loadout helps both jobs. Idle mining itself is untouched: this is a new active layer, not a replacement." }
     ],
     edges: [
       { from: 'kill', to: 'drop' },
@@ -1640,11 +1640,11 @@ const FLOWS = [
         code_ref: 'world.js (cyclesPerSecond)',
         detail: 'BASE_CYCLES_PER_MIN=3 is an always-on floor — metal flows even with zero AI Core built. AI Core\'s cyclesPerMin adds on top of that floor, not instead of it.' },
       { id: 'split', col: 2, row: 1, kind: 'process', tone: 'ok', label: 'Split evenly across\nevery active producer',
-        code_ref: 'world.js (metalPerSecond)',
+        code_ref: 'world.js (ironPerSecond)',
         detail: "share = cyclesPerSecond() / producer count — more producers means each one gets a smaller slice of the same fixed budget, then each producer's own per-cycle value (tier-scaled) is applied to its share. Adding a Scavenger Turret dilutes every other producer's payout, it doesn't add a separate stream." },
-      { id: 'pool', col: 3, row: 1, kind: 'store', tone: 'info', label: 'world.metal accrues\nevery frame, capped',
-        code_ref: 'world.js (updateCycleBudget / addMetal)',
-        detail: "updateCycleBudget(dt) is called once per frame from game.js's update() loop, same shape as gold's addGold — capped at metalCap() (METAL_CAP_BASE), a flat ceiling with no Command Core modifier feeding it (unlike gold's Storage-driven cap)." },
+      { id: 'pool', col: 3, row: 1, kind: 'store', tone: 'info', label: 'world.iron accrues\nevery frame, capped',
+        code_ref: 'world.js (updateCycleBudget / addIron)',
+        detail: "updateCycleBudget(dt) is called once per frame from game.js's update() loop, same shape as gold's addGold — capped at ironCap() (IRON_CAP_BASE), a flat ceiling with no Command Core modifier feeding it (unlike gold's Storage-driven cap)." },
       { id: 'sinks', col: 4, row: 1, kind: 'terminal', tone: 'sig', label: 'Towers, Scavenger Turrets\nbuild/upgrade/sell all spend metal',
         code_ref: 'world.js (placeTower / upgradeTower / placeScavenger / upgradeScavenger)',
         detail: 'As of Phase 4c, metal is purely the exterior-grid currency — gold never touches Tower or Scavenger Turret costs at all anymore (see Gold flows through the base).' }
@@ -1675,7 +1675,7 @@ const FLOWS = [
         detail: "MARKET_TRADE_GOLD_COST is a flat 40 gold. marketBonus comes from the Market room's own tier, same shape as Dock's tradeBonus." },
       { id: 'buyGold', col: 2, row: 1.75, kind: 'terminal', tone: 'ok', label: 'metal −= 40\ngold += 40×(0.5+marketBonus)',
         code_ref: 'world.js (tradeMetalForGold)',
-        detail: 'MARKET_TRADE_METAL_COST is a flat 40 metal — the opposite direction of the same trade, same ratio, same bonus source, spent from the opposite pool.' }
+        detail: 'MARKET_TRADE_IRON_COST is a flat 40 iron — the opposite direction of the same trade, same ratio, same bonus source, spent from the opposite pool.' }
     ],
     edges: [
       { from: 'press', to: 'gate' },
@@ -1986,11 +1986,11 @@ const FLOWS = [
   {
     id: 'balanceguards', group: 'Proving it',
     title: "A tuning pass can't silently break the economy",
-    summary: '286 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
+    summary: '335 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
     lanes: ['Change', 'Run', 'Stress', 'Checks', 'Verdict'],
     nodes: [
       { id: 'tune', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'A constant changes in config.js\ne.g. a tier-3 buff' },
-      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n286 tests, 17 files, zero deps',
+      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n335 tests, 19 files, zero deps',
         code_ref: 'package.json · tests/*.test.mjs',
         detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile/missions/inventory cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
       { id: 'maxed', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'maxOutRoom() helper\nfull tech chain, max tier, every module slot',
@@ -2073,7 +2073,7 @@ const FLOWS = [
         detail: 'A few seconds of reduced speed across the whole field — the "reduced accuracy, disabled abilities" wording Phase 4d\'s brownout card explicitly punted on finally gets a real mechanic here.' },
       { id: 'laser', col: 3, row: 0.9, kind: 'terminal', tone: 'sig', label: 'Orbital Laser\nflat damage straight to every live enemy.health',
         detail: 'No armor-type multiplier — a sky strike, not a Tower shot. Feeds the ordinary kill/reward path for free: World.updateEnemies()\'s isDead() sweep pays gold/combo/kills the same way regardless of what dropped the health to 0.' },
-      { id: 'supply', col: 3, row: 1.8, kind: 'terminal', tone: 'sig', label: 'Supply Drop\naddGold/addMetal, capped at the normal pool ceilings' },
+      { id: 'supply', col: 3, row: 1.8, kind: 'terminal', tone: 'sig', label: 'Supply Drop\naddGold + addScrap (Phase 20: its material half is run-only)' },
       { id: 'repair', col: 3, row: 2.7, kind: 'terminal', tone: 'sig', label: 'Drone Repair\nheals every placed Tower/Scavenger by healPct of missing health',
         detail: "Reads the health/maxHealth Phase 7d already gave every Tower/Scavenger — never overheals past maxHealth." },
       { id: 'recall', col: 3, row: 3.6, kind: 'terminal', tone: 'special', label: "Satellite Recall\nclears attackTarget, redirects the enemy back to the base",
@@ -2642,32 +2642,38 @@ const STATS = {
       "date": "07-25",
       "cum": 19683,
       "subject": "0.1.68 - Phase 20: the two-pool currency split (iron / scrap)"
+    },
+    {
+      "hash": "841c773",
+      "date": "07-25",
+      "cum": 20270,
+      "subject": "0.1.69 - Phase 20: the two per-stat upgrade ladders (scrap gets a sink)"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 6064,
+      "value": 6273,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 7067,
+      "value": 7134,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2830,
+      "value": 2840,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 3722,
+      "value": 4023,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 30,
+    "activeHours": 30.1,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5

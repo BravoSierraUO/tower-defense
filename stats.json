@@ -414,32 +414,38 @@
       "date": "07-25",
       "cum": 19683,
       "subject": "0.1.68 - Phase 20: the two-pool currency split (iron / scrap)"
+    },
+    {
+      "hash": "841c773",
+      "date": "07-25",
+      "cum": 20270,
+      "subject": "0.1.69 - Phase 20: the two per-stat upgrade ladders (scrap gets a sink)"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 6064,
+      "value": 6273,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 7067,
+      "value": 7134,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2830,
+      "value": 2840,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 3722,
+      "value": 4023,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 30,
+    "activeHours": 30.1,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5
