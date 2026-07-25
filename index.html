@@ -995,7 +995,11 @@ const ROADMAP = [
       'THE TD SESSION IS MULTI-WAVE (answered by the user 2026-07-25): wave after wave until you die, or flee/cancel. That settles more than it looks. Base health resets at SESSION start, not per wave — damage accumulating across waves IS the pressure that ends a long run. Salvage persists across waves within a session and dies at session end, so it compounds while you survive, which is what makes a mid-session emergency spend a real decision. And chests are per WAVE, BANKED as you go: clear waves 1-4, die on 5, you keep the four. So "lose and you get no chest" applies to the wave you died on, not the session — worth stating because the one-line version reads far harsher than the model actually is. Fleeing keeps what you banked; salvage always dies.',
       'Two NEW problems the multi-wave answer creates. (1) Flee/cancel does not exist — a grep for flee/abandon/retreat finds nothing; the only exits today are the base dying and hitting MAX_WAVES. It needs a player-facing confirmed exit (`js/ui/confirmModal.js` is the right existing component) that banks chests, discards salvage, and returns to Stage 1 — plus a call on WHEN it is allowed, because unrestricted mid-wave flee is a get-out-of-death-free card: you would bail the instant a wave looked unwinnable and lose only the salvage you were losing anyway. Leaning between-waves-only. (2) `MAX_WAVES: 20` (`config.js:120`) directly contradicts "until you die" — `spawner.js:137` ends the run at wave 20 and sets `Game.state = \'won\'`. Either go endless (retiring the only win condition the game has — note Phase 8a already retired `\'lost\'`, so this would leave NO terminal state, a legitimate idle-game position but one to choose rather than drift into), keep 20 as a milestone that awards something and continues, or accept an implicit "or until wave 20". This is the item that blocks code, since it changes `finalizeWave()`\'s shape.',
       'XP GATE SHAPE fixed, ladder deferred (user, 2026-07-25): the full list waits on the tutorial spec, correctly — "once the gameplay is more correct and we start working on tutorial side/spec the XP gates will be more clear", and a gate ladder designed before the thing it gates is guesswork. Two illustrative examples, neither built: "market exchange" buildable at level 5, "hero hangar upgrade" locked until level 25. That is enough to fix the mechanism — gates are level thresholds on buildable/upgradeable content, spread from early to long-tail — without inventing content.',
-      'STILL OPEN, in full in the spec: the resource\'s name (which is what unblocks 18b\'s promoted-stat question), the MAX_WAVES/win-state call above, whether the gold-for-HP repair button survives or repoints at salvage, what one-time chests actually contain now that a currency lump is the wrong shape for a one-time unlock, where the existing wave-clear gold+metal payout goes, whether flee is allowed mid-wave, how batteries cap idle time, and whether the prep currency gets a Storage-style cap.'
+      'ITEMIZATION IS MOSTLY ALREADY BUILT — checked against source, not assumed. The designed loop (idle collects raw material → processing makes "gears/wiring" → a chest pays components or a fully-assembled "engine" that improves DPS → build one yourself at base, rolling green/blue/gold) maps almost entirely onto Phase 11: `inventory.ore` is the raw stream, `REFINED_RECIPES` turns it into `alloy`/`circuitWire`/`prismaticCoil`, `COMPONENT_RECIPES.motor` IS the engine (the recipe already exists), `AFFIX_POOL` already has a `damage` affix at 0.03-0.08, and `Tower.effectiveDamage()` already applies it in combat (`combat.js:139`) — so "an engine that improves DPS" is functional TODAY, nothing needs wiring for the stat to bite. `rollItemRarity()` already rolls rarity, and Foundry\'s `rarityBonusPct` already shifts odds out of grey at craft time. The affix pool\'s own comment says it "only rolls and stores" pending a consumer; that is stale for the combat stats — damage, fireRate, range and cooldown are all consumed.',
+      'The itemization gaps are genuinely small. (1) No BLUE rarity: `RARITY_TIERS` is grey 70 / green 25 / gold 5, and its config comment claims those three are "exactly the language the user asked for" — so adding blue is a change of mind to record as one, not a bug to fix. (2) Chests do not drop items at all today; `computeRewards()` pays scaled gold + metal. The tier-scaled split (bronze 90/10, silver 75/25, gold 50/50 components-vs-assembled-engine) is new, but `ORE_LOOT_TABLE` is already a tier-indexed weighted table, so it is a pattern to copy rather than invent. That split also ANSWERS what one-time chests contain: items and materials, not a currency lump — which is the right shape, since a one-time unlock paying currency would be strictly worse than paying something otherwise unobtainable.',
+      'THE MULTIPLICATIVE CHAIN, and why it is cheap: `CONFIG.TOWER_TIERS` is ALREADY multiplicative (`damageMult`/`rangeMult`/`fireRateMult`/`healthMult`, applied as `TOWER_DAMAGE * t.damageMult`), and Phase 11 already added a second factor via `affixMultiplier()`. So the design needs ONE new factor in an existing chain: `effective = BASE × persistentMult × itemAffixMult × runMult`, where runMult is the salvage-bought temporary one. Resetting it is a one-liner — set every turret back to 1 at run end — with no snapshot, no restore, and no path by which a temporary buff leaks into permanence. That property is the whole reason to model the temporary upgrade as a multiplier rather than a stat edit. The one real refactor: the persistent factor is a discrete 3-tier table but the design wants per-stat upgrades, so `Tower.tier` becomes per-stat multipliers — contained, but it touches TOWER_TIERS, `TOWER_POWER_CONSUMPTION` (tier-indexed), the upgrade modal and `towerUpgradeCost()`.',
+      'TWO NAMING/STRUCTURE TRAPS found while spec\'ing. (1) THREE different things would be called "metal": `world.metal` (the currency that buys turrets), `ORE_LOOT_TABLE`\'s `metal` key (the common roll meaning "nothing rare this tick" — it never enters `inventory.ore`, which holds only fancyMetal/platinum/diamonds), and the new run-only "salvage metal" — plus the design\'s own "idle gets metal", which actually maps to the rare-ore stream. Four uses, three meanings. Any one is cheap to rename now and expensive once the HUD, chest table and upgrade costs all reference them. (2) Starting salvage as a "salvage room" needs ZERO new machinery (`ROOM_TYPES` entries already carry `{output, tiers}` and `totals()` sums them generically) — but `ROOM_TYPES` is at a hard cap of 10 that `tests/balance.test.mjs:229` enforces, because `game.js`\'s number-key selector addresses exactly 1-9,0, a guard added after v1.5\'s real bug where inserting `mine` left Dock unreachable. So the user\'s own alternative — a BASE UPGRADE granting 10/20/30 starting salvage — is the cheaper route and pairs naturally with the base-parts max-HP upgrade. Note the cap is softer now: Phase 18a\'s drawer is a scrollable list, so 10+ entries no longer need digit keys; the limit is only about keyboard shortcuts.',
+      'STILL OPEN after the 2026-07-25 design session (four of the original eight got answered): the resource NAMING — now a three-way collision, not a label, and still what unblocks 18b\'s promoted-stat question; the MAX_WAVES/win-state call, which is the one that blocks code because it changes `finalizeWave()`\'s shape; whether the gold-for-HP repair button survives or repoints at salvage as an in-run emergency heal; where the existing wave-clear gold+metal payout goes now that chests pay items; whether flee is allowed mid-wave or only between waves; how batteries cap idle time; and whether the prep currency gets a Storage-style cap. ANSWERED: XP-gate shape, the multi-wave session, what chests contain, and the salvage-into-prep contradiction (neither reading was right — in-run spends salvage for a temporary ×1.10, prep spends gold/manufactured parts to raise the permanent base, so salvage never leaves the run).'
     ],
     depends:'Nothing hard, but step 0 is reverting the v2.36 dev stash (`STARTING_GOLD`/`STARTING_METAL` at 10000 with 100k caps, both flagged REVERT in config.js) — economy work against a 10k stash is tuning against a fiction. Overlaps Phase 19 (both touch view/phase structure; sequence them together, not in parallel). Unblocks Phase 18b\'s promoted-stat decision.',
     note:'Designed with the user in conversation 2026-07-25, immediately after shipping v2.38; no code written. Filed with the same discipline `docs/mobile-audit.md` used for Phase 18 — settled design and open questions kept in separate sections, so the build session can tell which is which. Explicitly OUT of scope, by the user\'s own call: the Command Core room mechanic ("i think this room mechanic could be improved but outside the scope of this turn") — gold and rooms are untouched. Also out: rebalancing (every number in the spec is a current value being cited, not a proposed one; the difficulty curve has been waiting on a playtest pass since Phase 4c and this does not jump that queue). The riskiest work is splitting `addMetal()`\'s callers and moving a currency onto Profile — both in `world.js` (696 lines, the biggest file) — but both are also the most testable work in the phase, unlike the UI layer Phase 18 lived in.' },
@@ -2602,17 +2606,23 @@ const STATS = {
       "date": "07-25",
       "cum": 18563,
       "subject": "0.1.64 - Spec two-stage economy (Phase 20); switch to 0.MINOR.BUILD versioning"
+    },
+    {
+      "hash": "826bb95",
+      "date": "07-25",
+      "cum": 18902,
+      "subject": "0.1.65 - Phase 20 stage gate (unwired) + docs-stats correction"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5911,
+      "value": 5952,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 6622,
+      "value": 6730,
       "tone": "special"
     },
     {
@@ -2622,12 +2632,12 @@ const STATS = {
     },
     {
       "label": "Tests",
-      "value": 3208,
+      "value": 3398,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 29,
+    "activeHours": 29.2,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5

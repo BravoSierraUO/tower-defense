@@ -267,23 +267,29 @@ Needs the user's call. Listed roughly in the order they block work.
 3. **Name of the third resource**, and what the HUD calls it. This is what
    unblocks Phase 18b's promoted-stat question, which is where this all started.
    Also the last thing blocking the currency half of the `addMetal()` split —
-   routing is decided (B1's table), but the destination pool has no name.
-9. **Does salvage carry into prep, or not?** ⚠️ **A direct contradiction to
-   resolve, not a gap.** The stated model is that salvage is run-only and "only
-   good for use during the tower defense game" — but H2's prep-side upgrades were
-   described as "same rule spend 10 salvage to upgrade to 1.10", which would mean
-   salvage survives the run. Two readings: (a) literally, salvage persists — which
-   collapses the two-economy split, since the run currency would fund permanent
-   power; or (b) "same rule" means the same *mechanic shape* (spend 10 → +10% to a
-   stat) with prep paying in the prep currency instead. (b) is consistent with
-   everything else in this document; (a) is what the words say. This one changes
-   what gets built, so it can't be assumed.
+   routing is decided (B1's table), but the destination pool has no name. And it
+   is now bigger than a label: [J3](#j3--three-different-things-would-be-called-metal)
+   found **three distinct things that would all be called "metal"** (the existing
+   currency, `ORE_LOOT_TABLE`'s common-roll key, and the new run-only salvage),
+   plus the design's own "idle gets metal" which actually maps to the rare-ore
+   stream. Cheap to rename now; expensive once the HUD, chest table and upgrade
+   costs all reference them.
+9. ~~**Does salvage carry into prep?**~~ **RESOLVED 2026-07-25 — neither reading
+   was right.** The in-run spend is salvage (temporary ×1.10); the *prep* spend is
+   **gold / manufactured parts** and raises the permanent base. So salvage never
+   leaves the run, and "same rule spend 10 salvage" describes the ×1.10 shape
+   *recurring each run on a higher base* — not prep paying in salvage. See
+   [Section I](#i-the-multiplicative-stat-chain). One qualification: starting
+   salvage can be seeded per-run by a room or base upgrade (J4), which is a
+   capped, gold-bought head start rather than salvage persisting.
 4. **Does the base-repair button survive?** See D — retire it, or repoint it at
    salvage metal as an in-session emergency heal.
-5. **What do chests actually contain,** now that they're one-time? Today they
-   pay scaled gold + metal (`spawner.js:104-109`). A one-time unlock probably
-   wants to pay something you can't get otherwise — base parts, upgrade pieces,
-   a tech — rather than a currency lump.
+5. ~~**What do chests actually contain?**~~ **ANSWERED 2026-07-25:** components
+   and materials, with a tier-scaled chance of a fully assembled engine —
+   bronze 90/10, silver 75/25, gold 50/50. See [J2](#j2--gaps-and-theyre-small).
+   Not a currency lump, which was the right instinct: a one-time unlock paying
+   currency would be strictly worse than paying something otherwise
+   unobtainable.
 6. **Where do the existing wave-clear rewards go?** `computeRewards()` pays gold
    *and* metal on a full clear (`spawner.js:92-99`), plus module charges and
    production parts. Under the split, which pool receives them, and does a clear
@@ -422,6 +428,137 @@ death back makes it earnable again.
 This is why H1 ships unwired. Gating builds before a run can end would leave a
 player permanently unable to build after wave 1 — a hard regression. The gate,
 death, and flee all land together.
+
+---
+
+## I. The multiplicative stat chain
+
+The upgrade model (H2) needs one new factor in a chain the codebase **already
+has**, not a new mechanism. That's the maintainability answer.
+
+`CONFIG.TOWER_TIERS` is already multiplicative — `damageMult`, `rangeMult`,
+`fireRateMult`, `healthMult` — applied in `Tower.applyTier()` as
+`damage = CONFIG.TOWER_DAMAGE * t.damageMult`. Phase 11 then added a *second*
+multiplicative factor: `affixMultiplier(item, stat)`, consumed by
+`Tower.effectiveDamage()` / `effectiveFireRate()` / `effectiveRange()` and read by
+`combat.js` (`:52`, `:139`, `:144`).
+
+So the designed chain is:
+
+```
+effective(stat) = BASE × persistentMult × itemAffixMult × runMult
+                         ↑ prep-bought    ↑ Phase 11,     ↑ NEW — salvage-bought,
+                           (gold/parts)     already live     resets every run
+```
+
+The user's own example resolves cleanly: base 5, spend salvage → `runMult` 1.10 →
+5.5 for that run. Die, `runMult` resets to 1. Prep-upgrade the persistent factor so
+base reads 6 → next run, 6 × 1.10 = 6.6.
+
+**Why a multiplier and not a stat edit:** resetting is a one-liner — set every
+turret's `runMult` back to 1 at run end. No snapshot, no restore, no path by which
+a temporary buff leaks into permanence. That property is the entire reason to
+model the temporary thing this way.
+
+### I1 — The one real refactor here
+
+The persistent factor is currently a **discrete 3-entry tier table**, but the
+design wants per-stat upgrades (raise DPS specifically, or fire rate
+specifically). So `Tower.tier` → per-stat persistent multipliers. Contained to
+`applyTier()` and `upgrade()`/`canUpgrade()`, but it does touch
+`CONFIG.TOWER_TIERS`, `TOWER_POWER_CONSUMPTION` (indexed by tier), the upgrade
+modal, and `world.towerUpgradeCost()`. Not hard; not a one-liner either.
+
+---
+
+## J. Itemization and the chest loot table
+
+The user's loop: idle collects raw material → processing turns it into components
+("gears", "wiring", "anything else") → a mission chest pays either components or,
+at some chance, a **fully assembled "engine"** that improves DPS → back at base you
+can build an engine yourself, and either path rolls a green/blue/gold rarity.
+
+### J1 — Phase 11 already built almost all of this
+
+Checked against source, not assumed:
+
+| designed | already in code |
+|---|---|
+| raw material from idle | `inventory.ore` = `fancyMetal`/`platinum`/`diamonds`, fed by `orePerSecond()` |
+| "processing" into gears/wiring | `REFINED_RECIPES`: `alloy` ← fancyMetal, plus `circuitWire`, `prismaticCoil` |
+| assembled "engine" | `COMPONENT_RECIPES.motor` — **the recipe already exists** |
+| "engine improves DPS" | `AFFIX_POOL` has `damage` → `damageMult` 0.03–0.08, and `Tower.effectiveDamage()` **already applies it** in combat |
+| green/blue/gold rarity | `RARITY_TIERS` — grey/green/**gold** (see J2) |
+| rarity chance at craft time | `rollItemRarity()`, with Foundry's `rarityBonusPct` already shifting weight out of grey |
+
+So "an engine that improves DPS" is a `motor` with a `damage` affix, and it is
+**functional today** — nothing needs wiring for the stat to bite. The affix pool's
+own comment says it "only rolls and stores" affixes pending a consumer, but that's
+stale for the combat stats: damage, fireRate, range and cooldown are all consumed.
+
+### J2 — Gaps, and they're small
+
+1. **No blue rarity.** `RARITY_TIERS` is grey (70) / green (25) / gold (5). The
+   design says green/blue/gold. One entry plus a weight rebalance — but note the
+   config comment claims the current three are "exactly the language the user
+   asked for," so this is a *change of mind*, worth recording as one rather than
+   looking like a bug.
+2. **Chests don't drop items at all.** `computeRewards()` pays scaled gold + metal
+   (`spawner.js:92-109`). The tier-scaled materials-vs-engine split is new — but
+   `ORE_LOOT_TABLE` is already a tier-indexed weighted table, so it's a pattern to
+   copy, not invent:
+
+   | chest | components | assembled engine |
+   |---|---|---|
+   | bronze | 90% | 10% |
+   | silver | 75% | 25% |
+   | gold | 50% | 50% |
+
+   This also **answers F5** (what one-time chests contain): items and materials,
+   not a currency lump. Which is the right shape — a one-time unlock paying a
+   currency lump would be strictly worse than paying something you can't get
+   another way.
+
+### J3 — ⚠️ Three different things would be called "metal"
+
+The naming collision that has to be resolved, and it's why F3 matters more than a
+label:
+
+1. **`world.metal`** — the existing currency that buys turrets.
+2. **`ORE_LOOT_TABLE`'s `metal` key** (80/72/65 weight) — the common roll, meaning
+   "nothing rare this tick." Never enters `inventory.ore`, which only holds
+   `fancyMetal`/`platinum`/`diamonds`.
+3. **"salvage metal"** — the new run-only currency.
+
+Plus the design's own "idle gets metal", which from J1 maps to the *rare ore*
+stream (`fancyMetal` etc.), not to `world.metal`. Four uses, three meanings. Any
+one of them can be renamed cheaply right now; none can be renamed cheaply once the
+HUD, the chest table and the upgrade costs all reference them.
+
+### J4 — Starting salvage: room vs. base upgrade
+
+The design offers both: a "salvage room" holding e.g. 50 salvage to start a run
+with, or a base upgrade granting 10/20/30.
+
+**The room version needs zero new machinery** — `ROOM_TYPES` entries already carry
+`{ output, tiers: [...] }` and `commandCore.totals()` sums them generically, so a
+Salvage Bay with `tiers: [{startingSalvage:10}, {…20}, {…30}]` would work, gold-gated
+and tier-scaled like every other room.
+
+**But `ROOM_TYPES` is at a hard cap of 10 and `tests/balance.test.mjs:229` enforces
+it**, because `game.js`'s number-key selector addresses exactly `'1'`–`'9'`,`'0'`.
+That guard exists because the bug already happened once (v1.5: inserting `mine`
+shifted every later room and left Dock unreachable). An 11th room breaks a tested
+invariant.
+
+So the **base-upgrade route is cheaper**, and it pairs naturally with the base-parts
+max-HP upgrade Section D already wants — one "base upgrades" surface covering HP
+and starting salvage.
+
+Worth noting the cap is softer than it was: Phase 18a's drawer is a scrollable
+list, so displaying 10+ entries no longer depends on digit keys. The limit is now
+only about keyboard shortcuts. Raising it is a deliberate decision with a test to
+update, not a silent break.
 
 ---
 
