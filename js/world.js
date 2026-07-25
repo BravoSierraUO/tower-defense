@@ -435,21 +435,22 @@ export class World {
     return this.towers.some(t => t.x === x && t.y === y) || this.scavengers.some(s => s.x === x && s.y === y);
   }
 
-  // Phase 16: the base "compound" is a square ±BASE_RING_HALF around the base. A point is
-  // inside the ring if it's within that square AND off the base core (SCAVENGER_MIN_BASE_-
-  // DISTANCE, circular); it's out in the tower field if it's beyond the square in x or y.
-  // The two zones are complementary — a cell is one or the other, never both.
+  // Phase 16, corrected in Phase 18: the base "compound" is an ANNULUS around the base —
+  // outer edge BASE_RING_RADIUS, inner edge SCAVENGER_MIN_BASE_DISTANCE, both radial. A
+  // point is inside the ring if it falls between the two; it's out in the tower field if
+  // it's beyond the outer radius. The two zones are complementary except the base core
+  // itself, which is in neither on purpose — nothing places on the base.
+  //
+  // Both predicates are now one distance comparison against the same radius, so they can't
+  // disagree about where the boundary is. The square version needed two axis comparisons in
+  // each, duplicated across both methods.
   inBaseRing(x, y) {
-    const dx = Math.abs(x - this.base.x);
-    const dy = Math.abs(y - this.base.y);
     const dist = Math.hypot(x - this.base.x, y - this.base.y);
-    return dist >= CONFIG.SCAVENGER_MIN_BASE_DISTANCE && dx <= CONFIG.BASE_RING_HALF && dy <= CONFIG.BASE_RING_HALF;
+    return dist >= CONFIG.SCAVENGER_MIN_BASE_DISTANCE && dist <= CONFIG.BASE_RING_RADIUS;
   }
 
   inTowerField(x, y) {
-    const dx = Math.abs(x - this.base.x);
-    const dy = Math.abs(y - this.base.y);
-    return dx > CONFIG.BASE_RING_HALF || dy > CONFIG.BASE_RING_HALF;
+    return Math.hypot(x - this.base.x, y - this.base.y) > CONFIG.BASE_RING_RADIUS;
   }
 
   placeTower(x, y, damageType = 'kinetic') {

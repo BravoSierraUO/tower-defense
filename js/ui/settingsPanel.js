@@ -81,6 +81,23 @@ export class SettingsPanel {
       this.stopListeningForKeybind();
     });
 
+    // Phase 18a: which build-menu surface is active. Follows the showGrid
+    // precedent documented at the top of this file exactly — game.js/ui.js read
+    // `ui.settings.menuStyle` directly rather than this panel pushing state into
+    // Game. Stored as a string enum ('bar' | 'radial') rather than a boolean from
+    // day one, so a third style later needs no localStorage migration — the same
+    // forward-compatibility reasoning loadKeybindings() applies to bindings.
+    // Defaults to 'bar': Phase 18a makes the bar the default on every device, and
+    // an unset key reading as 'bar' is what makes that true for existing players
+    // too. Anything unrecognised falls back rather than leaving the game with no
+    // build menu at all.
+    this.menuStyle = localStorage.getItem('td.menuStyle') === 'radial' ? 'radial' : 'bar';
+    this.menuStyleButtons = [...document.querySelectorAll('#menu-style-segment .settings-segment-btn')];
+    for (const btn of this.menuStyleButtons) {
+      btn.addEventListener('click', () => this.applyMenuStyle(btn.dataset.menuStyle));
+    }
+    this.applyMenuStyle(this.menuStyle);
+
     // Default OFF on purpose (unset localStorage reads as false) — a debug aid,
     // not something a new player should see turned on.
     this.gridCheckbox = document.getElementById('grid-checkbox');
@@ -112,6 +129,16 @@ export class SettingsPanel {
     const light = theme === 'light';
     this.themeToggle.setAttribute('aria-checked', String(light));
     this.themeToggleLabel.textContent = light ? 'Light' : 'Dark';
+  }
+
+  applyMenuStyle(style) {
+    this.menuStyle = style === 'radial' ? 'radial' : 'bar';
+    try { localStorage.setItem('td.menuStyle', this.menuStyle); } catch (e) {}
+    for (const btn of this.menuStyleButtons) {
+      const active = btn.dataset.menuStyle === this.menuStyle;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-checked', String(active));
+    }
   }
 
   applySoundToggleUI(on) {

@@ -10,7 +10,13 @@ export const KEYBIND_ACTIONS = [
   { id: 'panUp', label: 'Move Up' },
   { id: 'panDown', label: 'Move Down' },
   { id: 'panLeft', label: 'Move Left' },
-  { id: 'panRight', label: 'Move Right' }
+  { id: 'panRight', label: 'Move Right' },
+  // Phase 18 (B1): added after a laptop player with no scroll wheel found zoom
+  // literally unreachable. loadKeybindings() below merges over the defaults for
+  // exactly this case — players with bindings saved before these existed pick up
+  // '='/'-' automatically instead of getting an undefined binding.
+  { id: 'zoomIn', label: 'Zoom In' },
+  { id: 'zoomOut', label: 'Zoom Out' }
 ];
 
 // Merges over the defaults rather than trusting the saved blob wholesale, so a

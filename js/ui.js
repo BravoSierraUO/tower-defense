@@ -9,6 +9,7 @@ import { MenuModal } from './ui/menuModal.js';
 import { ConfirmModal } from './ui/confirmModal.js';
 import { MissionBanner } from './ui/missionBanner.js';
 import { RadialMenu } from './ui/radialMenu.js';
+import { BottomBar } from './ui/bottomBar.js';
 import { WavePanel } from './ui/wavePanel.js';
 import { MissionPanel } from './ui/missionPanel.js';
 import { InventoryPanel } from './ui/inventoryPanel.js';
@@ -28,21 +29,24 @@ import { Sound } from './sound.js';
 export class UI {
   // callbacks: { onUnlockTech(id), onDockTrade(), onPrestige(), onBuySkill(id),
   // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold(), onToggleAbout(),
-  // onToggleCore(), onReportBug(), onRadialAction(id), onOpenWaveMenu(), onSelectWave(n, isReplay),
+  // onToggleCore(), onReportBug(), onMenuAction(id), onOpenWaveMenu(), onSelectWave(n, isReplay),
   // onOpenMissionMenu(), onTrackMission(id), onOpenInventoryMenu(), onRefine(id), onCraft(id),
   // onCloseUpgradeModal(), onUpgradeSelected(), onEquipItem(id), onUnequipItem(), onCloseMenuModal(),
-  // onUseAbility(id) } —
+  // onUseAbility(id), onZoom(factor), onCancelArmed() } —
   // UI only translates DOM clicks into these; it never mutates gameplay state directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onCloseUpgradeModal, onUpgradeSelected, onEquipItem, onUnequipItem, onRadialAction, onCloseMenuModal, onUseAbility } = {}) {
-    this.modeHint = document.getElementById('ui-mode-hint');
-
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onCloseUpgradeModal, onUpgradeSelected, onEquipItem, onUnequipItem, onMenuAction, onCloseMenuModal, onUseAbility, onZoom, onCancelArmed } = {}) {
     this.hud = new HudPanel({ onRestart, onRepairBase, onOpenWaveMenu, onUseAbility });
     this.core = new CorePanel({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold });
     this.field = new FieldPanel();
     this.profile = new ProfilePanel({ onPrestige, onBuySkill });
     this.about = new AboutPanel({ onToggleAbout });
     this.mission = new MissionBanner({ onOpenMenu: onOpenMissionMenu });
-    this.radialMenu = new RadialMenu({ onAction: onRadialAction });
+    // Phase 18a: both menu renderers are constructed unconditionally and share
+    // one onMenuAction callback — `menuStyle` decides which one is visible, not
+    // which one exists. Constructing both keeps the switch a pure display concern
+    // and means flipping the setting mid-game needs no re-init.
+    this.radialMenu = new RadialMenu({ onAction: onMenuAction });
+    this.bottomBar = new BottomBar({ onAction: onMenuAction, onZoom, onCancelArmed });
     this.waves = new WavePanel({ onSelectWave, onClose: onOpenWaveMenu });
     this.missionPanel = new MissionPanel({ onTrack: onTrackMission, onClose: onOpenMissionMenu });
     this.inventoryPanel = new InventoryPanel({ onRefine, onCraft });
@@ -59,9 +63,26 @@ export class UI {
     this.lastMenuModalOpen = false; // diff-watch so the menuModal open/back sound fires once per transition, not every frame
   }
 
-  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, missions, waveMenuOpen, missionMenuOpen, menuModalOpen, menuModalTab, upgradeModalOpen) {
+  update(world, fps, state, view, commandCore, profile, selectedTower, selectedScavenger, missions, waveMenuOpen, missionMenuOpen, menuModalOpen, menuModalTab, upgradeModalOpen, menuConfig, armedLabel) {
     const spawner = world.spawner;
     const base = world.base;
+
+    // Phase 18a: the bar is persistent, so unlike the radial it updates every
+    // frame — costs and lock states move while it's open (metal ticks up from
+    // salvage). BottomBar#update does its own change-detection before touching
+    // the DOM; see its signature() comment. Hidden entirely in radial mode, and
+    // hidden behind any full-screen modal so it can't be tapped through one.
+    const barMode = this.settings.menuStyle === 'bar';
+    const anyModalOpen = waveMenuOpen || missionMenuOpen || menuModalOpen || upgradeModalOpen;
+    this.bottomBar.el.hidden = !barMode || anyModalOpen || state !== 'playing';
+    if (barMode) {
+      if (anyModalOpen) this.bottomBar.close();
+      else this.bottomBar.update(menuConfig, view, armedLabel);
+    }
+    // Flipping the setting to 'radial' shouldn't leave a stale open drawer behind,
+    // and flipping to 'bar' shouldn't leave the radial hanging over the new bar.
+    if (!barMode && this.bottomBar.isOpen) this.bottomBar.close();
+    if (barMode && this.radialMenu.isOpen) this.radialMenu.close();
 
     this.waves.overlay.hidden = !waveMenuOpen;
     if (waveMenuOpen) this.waves.update(spawner, world);
@@ -78,9 +99,10 @@ export class UI {
     const inInventory = menuModalOpen && menuModalTab === 'inventory';
     const inAbout = menuModalOpen && menuModalTab === 'about';
     // Phase 5b: the avatar menu's Profile/Settings/Inventory/About items and the
-    // radial menu's Inventory leaf all open the same Player Menu Shell modal now,
+    // build menu's Inventory leaf all open the same Player Menu Shell modal now,
     // just on different tabs — one path instead of four independent ones.
-    this.modeHint.textContent = 'Avatar menu (top right) → Account · Settings · Inventory · Base · About';
+    // Phase 18: the #ui-mode-hint write that used to sit here is gone with the
+    // element (see game.html) — it reassigned the same constant string 60x/second.
 
     this.core.el.hidden = !inCore;
     if (inCore) this.core.update(world, commandCore);

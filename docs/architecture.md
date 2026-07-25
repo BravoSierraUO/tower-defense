@@ -11,7 +11,7 @@ http.server` (or any static server) from the repo root is enough.
 |---|---|
 | `game.js` | Orchestrator. Owns every other system, runs the `requestAnimationFrame` loop, holds the view state machine, routes input to the right subsystem. The only file that knows about all the others. |
 | `config.js` | Every tunable constant (costs, rates, tiers, colors) in one object, `CONFIG`. No logic. |
-| `camera.js` | Pan/zoom, screen↔world coordinate conversion for the field view. |
+| `camera.js` | Pan/zoom, screen↔world coordinate conversion for the field view. `zoomBy(factor)` is the single writer of `this.zoom` and owns the ZOOM_MIN/ZOOM_MAX clamp — shared by the mouse wheel, the `=`/`-` keybindings, and the bottom bar's zoom buttons. |
 | `renderer.js` | Canvas drawing only — field view, Command Core grid view. Never mutates state. |
 | `grid.js` | Grid-line drawing helper used by `renderer.js`. |
 | `input.js` | Raw DOM listeners → an edge-triggered `keyPresses` array + click/right-click queues, drained once per frame by `game.js`. |
@@ -23,6 +23,7 @@ http.server` (or any static server) from the repo root is enough.
 | `commandcore.js` / `room.js` | The interior base-building grid: room placement, tiers, build timers, tech tree, module slots. Exposes `totals()` — the one aggregate object `world.js` reads to apply Core bonuses to the field economy. |
 | `profile.js` | Persistent player progression: level/CP, prestige, skill tree, lifetime stats, save/load. Survives `Game.restart()` — everything else doesn't. |
 | `achievements.js` | Pure data: 21 badges, each a `test(profile, event)` predicate. Evaluated by `profile.js`'s fixpoint loop. |
+| `menuConfig.js` | Build-menu **contents** as pure data — `buildMenuConfig(view, world, commandCore)` returns the level-1 slots plus the Build submenu, each leaf carrying `{ id, label, digit, cost, color, desc, locked, reason }`. No DOM, no arcs, no slots. Both menu renderers consume it unchanged, so "what is buildable and why is it locked" has exactly one definition. Deliberately a free function rather than a `Game` method: `Game` can't be constructed outside a browser, which is what made this logic untestable before Phase 18a. |
 | `ui.js` | Thin composition shell: owns the view switch (which side panel is visible) and forwards per-frame updates to whichever `js/ui/*.js` panel owns each concern. Never mutates gameplay state directly — only translates DOM clicks into callbacks passed in by `game.js`. |
 | `ui/hudPanel.js` | Persistent top-bar stats, base health bar, repair/trigger-wave buttons, win banner, and the two toast queues (achievement unlock, wave-end chest). |
 | `ui/corePanel.js` | Command Core view: room slots, tech tree, power/compute/storage/research readouts, dock/market trade. |
@@ -33,9 +34,12 @@ http.server` (or any static server) from the repo root is enough.
 | `ui/avatarMenu.js` | Top-right avatar dropdown — routes to Profile/About/Settings/Report-bug/Reset. |
 | `ui/confirmModal.js` | Shared yes/no confirmation modal used by both reset-progress entry points. |
 | `ui/missionBanner.js` | Tutorial mission banner + the reusable `.mission-glow` highlight. |
+| `ui/radialMenu.js` | Phase 9b's click-to-open two-level radial build menu. Stateless between opens — rebuilt from `menuConfig.js` on every open. Active only when `settings.menuStyle === 'radial'`. |
+| `ui/bottomBar.js` | Phase 18a's five-slot bottom action bar and its drawer — the **default** build surface. Unlike the radial it's persistent, so it updates per frame and does its own change-detection (`signature()`) before touching the DOM. Renders the same `menuConfig.js` data as a vertical list. |
 | `ui/toast.js` | Reusable timed-toast queue, used by `hudPanel.js` for both toast types. |
 | `stats.js` | Fetches and caches `stats.json` for the in-game About panel. |
 | `utils.js` | Grab-bag of small pure helpers. |
+| `main.js` | Entry point: sizes the canvas, starts the loop, and exposes `window.__game` as a read-only handle for the Playwright live-verification path (see [Testing](#testing)). |
 
 ## Orchestration
 
@@ -56,14 +60,26 @@ http.server` (or any static server) from the repo root is enough.
 
 ## View state machine
 
-`Game.view` is one of `'field' | 'core' | 'profile' | 'about' | 'settings'`, toggled via the
-avatar-menu dropdown (top-right; `js/ui/avatarMenu.js`) — Phase 8g removed the old `B`/`P`/`O`/`S`
-hotkeys after `S` turned out to collide with WASD camera panning (holding S to pan south also
-flipped Settings open, which then stopped `camera.update()` from running at all). Exactly one
-top-level `<aside>` in `index.html` is un-hidden at a time (`core-panel` / `profile-panel` /
-`about-panel` / `settings-panel`); the field view has no panel of its own, just the always-visible
-HUD. Camera panning and tower/room placement clicks are both gated on `view === 'field'` — nothing
-happens underneath a panel.
+`Game.view` is one of just **`'field' | 'core'`**. Account/Settings/Inventory/About are *not*
+view values — Phase 5b folded them into the Player Menu Shell (`menuModalOpen` + `menuModalTab`,
+`js/ui/menuModal.js`), and the Wave/Mission/Upgrade menus are independent overlay flags for the
+same reason: an overlay that doesn't touch `view` can open from either view without disturbing
+the view switch. Both are reached from the avatar-menu dropdown (top-right;
+`js/ui/avatarMenu.js`) — Phase 8g removed the old `B`/`P`/`O`/`S` hotkeys after `S` turned out to
+collide with WASD camera panning (holding S to pan south also flipped Settings open, which then
+stopped `camera.update()` from running at all).
+
+The game page is `game.html`; `index.html` is the docs/portfolio page. Camera panning and
+tower/room placement clicks are both gated on `view === 'field'` — nothing happens underneath a
+panel.
+
+**That gate is also a known limitation, not just a safeguard.** Because `camera.update()` only
+runs in field view, the Command Core has no pan and no zoom on any device — which is why
+`js/ui/bottomBar.js` disables both of its zoom slots in Core view, and why Phase 18c had to make
+`renderer.coreLayout()`'s cell size responsive (clamped to a 44px touch floor) rather than simply
+letting a phone player zoom out to reach the grid's edge columns. Whether the Core should stop
+being a second view at all — becoming a modal like every other secondary surface already is — is
+filed as Phase 19 (`index.html`'s `ROADMAP`, card `p19`), deliberately unscoped.
 
 ## Economy layers
 
@@ -129,6 +145,32 @@ cross-checks instead (see `changelog.md`'s per-version notes for specifics). Eve
 plain JS with no DOM dependency and can be imported directly under Node, which is what makes
 the zero-dependency test harness possible at all.
 
+**Where that line actually falls is a design choice, not a fact of the code.** Phase 18a is the
+worked example: `buildRadialConfig()` was a `Game` method whose body touched no DOM at all, but
+it was untestable anyway, because `Game`'s constructor builds Camera/Renderer/Input/UI and
+`new Game()` throws under Node. Moving it to `js/menuConfig.js` as a free function over
+`(view, world, commandCore)` — the three zero-DOM objects `tests/helpers.mjs`'s `freshGame()`
+already builds — took it from 0 tests to 22 without changing a line of its logic. When something
+genuinely testable is stuck behind an untestable constructor, prefer extracting it over declaring
+it uncoverable.
+
+### Live verification (the DOM/canvas layer)
+
+`@playwright/test` is a devDependency, so the layer above has a second check available to it that
+isn't `npm test`: launch Chromium against `python3 -m http.server` and assert on the real page.
+`main.js` exposes `window.__game` specifically so those checks can read real state
+(`camera.zoom`, `view`, `renderer.coreLayout()`) instead of inferring it from pixels. This is not
+wired into `npm test` — it needs a server and a ~150MB browser binary — but it is the right tool
+when a change is layout, hit-testing, or CSS.
+
+Phase 18a is the argument for using it. **Assert computed values, not screenshots**: three real
+bugs in that pass were invisible in a screenshot and caught by measurement — a caret positioned
+against the wrong ancestor, the same caret measured while its container was still `hidden` (every
+rect reads 0), and a `:hover` rule at specificity (0,3,0) silently beating a state class at
+(0,2,0), which left an active control unreadable in *both* themes in what turned out to be its
+only reachable state. Also check both themes; a hardcoded `rgba()` of the dark accent looks
+correct until someone flips to light.
+
 ## Docs tooling (Phase 5)
 
 `whatever.html` is a single doc page (merged from two, see `changelog.md` v1.2) rendered by
@@ -149,14 +191,23 @@ commit.
 ## Known non-goals (as of this writing)
 
 - Still one generic `Tower` class — no per-tower XP/evolution/module loadout (see
-  `whatever.html`'s Phase 7b card, deliberately unscoped pending a playtest pass). Phase 7a
+  `index.html`'s Phase 7b card, deliberately unscoped pending a playtest pass). Phase 7a
   added a `damageType` tag (kinetic/plasma/energy) and a rock-paper-scissors matchup
   multiplier against enemy `armorType`, but stats (damage/range/fire rate/cost) are still
   identical across all three — that differentiation is Phase 7b's job.
 - Towers have no health and can't be damaged — enemies walk straight through them to the
   base (deliberately cut from Phase 4b, filed as an unscoped backlog item).
 - Single base, single player, world-center-fixed — no multiplayer/multi-base yet.
+- Not responsive, and not playable by touch. `css/style.css` has no `@media` blocks,
+  `game.html` has no viewport meta tag, `input.js` binds mouse events only, and the canvas
+  ignores `devicePixelRatio`. Several features are reachable *only* via right-click (sell,
+  rush-build, install-module) or hover (the placement ghost). Full findings, file:line-cited
+  and severity-rated, in [mobile-audit.md](mobile-audit.md); the build slices are Phase
+  18/18a/18b/18c in `index.html`'s roadmap.
 - No difficulty-curve tuning pass — the balance test suite guards structure, not fun.
-- `inventory.js`'s ore/refined/component system (Phase 11 skeleton) has no UI at all — no
-  Inventory-tab rendering, no way to trigger `refine()`/`craftComponent()` except a direct
-  method call, no HUD display of stacks or rolled items. Data model and tests only.
+- `inventory.js`'s ore/refined/component system has no *HUD* presence — no live stack or
+  rolled-item display outside the Inventory panel itself. The panel exists as of Phase 11's
+  UI layer (v2.18, `js/ui/inventoryPanel.js`, opened from the menu's Inventory leaf) and
+  drives `refine()`/`craftComponent()` for real; what's still missing is spending a crafted
+  component at a Tower/Scavenger upgrade, and a stats-screen odds table for the
+  `lifetimeOreMined`/`lifetimeOreSalvaged` counters that already exist.

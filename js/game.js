@@ -1,4 +1,5 @@
 import { CONFIG } from './config.js';
+import { buildMenuConfig } from './menuConfig.js';
 import { Camera } from './camera.js';
 import { Renderer } from './renderer.js';
 import { Input } from './input.js';
@@ -51,7 +52,15 @@ export class Game {
       },
       onEquipItem: itemId => this.world.equipItem(this.selectedTower || this.selectedScavenger, itemId),
       onUnequipItem: () => this.world.unequipItem(this.selectedTower || this.selectedScavenger),
-      onRadialAction: id => this.handleRadialAction(id),
+      onMenuAction: id => this.handleMenuAction(id),
+      // Phase 18a: the bottom bar's two zoom slots. Routed through
+      // Camera#zoomBy so the ZOOM_MIN/ZOOM_MAX clamp is applied in exactly one
+      // place, shared with the wheel and the new keyboard bindings.
+      onZoom: factor => this.camera.zoomBy(factor),
+      // The bar's tap-to-cancel affordance. Same disarm the Escape branch of
+      // handleInput() does, minus the menu-closing — this is a deliberate
+      // "cancel what's armed" rather than a universal dismiss.
+      onCancelArmed: () => { this.fieldBuildType = null; this.selectedRoomType = null; },
       // Phase 8g: the only mouse-driven way into Core now that the B hotkey is
       // gone — same toggle semantics the old key handler had (anywhere else -> field).
       // Phase 5b: also closes the Player Menu Shell modal if it happened to be
@@ -168,97 +177,57 @@ export class Game {
   // build bar. Opens fresh at the clicked screen point with a config built
   // from whatever's true right now (room locks, current costs) — see
   // js/ui/radialMenu.js for why the menu itself needs no per-frame update().
+  // Phase 18a: only reachable when ui.settings.menuStyle === 'radial'; in 'bar'
+  // mode the bottom bar is the build surface and an empty click deselects.
   openRadialMenu(screenX, screenY) {
-    this.ui.radialMenu.open(screenX, screenY, this.buildRadialConfig());
+    this.ui.radialMenu.open(screenX, screenY, this.buildMenuConfig());
   }
 
-  buildRadialConfig() {
-    const missions = { id: 'missions', icon: '?', label: 'Missions' };
-    // Phase 11 UI layer: promoted from Phase 9b's "coming soon" stub now that
-    // a real item/inventory system exists — opens the Inventory Menu exactly
-    // the way the Missions leaf above opens the Mission Menu.
-    const inventory = { id: 'inventory', icon: '?', label: 'Inventory' };
-    const home = { id: 'home', icon: '⌂', label: this.view === 'field' ? 'Home' : 'Field' };
-
-    if (this.view === 'field') {
-      // Phase 7a: the old single "Tower" leaf is now 3 typed attackers
-      // (Railgun/Laser/Missile — CONFIG.DAMAGE_TYPES' labels), same cost/
-      // stats as each other this phase, differing only in damageType.
-      const towerCostNum = this.world.towerCost();
-      const scavengerCostNum = this.world.scavengerCost();
-      // Phase 12: locked+reason on affordability so a click while too poor explains
-      // itself (radial-stub) instead of silently no-op'ing once armed and clicked
-      // on the field — see the reactor confusion this same gap caused in Core view.
-      const attackerLeaves = Object.entries(CONFIG.DAMAGE_TYPES).map(([type, def], i) => ({
-        id: type, digit: `${i + 1}`, label: def.label, color: def.color, cost: `${towerCostNum}m`,
-        locked: this.world.metal < towerCostNum,
-        reason: `Need ${towerCostNum}m metal (have ${Math.floor(this.world.metal)}m)`
-      }));
-      const build = {
-        id: 'build', icon: '+', label: 'Build',
-        flyout: [
-          ...attackerLeaves,
-          {
-            id: 'scavenger', digit: '4', label: 'Scavenger', cost: `${scavengerCostNum}m`,
-            locked: this.world.metal < scavengerCostNum,
-            reason: `Need ${scavengerCostNum}m metal (have ${Math.floor(this.world.metal)}m)`
-          }
-        ]
-      };
-      return { level1: [missions, inventory, home, build], flyoutRadius: 190, flyoutArc: 90 };
+  // What an empty-space click does, which is the one behaviour `menuStyle` has to
+  // fork. In radial mode it opens the menu at the click point (Phase 9b's thesis,
+  // preserved rather than quietly overwritten — its own card records the user
+  // correction that produced it: "no bar at the bottom... click the empty space...
+  // 1st level radial pops up"). In bar mode it deselects only.
+  emptyFieldClick(screenX, screenY) {
+    if (this.ui.settings.menuStyle === 'radial') {
+      this.openRadialMenu(screenX, screenY);
+      return;
     }
-
-    // Core view: same keyOrder convention as the '1'-'9'/'0' shortcut above,
-    // so the digit badge in each flyout leaf still matches its keyboard key.
-    // Phase 12: each room leaf now carries its build cost and, when locked, a
-    // `reason` (already built — one of each room, upgrade instead; missing
-    // tech; or can't afford it) so RadialMenu can surface it as a tooltip/stub
-    // instead of the leaf just silently doing nothing on click.
-    const keyOrder = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-    const roomFlyout = Object.keys(CONFIG.ROOM_TYPES).map((type, i) => {
-      const def = CONFIG.ROOM_TYPES[type];
-      const unlocked = this.commandCore.isRoomUnlocked(type);
-      // A stackable type (Reactor) is never "already built"-locked — you can keep adding.
-      const builtLock = this.commandCore.isBuilt(type) && !def.stackable;
-      const cost = this.commandCore.buildCost(type);
-      const afford = this.world.gold >= cost;
-      let reason = null;
-      if (builtLock) {
-        reason = `${def.label} already built — click it on the grid to upgrade instead`;
-      } else if (!unlocked) {
-        const techNode = CONFIG.TECH_TREE.find(n => n.unlocksRoom === type);
-        reason = techNode ? `Requires ${techNode.label} tech` : 'Locked';
-      } else if (!afford) {
-        reason = `Need ${cost}g gold (have ${Math.floor(this.world.gold)}g)`;
-      }
-      return {
-        id: type,
-        digit: keyOrder[i],
-        label: def.label,
-        color: def.color,
-        cost: builtLock ? null : `${cost}g`,
-        locked: !unlocked || builtLock || !afford,
-        reason
-      };
-    });
-    const build = { id: 'build', icon: '+', label: 'Build', flyout: roomFlyout };
-    return { level1: [missions, inventory, home, build], flyoutRadius: 260, flyoutArc: 170 };
+    this.fieldBuildType = null;
+    this.selectedRoomType = null;
+    this.selectedTower = null;
+    this.selectedScavenger = null;
   }
 
-  // Dispatches a leaf pick from the radial menu (js/ui/radialMenu.js already
-  // closed itself by the time this runs). Room-type ids are checked against
-  // CONFIG.ROOM_TYPES rather than hardcoded, so a future room type needs no
-  // change here.
-  handleRadialAction(id) {
-    if (id === 'home') {
+  // Phase 18a: the contents themselves live in js/menuConfig.js as a pure
+  // function so both menu renderers share one definition of what's buildable and
+  // why something's locked, and so it can be unit-tested without a DOM (Game
+  // can't be constructed outside a browser). This stays as a thin accessor
+  // because callers already have a Game, not a (view, world, commandCore) triple.
+  buildMenuConfig() {
+    return buildMenuConfig(this.view, this.world, this.commandCore);
+  }
+
+  // Dispatches a leaf pick from whichever menu renderer is active (the radial
+  // closes itself before this runs; the bar keeps its drawer state). Room-type
+  // ids are checked against CONFIG.ROOM_TYPES rather than hardcoded, so a future
+  // room type needs no change here.
+  handleMenuAction(id) {
+    if (id === 'base') {
+      // Phase 18a: was two actions behind one view-flipping label ('home' —
+      // Field recentred the camera, Core exited). A fixed bar slot can't mean
+      // both, so entering the Core now *also* recentres: the camera work isn't
+      // dropped, it rides along, and leaving the Core puts you back at the base
+      // rather than wherever you'd panned off to.
       if (this.view === 'field') {
-        this.camera.x = 0;
-        this.camera.y = 0;
+        this.camera.x = CONFIG.BASE_X;
+        this.camera.y = CONFIG.BASE_Y;
         this.camera.zoom = 1;
+        this.view = 'core';
       } else {
         this.view = 'field';
-        this.selectedRoomType = null;
       }
+      this.selectedRoomType = null;
     } else if (id === 'missions') {
       this.missionMenuOpen = true;
     } else if (id === 'inventory') {
@@ -308,8 +277,12 @@ export class Game {
       if (key === 'escape') {
         // Phase 9b: universal cancel — closes an open radial menu and disarms
         // whatever build type was armed, so a fresh click reopens the menu
-        // instead of placing/building immediately.
+        // instead of placing/building immediately. Phase 18a: closes the bottom
+        // bar's drawer on the same key, so the two menu styles cancel
+        // identically. (The bar also carries a tap-to-cancel button, because
+        // touch has no Escape — see js/ui/bottomBar.js.)
         this.ui.radialMenu.close();
+        this.ui.bottomBar.close();
         this.fieldBuildType = null;
         this.selectedRoomType = null;
         this.waveMenuOpen = false;
@@ -318,7 +291,7 @@ export class Game {
         this.upgradeModalOpen = false;
       } else if (this.view === 'core') {
         // Still positional (index into Object.keys(CONFIG.ROOM_TYPES)) — the
-        // radial menu's Build flyout (buildRadialConfig() above) must be kept
+        // build menu's Build submenu (js/menuConfig.js) must be kept
         // in the same order by hand. Explicit keyOrder (not Number(key)-1)
         // just supports all 10 current room types, with '0' as the 10th slot
         // instead of computing to -1.
@@ -330,7 +303,7 @@ export class Game {
         // view already uses for its 10 room slots. Phase 7a: 1-3 are now the 3
         // typed attackers (kinetic/energy/plasma, in CONFIG.DAMAGE_TYPES'
         // declared order — Railgun/Missile/Laser), 4 is Scavenger; must stay in
-        // the same order as buildRadialConfig()'s Field flyout above.
+        // the same order as js/menuConfig.js's Field submenu.
         const fieldKeyOrder = ['1', '2', '3', '4'];
         const fieldTypes = [...Object.keys(CONFIG.DAMAGE_TYPES), 'scavenger'];
         const idx = fieldKeyOrder.indexOf(key);
@@ -346,6 +319,14 @@ export class Game {
       // underneath, same convention as any other context menu.
       if (this.ui.radialMenu.isOpen) {
         this.ui.radialMenu.close();
+        continue;
+      }
+      // Phase 18a: same convention for the bar's drawer — its rows are DOM
+      // elements above the canvas, so a click arriving here while it's open is by
+      // definition outside it. Dismiss only, no placement underneath, exactly as
+      // the radial behaves above.
+      if (this.ui.bottomBar.isOpen) {
+        this.ui.bottomBar.close();
         continue;
       }
       if (this.view === 'field') {
@@ -387,9 +368,13 @@ export class Game {
           if (this.selectedTower) { Sound.play('build'); this.fieldBuildType = null; }
           else Sound.play('nope');
         } else {
-          // Nothing armed and nothing to interact with — pop the radial menu
-          // open right here instead of the old default-to-Tower placement.
-          this.openRadialMenu(click.x, click.y);
+          // Nothing armed and nothing to interact with. Phase 9b popped the
+          // radial open right here (replacing an older default-to-Tower
+          // placement) — Phase 18a keeps that, but only in radial mode. In bar
+          // mode the bar IS the build surface, so an empty click deselects and
+          // nothing else; opening a radial on top of a permanent bar would give
+          // two competing build menus and make `menuStyle` a half-setting.
+          this.emptyFieldClick(click.x, click.y);
         }
       } else if (this.view === 'core') {
         const cell = this.renderer.screenToCoreCell(click.x, click.y);
@@ -404,7 +389,7 @@ export class Game {
           this.world.upgradeRoom(cell.gx, cell.gy);
         } else {
           // Empty cell (or missed the grid entirely) and nothing armed.
-          this.openRadialMenu(click.x, click.y);
+          this.emptyFieldClick(click.x, click.y);
         }
       }
     }
@@ -508,7 +493,21 @@ export class Game {
     } else if (this.view === 'core') {
       this.renderer.drawCore(this.commandCore, this.selectedRoomType, this.input.mouse);
     }
-    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions, this.waveMenuOpen, this.missionMenuOpen, this.menuModalOpen, this.menuModalTab, this.upgradeModalOpen);
+    this.ui.update(this.world, this.fps, this.state, this.view, this.commandCore, this.profile, this.selectedTower, this.selectedScavenger, this.missions, this.waveMenuOpen, this.missionMenuOpen, this.menuModalOpen, this.menuModalTab, this.upgradeModalOpen, this.buildMenuConfig(), this.armedLabel());
+  }
+
+  // Human name of whatever build type is armed, for the bottom bar's armed-state
+  // indicator — null when nothing is. Reads the same CONFIG labels the menu does
+  // rather than a second copy of the names.
+  armedLabel() {
+    if (this.view === 'field' && this.fieldBuildType) {
+      if (this.fieldBuildType === 'scavenger') return 'Scavenger';
+      return CONFIG.DAMAGE_TYPES[this.fieldBuildType]?.label || null;
+    }
+    if (this.view === 'core' && this.selectedRoomType) {
+      return CONFIG.ROOM_TYPES[this.selectedRoomType]?.label || null;
+    }
+    return null;
   }
 
   loop(timestamp) {

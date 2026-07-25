@@ -17,7 +17,7 @@ export class MissionBanner {
   }
 
   // Re-triggers the glow-flash on whatever's currently glowing. Public so the
-  // radial menu's Missions slot (Phase 9b — see game.js handleRadialAction)
+  // build menu's Missions slot (Phase 9b — see game.js handleMenuAction)
   // can reuse the same "show me" nudge instead of duplicating it.
   flash() {
     // Re-trigger the flash by removing then re-adding the class next frame —

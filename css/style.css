@@ -37,6 +37,16 @@
     --control-border:rgba(255,255,255,.08);
     --control-hover-bg:rgba(255,255,255,.08);
     --accent:#7ED9FF;
+    /* Phase 18a: the shared accent at two fixed opacities, as theme-aware tokens.
+       Not new colors — the same one accent, which is what the project's
+       one-accent/no-one-off-hex rule asks for. They exist because the bottom bar
+       needs an accent WASH (not a solid fill) for its dominant Build slot and the
+       armed pill, and a bare rgba() literal of the dark accent stays pale-on-pale
+       in light mode — caught in a light-mode screenshot, the same way Phase 2b's
+       primitives-page light bug was. */
+    --accent-soft:rgba(126,217,255,.14);
+    --accent-line:rgba(126,217,255,.42);
+    --accent-soft-hover:rgba(126,217,255,.22);
 }
 
 :root[data-theme="light"]{
@@ -50,6 +60,10 @@
     --control-border:rgba(20,30,45,.12);
     --control-hover-bg:rgba(20,30,45,.09);
     --accent:#0B7CB0;
+    /* Same accent, same opacities, light-theme value — see the dark block above. */
+    --accent-soft:rgba(11,124,176,.13);
+    --accent-line:rgba(11,124,176,.40);
+    --accent-soft-hover:rgba(11,124,176,.20);
 }
 
 html,body{
@@ -366,12 +380,6 @@ html,body{
     opacity:.45;
 }
 
-.hud-mode-hint{
-    font-size:12px;
-    opacity:.55;
-    letter-spacing:1px;
-}
-
 .hud-docs-link{
     font-size:11px;
     letter-spacing:1.5px;
@@ -523,6 +531,11 @@ html,body{
     right:24px;
     bottom:130px;
     width:260px;
+    /* Phase 18 (C5): the max-width convention .menu-modal/.confirm-modal/.wave-panel
+       already carry — these three surfaces just predate it. Without it, a 260px panel
+       plus a 24px offset leaves 91px of visible game on a 375px screen, and since it's
+       pointer-events:none it can't even be dismissed. */
+    max-width:calc(100% - 48px);
     padding:22px;
     pointer-events:none;
 }
@@ -570,6 +583,7 @@ html,body{
     right:24px;
     bottom:130px;
     width:260px;
+    max-width:calc(100% - 48px); /* Phase 18 (C5) — see .tower-card above */
     padding:22px;
     pointer-events:none;
 }
@@ -1637,6 +1651,7 @@ html,body{
     left:24px;
     top:132px;
     width:300px;
+    max-width:calc(100% - 48px); /* Phase 18 (C5) — see .tower-card above */
     padding:16px 18px;
     display:flex;
     align-items:flex-start;
@@ -1707,4 +1722,461 @@ html,body{
 
 .mission-glow-flash{
     animation:mission-glow-flash .6s ease-out;
+}
+
+/* ===========================
+   BOTTOM ACTION BAR (Phase 18a)
+   The default build surface — five slots, Build centred and dominant, with a
+   drawer that opens above the bar and a caret pointing down at the slot that
+   opened it. Markup in game.html, behaviour in js/ui/bottomBar.js. The radial
+   menu above stays styled and reachable; Settings > Interface picks between them.
+
+   Drops into the 130px of bottom clearance .tower-card/.core-panel already
+   reserve — clearance the Phase 9 build bar left behind when 9b deleted it — so
+   no existing panel had to move to make room.
+
+   No new hex colors: --accent at varying opacities plus the shared glass recipe,
+   per the project's one-accent rule. Per-leaf --leaf-color comes from
+   CONFIG.DAMAGE_TYPES/ROOM_TYPES via js/ui/bottomBar.js, the same values the
+   radial's leaves already use.
+=========================== */
+
+.bottom-bar{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:24px;
+    /* .ui-overlay is pointer-events:none with children opting in. Without this the
+       bar would swallow canvas clicks across the whole bottom strip while being
+       unclickable itself — the exact bug .hud-center's comment records being caught
+       by a live click-through rather than code review. */
+    pointer-events:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    max-width:calc(100% - 32px);
+}
+
+.bar-slots{
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    padding:10px;
+    border-radius:18px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(14px);
+    box-shadow:0 10px 34px rgba(0,0,0,.35);
+}
+
+.bar-slot{
+    width:66px;
+    min-height:58px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    padding:8px 6px;
+    border-radius:13px;
+    background:var(--control-bg);
+    border:1px solid var(--control-border);
+    color:var(--text-primary);
+    font-family:inherit;
+    cursor:pointer;
+    transition:background .18s, border-color .18s, transform .12s;
+}
+
+.bar-slot:hover:not(:disabled){
+    background:var(--control-hover-bg);
+    border-color:var(--accent-line);
+}
+
+.bar-slot:active:not(:disabled){
+    transform:translateY(1px);
+}
+
+.bar-slot:disabled{
+    opacity:.35;
+    cursor:default;
+}
+
+/* Build is the dominant slot in both mockups — taller, accent-tinted, and wider. */
+.bar-slot-primary{
+    width:86px;
+    min-height:70px;
+    background:var(--accent-soft);
+    border-color:var(--accent-line);
+}
+
+.bar-slot-primary:hover:not(:disabled){
+    background:var(--accent-soft-hover);
+}
+
+/* Active slot is FILLED, not outlined — the mockups agreed on this and it's the
+   clearer signal at a glance on a small screen.
+
+   The :hover variants are load-bearing, not defensive padding. `.bar-slot.open` is
+   specificity (0,2,0) but `.bar-slot-primary:hover:not(:disabled)` above is (0,3,0),
+   so plain hover BEAT the open state: the slot kept its translucent accent wash
+   while taking this rule's --page-bg text, giving dark-on-pale in dark mode and
+   light-on-pale in light mode. And since opening the drawer means clicking the
+   slot, the pointer is always hovering it — the broken state was the normal one.
+   Caught by measuring computed styles in both themes, not by reading the file. */
+.bar-slot.open,
+.bar-slot.open:hover:not(:disabled),
+.bar-slot-primary.open:hover:not(:disabled){
+    background:var(--accent);
+    border-color:var(--accent);
+    color:var(--page-bg);
+}
+
+.bar-slot-icon{
+    font-size:20px;
+    line-height:1;
+}
+
+.bar-slot-label{
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    opacity:.8;
+    white-space:nowrap;
+}
+
+/* ── drawer ─────────────────────────────────────────
+   A vertical list, not a card row: it serves both views, and Core build has 9
+   leaves to Field's 4 (see js/ui/bottomBar.js's header for the full reasoning).
+*/
+
+.bar-drawer{
+    position:relative;
+    width:340px;
+    max-width:calc(100vw - 32px);
+    max-height:52vh;
+    display:flex;
+    flex-direction:column;
+    padding:14px;
+    border-radius:16px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(14px);
+    box-shadow:0 14px 40px rgba(0,0,0,.42);
+}
+
+.bar-drawer-title{
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    padding:0 4px 10px;
+}
+
+.bar-drawer-list{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    overflow-y:auto;
+}
+
+/* The caret is positioned in JS from live layout (bottomBar.positionCaret) so it
+   stays aimed at its slot at every breakpoint. */
+.bar-drawer-caret{
+    position:absolute;
+    bottom:-7px;
+    width:14px;
+    height:14px;
+    margin-left:-7px;
+    transform:rotate(45deg);
+    background:var(--glass-bg);
+    border-right:1px solid var(--glass-border);
+    border-bottom:1px solid var(--glass-border);
+}
+
+.bar-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    width:100%;
+    padding:10px 12px;
+    border-radius:11px;
+    background:var(--control-bg);
+    border:1px solid var(--control-border);
+    color:var(--text-primary);
+    font-family:inherit;
+    text-align:left;
+    cursor:pointer;
+    transition:background .15s, border-color .15s;
+}
+
+.bar-row:hover:not(.locked){
+    background:var(--control-hover-bg);
+    border-color:var(--leaf-color, var(--accent));
+}
+
+.bar-row.locked{
+    opacity:.5;
+    cursor:default;
+}
+
+/* Carries the damage-type/room color the config already assigns — the one place a
+   per-leaf color appears, same as the radial's --leaf-color. */
+.bar-row-swatch{
+    width:10px;
+    height:10px;
+    border-radius:3px;
+    flex-shrink:0;
+    background:var(--leaf-color, var(--accent));
+}
+
+.bar-row-text{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    flex:1;
+    min-width:0;
+}
+
+.bar-row-label{
+    font-size:13px;
+    letter-spacing:.5px;
+}
+
+/* Holds either the derived description or, on a locked row, the reason — see
+   js/ui/bottomBar.js. Wraps rather than truncating: a reason the player can't
+   read is the problem this row exists to solve. */
+.bar-row-sub{
+    font-size:11px;
+    color:var(--text-dim);
+    line-height:1.35;
+}
+
+.bar-row-cost{
+    font-size:12px;
+    color:var(--accent);
+    flex-shrink:0;
+}
+
+.bar-row-digit{
+    font-size:10px;
+    width:17px;
+    height:17px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:5px;
+    flex-shrink:0;
+    color:var(--text-dim);
+    background:var(--control-bg);
+    border:1px solid var(--control-border);
+}
+
+/* ── armed-state indicator ──────────────────────────
+   An explicit requirement of 18a, not a nice-to-have: Escape is otherwise the
+   only universal cancel and a touch device has no Escape.
+*/
+
+.bar-armed{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:7px 8px 7px 13px;
+    border-radius:999px;
+    background:var(--accent-soft);
+    border:1px solid var(--accent-line);
+    backdrop-filter:blur(14px);
+}
+
+.bar-armed-dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:var(--accent);
+    animation:mission-glow-pulse 1.6s ease-out infinite;
+}
+
+.bar-armed-label{
+    font-size:12px;
+    letter-spacing:1px;
+}
+
+.bar-armed-label::after{
+    content:' — tap to place';
+    color:var(--text-dim);
+}
+
+.bar-armed-cancel{
+    width:22px;
+    height:22px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background:var(--control-bg);
+    border:1px solid var(--control-border);
+    color:var(--text-primary);
+    font-family:inherit;
+    font-size:11px;
+    cursor:pointer;
+}
+
+.bar-armed-cancel:hover{
+    background:var(--control-hover-bg);
+}
+
+/* ── settings segmented control (menuStyle) ─────────
+   A string enum ('bar'|'radial'), so a two-state switch like .theme-toggle would
+   be the wrong shape — a third style shouldn't need a new control.
+*/
+
+.settings-segment{
+    display:flex;
+    gap:4px;
+    padding:3px;
+    border-radius:9px;
+    background:var(--control-bg);
+    border:1px solid var(--control-border);
+}
+
+.settings-segment-btn{
+    padding:5px 11px;
+    border-radius:6px;
+    background:transparent;
+    border:none;
+    color:var(--text-dim);
+    font-family:inherit;
+    font-size:11px;
+    letter-spacing:1px;
+    cursor:pointer;
+    transition:background .15s, color .15s;
+}
+
+.settings-segment-btn.active{
+    background:var(--accent);
+    color:var(--page-bg);
+}
+
+/* ===========================
+   BREAKPOINTS (Phase 18 / A2)
+   This file had zero @media blocks before Phase 18 — every dimension in it was a
+   fixed pixel value chosen for a wide window. Two breakpoints, committed to
+   deliberately rather than adding one-off queries per component:
+
+     <=900px  tablet / small laptop — the bar tightens, drawer goes near-full-width
+     <=600px  phone — single column, bar spans the screen, type floors at 12px
+
+   The type floor at the narrow breakpoint is C7's fix and is deliberately NOT a
+   global bump: the desktop density is intentional and worth keeping.
+=========================== */
+
+@media (max-width:900px){
+    .bottom-bar{
+        bottom:16px;
+        max-width:calc(100% - 24px);
+    }
+
+    .bar-drawer{
+        width:min(420px, calc(100vw - 24px));
+        max-height:46vh;
+    }
+
+    /* C5's panels sit at bottom:130px, which was clearance for a bar that no longer
+       existed and now does again — lift them clear of it on shorter screens. */
+    .tower-card,
+    .core-panel{
+        bottom:150px;
+    }
+}
+
+@media (max-width:600px){
+    .bottom-bar{
+        left:0;
+        right:0;
+        transform:none;
+        bottom:0;
+        max-width:100%;
+        gap:8px;
+    }
+
+    /* Full-width bar with squared bottom corners — it's an edge-anchored bar on a
+       phone, not a floating island. */
+    .bar-slots{
+        width:100%;
+        justify-content:space-between;
+        border-radius:16px 16px 0 0;
+        padding:8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .bar-slot{
+        flex:1;
+        width:auto;
+        min-height:52px;
+    }
+
+    .bar-slot-primary{
+        flex:1.4;
+        min-height:60px;
+    }
+
+    .bar-drawer{
+        width:calc(100vw - 16px);
+        max-height:44vh;
+    }
+
+    /* C7: floor the sub-11px type at the narrow breakpoint. Under 12px is below
+       most mobile legibility guidance, and it compounds with the canvas not being
+       DPR-scaled yet (A3) — small AND upscaled-blurry. */
+    .bar-slot-label,
+    .bar-row-sub,
+    .bar-drawer-title,
+    .bar-row-cost,
+    .bar-armed-label,
+    .bar-armed-cancel{
+        font-size:12px;
+    }
+
+    .bar-row-label{
+        font-size:14px;
+    }
+
+    /* The digit badge grows with its type rather than clipping it. */
+    .bar-row-digit{
+        font-size:12px;
+        width:21px;
+        height:21px;
+    }
+
+    .bar-armed-cancel{
+        width:26px;
+        height:26px;
+    }
+
+    /* Side panels go full-width above the bar rather than covering the field. */
+    .tower-card,
+    .core-panel{
+        left:12px;
+        right:12px;
+        width:auto;
+        max-width:none;
+        bottom:96px;
+        padding:16px;
+    }
+
+    .mission-banner{
+        left:12px;
+        right:12px;
+        width:auto;
+        max-width:none;
+    }
+
+    /* C8: "VICTORY"/"DEFEAT" at 40px plus 88px of horizontal padding overflows a
+       375px screen. */
+    .ui-banner{
+        font-size:28px;
+        letter-spacing:2px;
+        padding:18px 24px;
+        max-width:calc(100% - 32px);
+        text-align:center;
+    }
 }

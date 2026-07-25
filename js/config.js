@@ -14,8 +14,19 @@ export const CONFIG = {
     panUp: 'w',
     panDown: 's',
     panLeft: 'a',
-    panRight: 'd'
+    panRight: 'd',
+    // Phase 18 (B1): zoom was wheel-only — camera.js's single zoom input was
+    // input.wheelDelta, which a laptop trackpad emits with very different
+    // magnitude than the discrete mouse notches ZOOM_SPEED is tuned for, and a
+    // touch device doesn't emit at all. '=' rather than '+' because the binding
+    // system is single physical keys, no Shift chords.
+    zoomIn: '=',
+    zoomOut: '-'
   },
+  // Per-second zoom factor for the held-key path. Multiplicative (not additive)
+  // so a step feels the same at 0.3x as at 3x; the wheel keeps its own
+  // ZOOM_SPEED because it's driven by delta magnitude, not elapsed time.
+  KEY_ZOOM_RATE: 2.2,
   BG_COLOR: '#0B1020',
   GRID_COLOR: 'rgba(98,208,255,0.08)',
   GRID_COLOR_MAJOR: 'rgba(98,208,255,0.15)',
@@ -86,13 +97,24 @@ export const CONFIG = {
 
   SPAWN_MARGIN: 150,
   TOWER_MAX_COUNT: 50,
-  // Phase 16: the base "compound" — a SQUARE ring ±BASE_RING_HALF around the base (5 grid
-  // cells each way, so scavengers and future support objects have real room). Towers must
-  // be placed OUTSIDE the square (World.inTowerField); scavengers INSIDE it and off the
-  // base core (World.inBaseRing). renderer.js draws the square so the two zones read on
-  // sight. Half-extent = 5 * GRID_SIZE (40).
-  BASE_RING_HALF: 200,
-  // Phase 16: inner edge — scavengers stay at least this far (circular) off the base core.
+  // Phase 16: the base "compound" — a CIRCULAR ring of radius BASE_RING_RADIUS around the
+  // base (5 grid cells, so scavengers and future support objects have real room). Towers
+  // must be placed OUTSIDE the circle (World.inTowerField); scavengers INSIDE it and off
+  // the base core (World.inBaseRing). renderer.js draws the circle so the two zones read on
+  // sight. Radius = 5 * GRID_SIZE (40).
+  //
+  // Phase 18 correction: this shipped in Phase 16 as a SQUARE (±BASE_RING_HALF), from
+  // reading the user's "+/- 5 in each direction" literally. That was a misread — the
+  // intended model is radial ("everything is an orbit"), and the square was the odd one
+  // out: SCAVENGER_MIN_BASE_DISTANCE below has always been circular (Math.hypot), so the
+  // compound was a circle inside a square. It is now a true annulus. The radius keeps the
+  // old value 200, so it equals the old square's EDGE distance — meaning the compound
+  // loses area at the diagonals (a former corner sat at 200*sqrt(2) ≈ 283 out, now
+  // outside). Deliberate: the user confirmed the "5 grid cells" framing is what matters,
+  // not preserving corner placements.
+  BASE_RING_RADIUS: 200,
+  // Phase 16: inner edge — scavengers stay at least this far off the base core. Circular
+  // from the start, which is what Phase 18 made the outer edge agree with.
   SCAVENGER_MIN_BASE_DISTANCE: 40,
 
   MAX_WAVES: 20,
@@ -117,6 +139,11 @@ export const CONFIG = {
   // in TECH_TREE below.
   CORE_GRID_SIZE: 8,
   CORE_CELL_SIZE: 64,
+  // Phase 18 (C3): floor for the responsive cell size renderer.coreLayout() now
+  // derives. 44px is the conventional minimum touch target — below that the grid
+  // fits on screen but individual cells stop being reliably tappable. An 8-wide
+  // grid at 44px needs 352px, which clears a 375px phone.
+  CORE_CELL_MIN_SIZE: 44,
   ROOM_TYPES: {
     reactor: {
       label: 'Reactor', color: '#F3C969', output: 'power',

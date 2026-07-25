@@ -40,9 +40,26 @@ export class Renderer {
 
   // Layout shared between drawCore() and screenToCoreCell() so clicks map
   // to exactly the cells that got drawn.
+  //
+  // Phase 18 (C3): `cell` used to be CONFIG.CORE_CELL_SIZE flat, making the grid a
+  // fixed 8 × 64 = 512px. On a 375px-wide phone that centred to originX = -68.5,
+  // hanging the grid off BOTH edges — and there was no recovery, because game.js
+  // gates camera.update() on field view, so the Core has no pan and no zoom on any
+  // device. Columns 0 and 7 were simply untappable below ~520px.
+  //
+  // Now the cell shrinks to fit the smaller viewport axis, never growing past the
+  // configured size (desktop is unchanged) and never dropping below a touch-usable
+  // floor. Because this function is already the single source for both the draw and
+  // the hit-test — the reason it exists — draw and click stay in lockstep for free.
   coreLayout() {
-    const cell = CONFIG.CORE_CELL_SIZE;
     const gridSize = CONFIG.CORE_GRID_SIZE;
+    // The +1 leaves roughly half a cell of breathing room on each side rather than
+    // butting the grid against the viewport edge.
+    const fit = Math.min(this.canvas.width, this.canvas.height) / (gridSize + 1);
+    const cell = Math.max(
+      CONFIG.CORE_CELL_MIN_SIZE,
+      Math.min(CONFIG.CORE_CELL_SIZE, fit)
+    );
     const originX = (this.canvas.width - cell * gridSize) / 2;
     const originY = (this.canvas.height - cell * gridSize) / 2;
     return { originX, originY, cell, gridSize };
@@ -400,17 +417,21 @@ export class Renderer {
   // brightened while a build type is armed (that's when the boundary actually matters).
   drawPlacementRing(world, camera, fieldBuildType) {
     const ctx = this.ctx;
-    const H = CONFIG.BASE_RING_HALF;
-    // Phase 16: the compound is a square ±BASE_RING_HALF — draw it from its two opposite
-    // world-space corners so camera pan/zoom are handled by worldToScreen.
-    const a = camera.worldToScreen(world.base.x - H, world.base.y - H);
-    const b = camera.worldToScreen(world.base.x + H, world.base.y + H);
+    // Phase 18 correction: the compound is a CIRCLE of radius BASE_RING_RADIUS, not the
+    // square Phase 16 shipped. The square was drawn from two opposite world-space corners
+    // so worldToScreen absorbed pan and zoom; a circle needs the centre through
+    // worldToScreen and the radius scaled by camera.zoom explicitly — the same treatment
+    // lineWidth and setLineDash below already get. Must match World.inBaseRing() /
+    // inTowerField() exactly, since this line is the player's only cue where they are.
+    const c = camera.worldToScreen(world.base.x, world.base.y);
     ctx.save();
     ctx.strokeStyle = CONFIG.SCAVENGER_COLOR;
     ctx.globalAlpha = fieldBuildType ? 0.55 : 0.22;
     ctx.lineWidth = 2.5 * camera.zoom;
     ctx.setLineDash([7 * camera.zoom, 7 * camera.zoom]);
-    ctx.strokeRect(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, CONFIG.BASE_RING_RADIUS * camera.zoom, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.restore();
   }
 

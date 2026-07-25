@@ -5,8 +5,10 @@ import { Enemy } from '../js/enemy.js';
 import { freshGame, finishBuild } from './helpers.mjs';
 
 const AWAY_FROM_BASE = 200; // snaps to cell-center 220 — out past the base ring, the tower field
-// Phase 16: scavengers live *inside* the square base ring (±BASE_RING_HALF), so their test
-// coords have to snap to a cell within it (and off the base core). Two distinct in-ring cells.
+// Phase 16, corrected in Phase 18: scavengers live *inside* the CIRCULAR base ring (radius
+// BASE_RING_RADIUS), so their test coords have to snap to a cell within that radius (and off
+// the base core). Two distinct in-ring cells — both chosen well inside the radius rather than
+// near a diagonal, since the circle does not reach as far as the old square did at 45°.
 const SCAV_SPOT = 100;  // (100,100) -> dist ~141, inside the ring
 const SCAV_SPOT2 = 60;  // (60,60)   -> dist ~85, a second distinct ring cell
 

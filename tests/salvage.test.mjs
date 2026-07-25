@@ -8,16 +8,58 @@ import { freshGame } from './helpers.mjs';
 // Phase 16: enemy corpses + the Scavenger tractor-beam salvage loop.
 
 describe('Phase 16: placement zones (ring)', () => {
-  test('scavengers are legal inside the (square) ring and refused out in the tower field', () => {
+  // Phase 18 correction: this ring was built as a SQUARE from a literal reading of the
+  // user's "+/- 5 in each direction". It is a CIRCLE — the intended model is radial, and the
+  // inner edge (SCAVENGER_MIN_BASE_DISTANCE) was already circular, so the square was the
+  // inconsistent part. The radius keeps the old edge distance (200), so the compound now
+  // LOSES the diagonals: a former corner sat 200*sqrt(2) ≈ 283 out and is now tower field.
+  // The corner assertion below is inverted from what it used to claim, on purpose.
+  test('scavengers are legal inside the circular ring and refused out in the tower field', () => {
     const { world } = freshGame(100000);
-    const H = CONFIG.BASE_RING_HALF;
+    const R = CONFIG.BASE_RING_RADIUS;
     assert.ok(world.scavengerPlacementAllowed(100, 100), 'inside the ring');
-    assert.ok(world.scavengerPlacementAllowed(H, 0), 'the square edge is inclusive');
-    assert.ok(world.scavengerPlacementAllowed(H, H), 'and the corner too — it is a square, not a circle');
+    assert.ok(world.scavengerPlacementAllowed(R, 0), 'the radius is inclusive on-axis');
+    assert.ok(!world.scavengerPlacementAllowed(R, R), 'the old square corner is now OUTSIDE — it is a circle');
     assert.ok(!world.scavengerPlacementAllowed(10, 0), 'too close to the base core');
-    assert.ok(!world.scavengerPlacementAllowed(H + 1, 0), 'out past the ring is tower turf');
-    assert.ok(world.inTowerField(H + 1, 0), 'and inTowerField agrees on the same point');
+    assert.ok(!world.scavengerPlacementAllowed(R + 1, 0), 'out past the ring is tower turf');
+    assert.ok(world.inTowerField(R + 1, 0), 'and inTowerField agrees on the same point');
     assert.ok(!world.inTowerField(100, 100), 'a ring cell is not tower field');
+  });
+
+  test('the ring boundary is radial, not axis-aligned', () => {
+    // The distinguishing property: on a square, a point at 45° reaches further from the
+    // base before leaving the zone than one on an axis. On a circle they leave at the same
+    // distance. This is the test that would have failed before the Phase 18 correction.
+    const { world } = freshGame(100000);
+    const R = CONFIG.BASE_RING_RADIUS;
+    const diag = R / Math.SQRT2; // a 45° point at exactly distance R
+    assert.ok(world.inBaseRing(diag, diag), 'a 45° point at distance R is inside');
+    assert.ok(!world.inBaseRing(diag + 5, diag + 5), 'just past distance R at 45° is outside');
+    // Same distance, every direction, same answer.
+    for (const deg of [0, 30, 45, 60, 90, 135, 180, 225, 270, 315]) {
+      const rad = deg * Math.PI / 180;
+      const inside = { x: Math.cos(rad) * (R - 2), y: Math.sin(rad) * (R - 2) };
+      const outside = { x: Math.cos(rad) * (R + 2), y: Math.sin(rad) * (R + 2) };
+      assert.ok(world.inBaseRing(inside.x, inside.y), `${deg}°: just inside R is in the ring`);
+      assert.ok(world.inTowerField(outside.x, outside.y), `${deg}°: just outside R is tower field`);
+    }
+  });
+
+  test('ring and tower field are complementary except the base core', () => {
+    const { world } = freshGame(100000);
+    const R = CONFIG.BASE_RING_RADIUS;
+    for (const d of [0, 10, 39, 40, 100, 199, 200, 201, 400]) {
+      const inRing = world.inBaseRing(d, 0);
+      const inField = world.inTowerField(d, 0);
+      assert.ok(!(inRing && inField), `distance ${d} cannot be both zones`);
+      // The base core (inside SCAVENGER_MIN_BASE_DISTANCE) is deliberately neither —
+      // nothing places on the base itself.
+      if (d < CONFIG.SCAVENGER_MIN_BASE_DISTANCE) {
+        assert.ok(!inRing && !inField, `distance ${d} is the base core — neither zone`);
+      } else {
+        assert.ok(inRing || inField, `distance ${d} must be one zone or the other`);
+      }
+    }
   });
 
   test('placeScavenger refuses a spot in the tower field but takes one in the ring', () => {

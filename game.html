@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- Phase 18 (18c/A1): without this a phone assumes a 980px CSS width and scales the
+     whole page down, so every @media query below evaluates against the wrong width and
+     every other responsive fix is invisible. user-scalable is deliberately left ENABLED —
+     browser pinch-zoom is an accessibility affordance and doesn't conflict with the
+     game's own camera zoom, which is a different thing entirely. -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tower Defense</title>
 <!-- Phase 15: a simple turret glyph (accent-blue triangle barrel on a circular mount) —
      inline SVG data URI, zero new binary asset, matches this project's zero-dependency rule. -->
@@ -116,7 +122,11 @@
 
         <div class="hud-group hud-right">
 
-            <div id="ui-mode-hint" class="hud-mode-hint">Avatar menu (top right) → Command Core · Profile · About · Settings</div>
+            <!-- Phase 18 (18b/C2): #ui-mode-hint deleted here. It was a hardcoded 62-char
+                 string ≈465px wide — the single largest item in .hud-right — and ui.js
+                 overwrote it every frame with a *different* constant, so the markup string
+                 never even rendered. A static label, not a hint. The avatar menu it pointed
+                 at is discoverable on its own. -->
 
             <button id="about-btn" class="hud-docs-link">ABOUT</button>
 
@@ -376,6 +386,20 @@
                     </button>
                 </div>
 
+                <div class="settings-panel-title" style="margin-top:20px;">Interface</div>
+
+                <!-- Phase 18a: a string enum, not a boolean, from day one — a third
+                     menu style later shouldn't need a localStorage migration, the
+                     same reasoning loadKeybindings() already applies to bindings.
+                     So a segmented control rather than the theme/sound switch. -->
+                <div class="settings-row">
+                    <span>Build menu</span>
+                    <div class="settings-segment" id="menu-style-segment" role="radiogroup" aria-label="Build menu style">
+                        <button class="settings-segment-btn" data-menu-style="bar" role="radio" aria-checked="true">Bottom bar</button>
+                        <button class="settings-segment-btn" data-menu-style="radial" role="radio" aria-checked="false">Radial</button>
+                    </div>
+                </div>
+
                 <div class="settings-panel-title" style="margin-top:20px;">Hotkeys</div>
 
                 <div id="keybind-list" class="keybind-list"></div>
@@ -574,6 +598,34 @@
         <div class="radial-level1"></div>
         <div class="radial-flyout" hidden></div>
         <div class="radial-stub" hidden></div>
+    </div>
+
+    <!-- =========================
+         BOTTOM ACTION BAR (Phase 18a)
+         Default build surface; the radial above survives as a Settings option
+         (Settings > Interface > Build Menu). Slots are built by
+         js/ui/bottomBar.js, not listed here — only the containers are static.
+         Drops into the 130px of bottom clearance .tower-card/.core-panel
+         already reserve (left behind by the Phase 9 build bar that 9b deleted),
+         so nothing else on screen had to move.
+    ========================== -->
+
+    <div class="bottom-bar" id="bottom-bar" hidden>
+
+        <div class="bar-drawer" id="bar-drawer" hidden>
+            <div class="bar-drawer-title" id="bar-drawer-title"></div>
+            <div class="bar-drawer-list" id="bar-drawer-list"></div>
+            <div class="bar-drawer-caret" id="bar-drawer-caret"></div>
+        </div>
+
+        <div class="bar-armed" id="bar-armed" hidden>
+            <span class="bar-armed-dot"></span>
+            <span class="bar-armed-label" id="bar-armed-label"></span>
+            <button class="bar-armed-cancel" id="bar-armed-cancel" title="Cancel (Esc)">✕</button>
+        </div>
+
+        <div class="bar-slots" id="bar-slots"></div>
+
     </div>
 
     <div id="ui-banner" class="ui-banner" hidden></div>
