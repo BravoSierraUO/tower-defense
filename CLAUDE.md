@@ -10,9 +10,19 @@ should read first.
 A zero-dependency, client-side 2D simulation engine (tower-defense siege sim)
 built as a testbed for deterministic state machines and docs-as-data tooling.
 Native JS + Canvas 2D — no framework, no bundler, no build step, no runtime
-dependencies. `npm run stats` regenerates real git-derived metrics (commits,
-active hours, LOC, test density) into `stats.json` — the numbers in README.md
-and the in-game About panel are computed from git history, not hand-maintained.
+dependencies. `npm run stats` regenerates real derived metrics (commits, active
+hours, LOC, test density, and the test count — which it gets by actually running
+the suite) into `stats.json` — the numbers in README.md, index.html and the
+in-game About panel are computed, not hand-maintained.
+
+**Never hand-type a test count, LOC figure or commit count into any doc.** In
+README.md wrap the number in `<!--S:key-->…<!--/S:key-->` markers; in index.html
+use a DOM id fed from `STATS`, or a `{{tests}}`/`{{testFiles}}` placeholder if
+it sits inside a `ROADMAP`/`FLOWS` string. Every one of these that was ever
+hand-typed has drifted — index.html was simultaneously claiming 183, 203, 226
+and 335 tests before this was wired up (fixed 2026-07-25). Historical counts in
+shipped roadmap notes ("Suite 293 → 312") are the one exception: they record
+what was true then and stay hand-typed.
 
 ## Setup
 
@@ -29,7 +39,7 @@ python3 -m http.server 8000
 ## Commands
 
 ```bash
-npm test                 # node --test tests/ — 226 tests, zero deps, a few seconds
+npm test                 # node --test tests/ — 335 tests, zero deps, a few seconds
 npm run stats            # regenerate stats.json + index.html's inline STATS block
 npm run check-roadmap    # advisory: cross-check changelog.md phases vs index.html's ROADMAP array
 ```

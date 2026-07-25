@@ -1,5 +1,6 @@
 {
   "generatedAt": "2026-07-25",
+  "build": 72,
   "growth": [
     {
       "hash": "c488b9d",
@@ -420,6 +421,12 @@
       "date": "07-25",
       "cum": 20270,
       "subject": "0.1.69 - Phase 20: the two per-stat upgrade ladders (scrap gets a sink)"
+    },
+    {
+      "hash": "a350781",
+      "date": "07-25",
+      "cum": 20285,
+      "subject": "0.1.70 - Docs-accuracy pass on index.html (Roadmap + WhatHow)"
     }
   ],
   "categories": [
@@ -430,7 +437,7 @@
     },
     {
       "label": "Docs & tooling",
-      "value": 7134,
+      "value": 7149,
       "tone": "special"
     },
     {
@@ -444,8 +451,15 @@
       "tone": "ok"
     }
   ],
+  "tests": {
+    "count": 335,
+    "suites": 90,
+    "pass": 335,
+    "fail": 0,
+    "files": 19
+  },
   "velocity": {
-    "activeHours": 30.1,
+    "activeHours": 30.2,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5

@@ -1,12 +1,12 @@
 # Deterministic 2D Simulation Engine & Graph Observability Framework
 
 A zero-dependency, fully client-side simulation engine and self-documenting
-observability toolchain. **12,000+ lines** of native Vanilla JS + Canvas 2D —
+observability toolchain. **<!--S:totalLines-->20,285<!--/S:totalLines--> lines** of native Vanilla JS + Canvas 2D —
 no framework, no build step, no runtime dependencies. Rendered as a
 real-time siege simulation, but engineered as a testbed for deterministic
 state machines, high-throughput agent routing, and docs-as-data tooling.
 
-> **203 passing tests · 0 dependencies · 0 failures**
+> **<!--S:tests-->335<!--/S:tests--> passing tests · 0 dependencies · <!--S:testFails-->0<!--/S:testFails--> failures**
 
 **Live:** https://bravosierrauo.github.io/tower-defense/ · **Play the sim:** [`game.html`](https://bravosierrauo.github.io/tower-defense/game.html)
 
@@ -17,12 +17,12 @@ state machines, high-throughput agent routing, and docs-as-data tooling.
 | Metric | Value |
 |--------|-------|
 | **Runtime dependencies** | `0` (native JS + Canvas 2D only) |
-| **Automated tests** | `203` passing via `node --test`, zero failures |
-| **Engine source** | `4,995` lines |
-| **Test coverage density** | `49%` test lines per engine line |
-| **Total codebase** | `12,000+` lines |
-| **Commits** | `55` across `5` focused build sessions |
-| **Build velocity** | full engine + tooling in `~26` active engineering hours |
+| **Automated tests** | `<!--S:tests-->335<!--/S:tests-->` passing via `node --test`, zero failures |
+| **Engine source** | `<!--S:engineLines-->6,273<!--/S:engineLines-->` lines |
+| **Test coverage density** | `<!--S:density-->64%<!--/S:density-->` test lines per engine line |
+| **Total codebase** | `<!--S:totalLines-->20,285<!--/S:totalLines-->` lines |
+| **Commits** | `<!--S:commits-->71<!--/S:commits-->` across `<!--S:sessionCount-->8<!--/S:sessionCount-->` focused build sessions |
+| **Build velocity** | full engine + tooling in `~<!--S:activeHours-->30.2<!--/S:activeHours-->` active engineering hours |
 
 ---
 
@@ -68,19 +68,26 @@ real engineering metrics — no third-party analytics.
 
 ```bash
 node scripts/gen-stats.mjs
-# → wrote stats.json + refreshed index.html
-#   (55 commits, 12,864 lines, ~25.9h across 5 sessions/5 days)
+# → wrote stats.json + refreshed index.html/README.md
+#   (build <!--S:build-->72<!--/S:build-->, <!--S:commits-->71<!--/S:commits--> commits, <!--S:totalLines-->20,285<!--/S:totalLines--> lines, <!--S:tests-->335<!--/S:tests--> tests,
+#    ~<!--S:activeHours-->30.2<!--/S:activeHours-->h across <!--S:sessionCount-->8<!--/S:sessionCount--> sessions/<!--S:activeDays-->7<!--/S:activeDays--> days)
 ```
+
+Every number in this README sits between `<!--S:key-->` markers and is rewritten
+by that same command — including the numbers in this section. Nothing here is
+hand-maintained, which is the point: it went stale at `203 tests / 55 commits`
+while the repo was at more than half again that, because it used to be.
 
 ## ✅ Test Fidelity
 
-`203` tests run natively on `node --test` — no Jest, no Vitest, no config.
+`<!--S:tests-->335<!--/S:tests-->` tests across `<!--S:testFiles-->19<!--/S:testFiles-->` files run natively on
+`node --test` — no Jest, no Vitest, no config.
 
 ```bash
 node --test tests/
-# tests 203
-# pass  203
-# fail  0
+# tests <!--S:tests-->335<!--/S:tests-->
+# pass  <!--S:pass-->335<!--/S:pass-->
+# fail  <!--S:testFails-->0<!--/S:testFails-->
 ```
 
 Coverage spans combat resolution, economy, spawner logic, inventory,
@@ -100,7 +107,7 @@ node scripts/gen-stats.mjs  # regenerate telemetry
 ## 🧱 Design Philosophy
 
 1. **Zero dependencies** — every line is auditable; nothing rots in a lockfile.
-2. **Determinism first** — reproducible state is what makes 203 tests possible.
+2. **Determinism first** — reproducible state is what makes <!--S:tests-->335<!--/S:tests--> tests possible.
 3. **Docs as data** — documentation that can't drift from the code.
 4. **Measure everything** — the repo reports its own build telemetry.
 

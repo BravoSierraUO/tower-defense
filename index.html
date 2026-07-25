@@ -264,7 +264,7 @@
   <div class="eyebrow">Deterministic 2D Simulation Engine &amp; Observability Framework</div>
   <div class="wordmark">TOWER DEFENSE<span class="dot">.</span></div>
   <div class="ring" aria-hidden="true"></div>
-  <p class="tag">A zero-dependency, reproducible tick-based simulation engine — 12,000+ lines of native Vanilla JS and Canvas 2D, 203 passing tests, no build step — driving hundreds of autonomous agents over custom pathfinding. Implemented as a real-time, static-world siege simulation.</p>
+  <p class="tag">A zero-dependency, reproducible tick-based simulation engine — <span id="ledeTotalLines">·</span> lines of native Vanilla JS and Canvas 2D, <span id="ledeTestCount">·</span> passing tests, no build step — driving hundreds of autonomous agents over custom pathfinding. Implemented as a real-time, static-world siege simulation.</p>
   <a class="play" href="game.html">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
     Launch the simulation
@@ -273,7 +273,7 @@
   <div class="chips">
     <span class="chip">Vanilla JS · Canvas 2D · zero deps</span>
     <span class="chip">Deterministic state machines</span>
-    <span class="chip">335 tests · node --test</span>
+    <span class="chip"><span id="chipTestCount">·</span> tests · node --test</span>
   </div>
   <nav class="quicknav" aria-label="Section jump">
     <a class="qn" href="#roadmap">Roadmap</a>
@@ -520,7 +520,7 @@
     <div class="stat"><b id="statFlows">·</b><span>system flows</span></div>
     <div class="stat"><b id="statNodes">·</b><span>documented steps</span></div>
     <div class="stat"><b id="statRefs">·</b><span>code references</span></div>
-    <div class="stat"><b>183</b><span>passing tests, zero deps</span></div>
+    <div class="stat"><b id="statTestCount">·</b><span>passing tests, zero deps</span></div>
   </div>
 </section>
 
@@ -656,7 +656,7 @@ const ROADMAP = [
   { id:'p5', num:'5', title:'Dev Tooling & Portfolio Polish', status:'DONE', color:'--phase-5',
     desc:'Turn the git history and this doc into a live flex, plus a real test harness. None of it blocked the gameplay phases.',
     items:[
-      'Test harness — done. 335 tests across 19 test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory/phase7d cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
+      'Test harness — done. {{tests}} tests across {{testFiles}} test files (plus tests/helpers.mjs) via `node --test tests/` (`npm test` also works). commandcore/economy/combat/spawner/profile/missions/inventory/phase7d cover behavior; balance.test.mjs guards the economy against silent regressions as constants get tuned.',
       'Merge docs.html + whathow.html into one whatever.html, re-themed to the game\'s real primitives (bg/ink/accent/glass recipe) instead of two invented palettes — done, this page.',
       'Git hook bakes `git log` into stats.json so Velocity stops being a hand-authored snapshot — done. Pre-commit hook (scripts/hooks/pre-commit, `npm run hooks:install`) runs scripts/gen-stats.mjs before every commit, regenerating stats.json and re-inlining this page\'s STATS block from real history.',
       'In-game About/Analytics screen reading stats.json — done. Press O or click ABOUT in the top-right HUD: generated date, total lines, category bars, last 12 commits. Same stats.json the hook above produces; js/stats.js fetches it, js/ui.js renders it once (see WhatHow).',
@@ -1050,7 +1050,10 @@ function renderRoadmap(){
     grid.appendChild(card);
   });
 }
-renderRoadmap();
+// Deliberately NOT called here — ROADMAP's strings carry {{tests}}/{{testFiles}} placeholders that
+// hydrateStats() fills from the generated STATS const, which is declared further down this same
+// script. Rendering before that ran would paint the raw tokens. Both initial render calls now live
+// at the bottom, after hydration.
 
 const FLOWS = [
   // =============================== GETTING STARTED ===============================
@@ -1986,11 +1989,11 @@ const FLOWS = [
   {
     id: 'balanceguards', group: 'Proving it',
     title: "A tuning pass can't silently break the economy",
-    summary: '335 tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
+    summary: '{{tests}} tests, zero dependencies, one file whose only job is catching a broken number before it ships — not deciding what\'s fun.',
     lanes: ['Change', 'Run', 'Stress', 'Checks', 'Verdict'],
     nodes: [
       { id: 'tune', col: 0, row: 0.5, kind: 'input', tone: 'sig', label: 'A constant changes in config.js\ne.g. a tier-3 buff' },
-      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n335 tests, 19 files, zero deps',
+      { id: 'run', col: 1, row: 0.5, kind: 'process', tone: 'ok', label: 'node --test tests/\n{{tests}} tests, {{testFiles}} files, zero deps',
         code_ref: 'package.json · tests/*.test.mjs',
         detail: "Node's built-in test runner — no npm install needed, npm test is just an alias for the same command. commandcore/combat/economy/spawner/profile/missions/inventory cover 'does the code do what it does'; balance.test.mjs is the only file asking a different question." },
       { id: 'maxed', col: 2, row: 0.5, kind: 'process', tone: 'special', label: 'maxOutRoom() helper\nfull tech chain, max tier, every module slot',
@@ -2204,7 +2207,7 @@ document.getElementById('statFlows').textContent=FLOWS.length;
 document.getElementById('statNodes').textContent=FLOWS.reduce((a,f)=>a+f.nodes.length,0);
 document.getElementById('statRefs').textContent=FLOWS.reduce((a,f)=>a+f.nodes.filter(n=>n.code_ref).length,0);
 curFlow=FLOWS.find(f=>f.group===curGroup);
-renderAll();
+// renderAll() moved to the bottom for the same reason renderRoadmap() was — see that comment.
 
 // ============================= VELOCITY (real git log data) =============================
 // Auto-generated by scripts/gen-stats.mjs, run from the pre-commit hook (scripts/hooks/pre-commit,
@@ -2216,6 +2219,11 @@ renderAll();
 // One inherent lag, unchanged from the old hand-authored version: the growth array's last point is
 // always the commit BEFORE the one currently being made, since a commit's own hash doesn't exist
 // yet when its pre-commit hook runs — known, accepted limitation, not a bug.
+// That lag DID become a bug in one place: `growth.length` was also being used as the changelog's
+// `0.MINOR.BUILD` build number, which made every version one behind its real commit (0.1.70 was
+// commit 71). STATS.build is `growth.length + 1` for exactly that reason and is the number to cite
+// in a commit message; STATS.growth.length stays the honest count of commits this data covers.
+// See changelog.md's version-scheme header. Fixed 2026-07-25.
 // The commit COUNT below (lede + stat tile + commit-log heading) is computed from STATS.growth at
 // render time, not hand-typed — it can't go stale independently again. The "~58h across 4 days"
 // span used to be hand-typed prose too, and it showed: caught 2026-07-19 sitting stale at 58h
@@ -2228,6 +2236,7 @@ renderAll();
 // plain language. Nothing left to hand re-check periodically.
 // STATS_GENERATED_START
 const STATS = {
+  "build": 72,
   "growth": [
     {
       "hash": "c488b9d",
@@ -2648,6 +2657,12 @@ const STATS = {
       "date": "07-25",
       "cum": 20270,
       "subject": "0.1.69 - Phase 20: the two per-stat upgrade ladders (scrap gets a sink)"
+    },
+    {
+      "hash": "a350781",
+      "date": "07-25",
+      "cum": 20285,
+      "subject": "0.1.70 - Docs-accuracy pass on index.html (Roadmap + WhatHow)"
     }
   ],
   "categories": [
@@ -2658,7 +2673,7 @@ const STATS = {
     },
     {
       "label": "Docs & tooling",
-      "value": 7134,
+      "value": 7149,
       "tone": "special"
     },
     {
@@ -2672,8 +2687,15 @@ const STATS = {
       "tone": "ok"
     }
   ],
+  "tests": {
+    "count": 335,
+    "suites": 90,
+    "pass": 335,
+    "fail": 0,
+    "files": 19
+  },
   "velocity": {
-    "activeHours": 30.1,
+    "activeHours": 30.2,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5
@@ -2766,8 +2788,51 @@ function renderCommitLog() {
   document.getElementById('commitLogShown').textContent = shown.length;
 }
 
-document.getElementById('statTotalLines').textContent =
-  STATS.categories.reduce((s,c)=>s+c.value,0).toLocaleString();
+const TOTAL_LINES = STATS.categories.reduce((s,c)=>s+c.value,0);
+document.getElementById('statTotalLines').textContent = TOTAL_LINES.toLocaleString();
+
+// ------------------------------- TEST COUNT (derived) -------------------------------
+// The test count was the last hand-typed number on this page, and it showed: 183, 203, 226 and 335
+// were all live simultaneously (2026-07-25) while the suite actually stood at 335. gen-stats.mjs
+// now runs `node --test tests/` and records its TAP summary into STATS.tests, so the number here is
+// the suite's own report. Two shapes of consumer, because the page has two:
+//   - DOM ids, for numbers sitting in markup (lede, chip, stat tile);
+//   - {{tests}}/{{testFiles}} placeholders, for numbers inside the ROADMAP/FLOWS data strings,
+//     which are JS and can't hold an element. hydrateStats() walks both arrays and substitutes.
+// HISTORICAL counts in roadmap notes ("Suite 293 → 312", "full pass: 226/226") are deliberately
+// left hand-typed — they record what was true when that phase shipped, and re-deriving them from
+// today's suite would falsify the record. Only present-tense claims use placeholders.
+const STAT_TOKENS = {
+  tests: STATS.tests ? STATS.tests.count : null,
+  testFiles: STATS.tests ? STATS.tests.files : null,
+};
+function hydrateStats(){
+  const fill = s => s.replace(/\{\{(\w+)\}\}/g, (whole,key) =>
+    STAT_TOKENS[key] == null ? whole : STAT_TOKENS[key]);
+  // Arrays are handled by index, not just recursed into: ROADMAP's `desc` bullets are arrays OF
+  // strings, and a string element can't rewrite itself from inside a forEach — an earlier pass
+  // that only recursed left `{{tests}}` visible on the Test-harness card. Caught in the browser.
+  const walk = node => {
+    if (!node || typeof node !== 'object') return;
+    const keys = Array.isArray(node) ? node.keys() : Object.keys(node);
+    for (const k of keys) {
+      const v = node[k];
+      if (typeof v === 'string') node[k] = fill(v);
+      else if (v && typeof v === 'object') walk(v);
+    }
+  };
+  walk(ROADMAP); walk(FLOWS);
+  // A missing/unreadable suite summary leaves these as "·" rather than printing "null".
+  const set = (id,val) => { if (val != null) document.getElementById(id).textContent = val; };
+  set('ledeTestCount', STAT_TOKENS.tests);
+  set('chipTestCount', STAT_TOKENS.tests);
+  set('statTestCount', STAT_TOKENS.tests);
+  document.getElementById('ledeTotalLines').textContent = TOTAL_LINES.toLocaleString();
+}
+hydrateStats();
+renderRoadmap();
+renderAll();
+
 // Commit count is derived from STATS.growth (same auto-generated data the chart plots) instead of
 // hand-typed, so it can't drift the way the hour-span prose used to (that one sat stale at "~58h"
 // for days while commits/lines kept moving — fixed 2026-07-19 by deriving hours the same way,

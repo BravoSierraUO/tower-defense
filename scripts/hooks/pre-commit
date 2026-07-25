@@ -3,7 +3,7 @@
 # commit, so Velocity never goes stale. Installed via `npm run hooks:install` (git doesn't version
 # .git/hooks, so this source file is the one that's tracked).
 node scripts/gen-stats.mjs || exit 1
-git add stats.json index.html
+git add stats.json index.html README.md
 
 # Advisory only (see the script's own comment) — never blocks the commit.
 node scripts/check-roadmap-sync.mjs

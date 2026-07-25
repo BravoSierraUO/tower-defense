@@ -86,11 +86,54 @@ for (const { file, sha } of lsTree('HEAD')) {
   totals[categoryFor(file)] += blobLines(sha);
 }
 const categories = CATEGORY_ORDER.map(([label, tone]) => ({ label, value: totals[label], tone }));
+const totalLines = categories.reduce((s, c) => s + c.value, 0);
+
+// The test count used to be hand-typed in ~6 places across index.html and README.md, and it drifted
+// every single time the suite grew — caught at 183/203/226/335 all live on the same page at once
+// (2026-07-25). Everything else on that page is derived; this was the last hand-maintained number.
+// So: run the suite and read its own TAP summary. That's the only source that can't be wrong —
+// grepping for `test(` would miss the loop-generated cases balance.test.mjs and spawner.test.mjs
+// both use. Cost is ~0.5s on the pre-commit hook, which is cheaper than the drift was.
+//
+// This must NEVER block a commit. A failing suite still prints a well-formed summary, so a red run
+// records its real numbers; only a suite that can't run at all (syntax error, no node) falls back
+// to the previous stats.json values rather than writing nulls into the page.
+function testStats() {
+  let out;
+  try {
+    out = execFileSync('node', ['--test', 'tests/'], { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch (err) {
+    out = err.stdout || ''; // non-zero exit just means red tests — the summary is still there
+  }
+  const num = key => {
+    const m = out.match(new RegExp(`^# ${key} (\\d+)$`, 'm'));
+    return m ? Number(m[1]) : null;
+  };
+  const count = num('tests');
+  if (count === null) {
+    console.warn('gen-stats: could not read a TAP summary from `node --test tests/` — reusing previous test counts');
+    try {
+      return JSON.parse(readFileSync(path.join(ROOT, 'stats.json'), 'utf8')).tests ?? null;
+    } catch { return null; }
+  }
+  const files = lsTree('HEAD').filter(e => /^tests\/.*\.test\.mjs$/.test(e.file)).length;
+  return { count, suites: num('suites'), pass: num('pass'), fail: num('fail'), files };
+}
+const tests = testStats();
+
+// BUILD in `0.MINOR.BUILD` is the number of THIS commit, not the count of the ones before it.
+// The +1 is the whole point: this script runs from the pre-commit hook, so the commit being made
+// doesn't exist yet and `growth.length` is one short. Without it the version in a commit message
+// is permanently off by one against `git rev-list --count` — 0.1.70 was really commit 71. See
+// changelog.md's version-scheme header, which documents this as the convention.
+const build = growth.length + 1;
 
 const stats = {
   generatedAt: new Date().toISOString().slice(0, 10),
+  build,
   growth,
   categories,
+  tests,
   velocity: { activeHours, sessionCount, activeDays, sessionGapHours: SESSION_GAP_HOURS },
 };
 
@@ -106,9 +149,49 @@ if (startIdx === -1 || endIdx === -1) {
   console.error('gen-stats: STATS_GENERATED_START/END markers not found in index.html');
   process.exit(1);
 }
-const inlineStats = { growth: stats.growth, categories: stats.categories, velocity: stats.velocity };
+const inlineStats = {
+  build: stats.build,
+  growth: stats.growth,
+  categories: stats.categories,
+  tests: stats.tests,
+  velocity: stats.velocity,
+};
 const replacement = `${START}\nconst STATS = ${JSON.stringify(inlineStats, null, 2)};\n${END}`;
 const updatedDoc = doc.slice(0, startIdx) + replacement + doc.slice(endIdx + END.length);
 writeFileSync(docPath, updatedDoc);
 
-console.log(`gen-stats: wrote stats.json + refreshed index.html (${growth.length} commits, ${categories.reduce((s, c) => s + c.value, 0)} lines, ~${activeHours}h across ${sessionCount} sessions/${activeDays} days)`);
+// README.md carried its own hand-typed copies of the same numbers and went stale harder than
+// index.html ever did (it was still claiming 203 tests / 55 commits / 12,000+ lines at 335/71/20k).
+// index.html can read the inlined STATS const at render time; a markdown file has no render step,
+// so the values get substituted in place here instead, between HTML comment markers GitHub hides.
+// Add a new one by wrapping any number in <!--S:key-->…<!--/S:key--> and adding the key below.
+const engineLines = totals['Engine (JS)'];
+const testLines = totals['Tests'];
+const MARKER_VALUES = {
+  tests: tests ? tests.count : null,
+  pass: tests ? tests.pass : null,
+  testFiles: tests ? tests.files : null,
+  testFails: tests ? tests.fail : null,
+  commits: growth.length,
+  build,
+  engineLines: engineLines.toLocaleString('en-US'),
+  testLines: testLines.toLocaleString('en-US'),
+  totalLines: totalLines.toLocaleString('en-US'),
+  density: `${Math.round((testLines / engineLines) * 100)}%`,
+  activeHours,
+  sessionCount,
+  activeDays,
+};
+const readmePath = path.join(ROOT, 'README.md');
+let readme = readFileSync(readmePath, 'utf8');
+const unknown = new Set();
+readme = readme.replace(/<!--S:(\w+)-->[\s\S]*?<!--\/S:\1-->/g, (whole, key) => {
+  if (!(key in MARKER_VALUES)) { unknown.add(key); return whole; }
+  const value = MARKER_VALUES[key];
+  return value === null ? whole : `<!--S:${key}-->${value}<!--/S:${key}-->`;
+});
+if (unknown.size) console.warn(`gen-stats: README.md has unknown stat markers: ${[...unknown].join(', ')}`);
+writeFileSync(readmePath, readme);
+
+const testNote = tests ? `${tests.count} tests` : 'tests unknown';
+console.log(`gen-stats: wrote stats.json + refreshed index.html/README.md (build ${build}, ${growth.length} commits, ${totalLines} lines, ${testNote}, ~${activeHours}h across ${sessionCount} sessions/${activeDays} days)`);
