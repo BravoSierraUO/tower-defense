@@ -15,22 +15,22 @@ const SCAV_SPOT2 = 60;  // (60,60)   -> dist ~85, a second distinct ring cell
 describe('World: tower economy', () => {
   test('placeTower charges exactly towerCost() (metal) and refuses when metal is short', () => {
     const { world } = freshGame(CONFIG.TOWER_COST - 1);
-    assert.equal(world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE), null, 'refused: not enough metal');
-    assert.equal(world.metal, CONFIG.TOWER_COST - 1, 'metal untouched on refusal');
+    assert.equal(world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE), null, 'refused: not enough iron');
+    assert.equal(world.iron, CONFIG.TOWER_COST - 1, 'metal untouched on refusal');
 
-    world.metal = CONFIG.TOWER_COST;
+    world.iron = CONFIG.TOWER_COST;
     const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
     assert.ok(tower, 'placement succeeds with exact metal');
-    assert.equal(world.metal, 0);
+    assert.equal(world.iron, 0);
     assert.equal(tower.cost, CONFIG.TOWER_COST);
   });
 
   test('sellTowerAt refunds TOWER_SELL_REFUND_PCT of what was actually paid, in metal', () => {
     const { world } = freshGame(CONFIG.TOWER_COST);
     world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
-    assert.equal(world.metal, 0);
+    assert.equal(world.iron, 0);
     assert.equal(world.sellTowerAt(AWAY_FROM_BASE, AWAY_FROM_BASE), true);
-    assert.equal(world.metal, Math.round(CONFIG.TOWER_COST * CONFIG.TOWER_SELL_REFUND_PCT));
+    assert.equal(world.iron, Math.round(CONFIG.TOWER_COST * CONFIG.TOWER_SELL_REFUND_PCT));
     assert.equal(world.towers.length, 0);
   });
 
@@ -165,33 +165,33 @@ describe('World: Market trading, gold<->metal', () => {
   // both caps, which addGold/addMetal would silently clamp back down to).
   const TRADE_TEST_FUNDS = 200;
 
-  test('tradeGoldForMetal is unavailable with no active Market, and converts gold to metal at base+tier ratio once built', () => {
+  test('tradeGoldForIron is unavailable with no active Market, and converts gold to metal at base+tier ratio once built', () => {
     const { world } = freshGame(TRADE_TEST_FUNDS);
-    assert.equal(world.tradeGoldForMetal(), false, 'no market built yet');
+    assert.equal(world.tradeGoldForIron(), false, 'no market built yet');
 
     const market = world.buildRoom('market', 0, 0);
     finishBuild(market);
 
     const goldBefore = world.gold;
-    const metalBefore = world.metal;
-    assert.equal(world.tradeGoldForMetal(), true);
+    const ironBefore = world.iron;
+    assert.equal(world.tradeGoldForIron(), true);
     assert.equal(goldBefore - world.gold, CONFIG.MARKET_TRADE_GOLD_COST);
     const expectedGain = CONFIG.MARKET_TRADE_GOLD_COST * (CONFIG.MARKET_TRADE_BASE_RATIO + market.stats.marketBonus);
-    assert.ok(Math.abs(world.metal - metalBefore - expectedGain) < 1e-9);
+    assert.ok(Math.abs(world.iron - ironBefore - expectedGain) < 1e-9);
   });
 
-  test('tradeMetalForGold is unavailable with no active Market, and converts metal to gold at base+tier ratio once built', () => {
+  test('tradeIronForGold is unavailable with no active Market, and converts metal to gold at base+tier ratio once built', () => {
     const { world } = freshGame(TRADE_TEST_FUNDS);
-    assert.equal(world.tradeMetalForGold(), false, 'no market built yet');
+    assert.equal(world.tradeIronForGold(), false, 'no market built yet');
 
     const market = world.buildRoom('market', 0, 0);
     finishBuild(market);
 
     const goldBefore = world.gold;
-    const metalBefore = world.metal;
-    assert.equal(world.tradeMetalForGold(), true);
-    assert.equal(metalBefore - world.metal, CONFIG.MARKET_TRADE_METAL_COST);
-    const expectedGain = CONFIG.MARKET_TRADE_METAL_COST * (CONFIG.MARKET_TRADE_BASE_RATIO + market.stats.marketBonus);
+    const ironBefore = world.iron;
+    assert.equal(world.tradeIronForGold(), true);
+    assert.equal(ironBefore - world.iron, CONFIG.MARKET_TRADE_IRON_COST);
+    const expectedGain = CONFIG.MARKET_TRADE_IRON_COST * (CONFIG.MARKET_TRADE_BASE_RATIO + market.stats.marketBonus);
     assert.ok(Math.abs(world.gold - goldBefore - expectedGain) < 1e-9);
   });
 
@@ -200,15 +200,15 @@ describe('World: Market trading, gold<->metal', () => {
     const market = world.buildRoom('market', 0, 0);
     finishBuild(market);
     world.gold = 0;
-    world.metal = 0;
+    world.iron = 0;
 
-    assert.equal(world.tradeGoldForMetal(), false, 'refused: not enough gold');
+    assert.equal(world.tradeGoldForIron(), false, 'refused: not enough gold');
     assert.equal(world.gold, 0);
-    assert.equal(world.metal, 0);
+    assert.equal(world.iron, 0);
 
-    assert.equal(world.tradeMetalForGold(), false, 'refused: not enough metal');
+    assert.equal(world.tradeIronForGold(), false, 'refused: not enough iron');
     assert.equal(world.gold, 0);
-    assert.equal(world.metal, 0);
+    assert.equal(world.iron, 0);
   });
 });
 
@@ -293,23 +293,23 @@ describe('World: tower upgrades (Phase 4b)', () => {
     assert.equal(world.towerUpgradeCost(tower), Math.round(CONFIG.TOWER_UPGRADE_COST_BASE * CONFIG.TOWER_UPGRADE_COST_GROWTH));
   });
 
-  test('upgradeTower charges metal, raises damage, and refuses past the max tier or when metal is short', () => {
+  test('upgradeTower charges iron, raises damage, and refuses past the max tier or when iron is short', () => {
     const { world } = freshGame(100000);
     const tower = world.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
     const baseDamage = tower.damage;
     while (tower.canUpgrade()) {
       const cost = world.towerUpgradeCost(tower);
-      const metalBefore = world.metal;
+      const ironBefore = world.iron;
       assert.ok(world.upgradeTower(tower));
-      assert.equal(metalBefore - world.metal, cost);
+      assert.equal(ironBefore - world.iron, cost);
     }
     assert.ok(tower.damage > baseDamage, 'fully upgraded tower deals more damage than tier 1');
     assert.equal(world.upgradeTower(tower), false, 'refused: already at max tier');
 
     const { world: poorWorld } = freshGame(CONFIG.TOWER_COST);
     const poorTower = poorWorld.placeTower(AWAY_FROM_BASE, AWAY_FROM_BASE);
-    assert.equal(poorWorld.metal, 0);
-    assert.equal(poorWorld.upgradeTower(poorTower), false, 'refused: not enough metal');
+    assert.equal(poorWorld.iron, 0);
+    assert.equal(poorWorld.upgradeTower(poorTower), false, 'refused: not enough iron');
   });
 
   test('towerAt() finds a placed tower from any point inside its snapped grid cell', () => {
@@ -325,12 +325,12 @@ describe('World: tower upgrades (Phase 4b)', () => {
 describe('World: Scavenger Turret economy (Phase 4c)', () => {
   test('placeScavenger charges exactly scavengerCost() (metal) and refuses when metal is short', () => {
     const { world } = freshGame(CONFIG.SCAVENGER_COST - 1);
-    assert.equal(world.placeScavenger(SCAV_SPOT, SCAV_SPOT), null, 'refused: not enough metal');
+    assert.equal(world.placeScavenger(SCAV_SPOT, SCAV_SPOT), null, 'refused: not enough iron');
 
-    world.metal = CONFIG.SCAVENGER_COST;
+    world.iron = CONFIG.SCAVENGER_COST;
     const scavenger = world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
     assert.ok(scavenger, 'placement succeeds with exact metal');
-    assert.equal(world.metal, 0);
+    assert.equal(world.iron, 0);
     assert.equal(scavenger.cost, CONFIG.SCAVENGER_COST);
   });
 
@@ -338,7 +338,7 @@ describe('World: Scavenger Turret economy (Phase 4c)', () => {
     const { world } = freshGame(CONFIG.SCAVENGER_COST);
     world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
     assert.equal(world.sellScavengerAt(SCAV_SPOT, SCAV_SPOT), true);
-    assert.equal(world.metal, Math.round(CONFIG.SCAVENGER_COST * CONFIG.TOWER_SELL_REFUND_PCT));
+    assert.equal(world.iron, Math.round(CONFIG.SCAVENGER_COST * CONFIG.TOWER_SELL_REFUND_PCT));
     assert.equal(world.scavengers.length, 0);
   });
 
@@ -348,9 +348,9 @@ describe('World: Scavenger Turret economy (Phase 4c)', () => {
     const baseOutput = scavenger.metalPerCycle;
     while (scavenger.canUpgrade()) {
       const cost = world.scavengerUpgradeCost(scavenger);
-      const metalBefore = world.metal;
+      const ironBefore = world.iron;
       assert.ok(world.upgradeScavenger(scavenger));
-      assert.equal(metalBefore - world.metal, cost);
+      assert.equal(ironBefore - world.iron, cost);
     }
     assert.ok(scavenger.metalPerCycle > baseOutput);
     assert.equal(world.upgradeScavenger(scavenger), false, 'refused: already at max tier');
@@ -370,24 +370,24 @@ describe('World: Scavenger Turret economy (Phase 4c)', () => {
 });
 
 describe('World: Mine room and the AI Cycle Budget scheduler (Phase 4c)', () => {
-  test('metalPerSecond() is 0 with no metal producers built', () => {
+  test('ironPerSecond() is 0 with no metal producers built', () => {
     const { world } = freshGame(0);
-    assert.equal(world.metalPerSecond(), 0);
+    assert.equal(world.ironPerSecond(), 0);
   });
 
   test('BASE_CYCLES_PER_MIN gives a lone Scavenger Turret nonzero output with zero AI Core built', () => {
     const { world } = freshGame(CONFIG.SCAVENGER_COST);
     world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
-    assert.ok(world.metalPerSecond() > 0, 'the always-on cycle floor should feed a lone producer');
+    assert.ok(world.ironPerSecond() > 0, 'the always-on cycle floor should feed a lone producer');
   });
 
   test('more active producers dilutes each one\'s share (fixed cycle budget, split evenly)', () => {
     const { world } = freshGame(100000);
     world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
-    const oneProducerTotal = world.metalPerSecond(); // one producer -> total IS its share
+    const oneProducerTotal = world.ironPerSecond(); // one producer -> total IS its share
 
     world.placeScavenger(SCAV_SPOT2, SCAV_SPOT2);
-    const twoProducerTotal = world.metalPerSecond();
+    const twoProducerTotal = world.ironPerSecond();
     const twoProducerShare = twoProducerTotal / 2; // same-tier scavengers split the budget evenly
 
     assert.ok(twoProducerShare < oneProducerTotal, 'a second producer dilutes each one\'s individual share');
@@ -396,22 +396,22 @@ describe('World: Mine room and the AI Cycle Budget scheduler (Phase 4c)', () => 
       'this is the "turret count and AI clock speed have to scale together" dilution the roadmap describes');
   });
 
-  test('an active Mine room contributes to activeMetalProducers() and metalPerSecond()', () => {
+  test('an active Mine room contributes to activeMetalProducers() and ironPerSecond()', () => {
     const { world } = freshGame(100000);
-    const before = world.metalPerSecond();
+    const before = world.ironPerSecond();
     const mine = world.buildRoom('mine', 0, 0);
     finishBuild(mine);
-    assert.ok(world.metalPerSecond() > before, 'an active Mine adds to the shared cycle budget throughput');
+    assert.ok(world.ironPerSecond() > before, 'an active Mine adds to the shared cycle budget throughput');
   });
 
-  test('AI Core cyclesPerMin raises cyclesPerSecond() and therefore metalPerSecond()', () => {
+  test('AI Core cyclesPerMin raises cyclesPerSecond() and therefore ironPerSecond()', () => {
     const { world } = freshGame(100000);
     world.placeScavenger(SCAV_SPOT, SCAV_SPOT);
-    const baseRate = world.metalPerSecond();
+    const baseRate = world.ironPerSecond();
 
     const aiCore = world.buildRoom('aiCore', 1, 0);
     finishBuild(aiCore);
-    assert.ok(world.metalPerSecond() > baseRate, 'an active AI Core raises the shared cycle budget');
+    assert.ok(world.ironPerSecond() > baseRate, 'an active AI Core raises the shared cycle budget');
   });
 
   test('rewardMultiplier() no longer includes any AI Core contribution (Phase 4c reframe)', () => {
@@ -437,14 +437,14 @@ describe('World/CommandCore: onboarding-guarantee starters (Phase 4c)', () => {
     const scavenger = world.placeStarterScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
     assert.equal(scavenger.cost, 0);
     assert.equal(world.scavengers.length, 1);
-    assert.ok(world.metalPerSecond() > 0, 'day-one guarantee: metal accrues before anything else is built');
+    assert.ok(world.ironPerSecond() > 0, 'day-one guarantee: metal accrues before anything else is built');
   });
 
   test('day-one guarantee: a Game-shaped commandCore+world produces metal immediately, no player action needed', () => {
     const { commandCore, world } = freshGame(0);
     commandCore.placeStarterRoom('reactor', 0, 0);
     world.placeStarterScavenger(AWAY_FROM_BASE, AWAY_FROM_BASE);
-    assert.ok(world.metalPerSecond() > 0);
+    assert.ok(world.ironPerSecond() > 0);
     // Phase 4d: the starter Reactor's power feeds powerFactor(), not tower cost
     // anymore — a lone tier-1 tower should fire at full power on day one too.
     assert.ok(world.powerSupply() > 0);

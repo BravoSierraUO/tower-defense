@@ -1003,6 +1003,11 @@ const ROADMAP = [
       'SHIPPED 2026-07-25 (0.1.67): the ore taxonomy. `fancyMetal` is gone — it was a placeholder for the mid-tier metals before they had names ("fancy metal was my previous attempt at describing iron-bronze-steel"), replaced by tin/bronze/steel/shadow. Its single 15/20/25 loot band split across the four, tin common through shadow scarce, every tier still summing to exactly 100. `REFINED_RECIPES` inputs repointed so a recipe reads as the thing it makes — `alloy ← bronze` (bronze IS an alloy), `circuitWire ← tin + platinum` (tin being the classic wire/solder metal) — same quantities, a rename with intent rather than a rebalance. 7 new guard tests in `balance.test.mjs`: every loot tier sums to 100, every rollable ore has an ORE_TYPES entry with a valid colour, every ORE_TYPES entry is reachable from some table (no dead config), recipes only consume keys that exist, and `\'metal\'` is a loot-table roll but never an `Inventory.ore` field. Suite 286 → 293.',
       'DELIBERATELY NOT RENAMED in the same pass: `world.metal` → `iron`. "metal" appears 386 times across js/ and tests/, and roughly HALF those call sites are headed for scrap rather than iron — every in-run accrual, the wave payout, the defender bonus. Renaming them all to iron first and then re-splitting half to scrap would touch the same lines twice and double the review surface for nothing. So `metal` keeps its name until the commit that actually splits it, where each of the eight `addMetal()` callers gets routed exactly once. The ore taxonomy was worth doing separately precisely because it is purely idle-side — the split does not touch `Inventory.ore` at all.',
       'MAX_WAVES DECIDED, with a caveat the user raised themselves: keep the terminal branch (so `finalizeWave()` keeps its shape and the `\'won\'` state survives) but raise the number high enough to be effectively endless — 999, "no one will get there any time soon" — framed as wanting it "unlimited but not just unlimited, STRUCTURED". That caveat is load-bearing, because the scaling is currently unstructured past wave 8. Measured: enemy COUNT is linear and unbounded (wave 1 = 5 enemies, wave 20 = 43, wave 100 = 203, wave 999 = 2001) but DIFFICULTY is hard-capped — `DIFFICULTY_TIERS` has exactly three entries and the last unlocks at wave 8, with one `ENEMY_CLASSES` entry each. So 999 as-is buys 991 waves of the identical fight with more bodies, and at ~50 towers 2001 enemies is ~100k distance checks per frame — a performance wall before a difficulty one. So MAX_WAVES STAYS AT 20 until structured scaling exists; 999 without it advertises depth the waves do not have, which is worse than 20 rather than better. Candidates, all partly built: more DIFFICULTY_TIERS at higher unlockWaves, a wave-scaled multiplier stacking on the tier one, or new ENEMY_CLASSES introduced in bands — which is what Phase 7b\'s parked 9-class lift was for.',
+      'SHIPPED 2026-07-25 (0.1.68): THE CURRENCY SPLIT — the phase\'s blocker, done. `world.metal` is gone, replaced by `world.iron` (capped, prep-side, spent on placing and upgrading turrets and by the Market) and `world.scrap` (deliberately UNCAPPED, fed by salvage and combat, and set to 0 in `endTdRun()`). That single line is what makes scrap run-only: no snapshot, no unwinding, no path by which a long profitable run funds permanent power. 18 new tests (`tests/currencySplit.test.mjs`) all defending one invariant — scrap can never become permanent power — because a future reward routed to the wrong pool looks identical in play until the idle economy quietly inflates. Among them: scrap cannot buy a turret however much you hold, a wave clear AND a wipe both mint exactly zero iron, a full salvage run produces zero permanent currency, and a reflective check that no reverse scrap→ore conversion exists anywhere, so adding one later has to be justified against a failing test. Suite 293 → 312.',
+      'THE ROUTING TABLE WAS WRONG TWICE, and the second error mattered. This card and the spec said `addMetal()` had seven callers, then eight, then nine — each correction found during the work rather than by re-reading. Seven→eight was grepping only `world.js` (the eighth is `spawner.js`\'s wave payout). Eight→nine was worse, because it was not a count error but a MISLABELLED SITE: `world.js`\'s `addMetal(def.metal)` is the Supply Drop ability, which the spec called "mission rewards" — those actually live in `game.js`. The test suite caught it. An undercount bites mid-refactor; a mislabel routes real income into the wrong economy permanently. This is also the vindication of routing callers one at a time instead of doing a blanket `metal`→`iron` rename: the blanket version would have sent Supply Drop\'s payout to the prep pool silently.',
+      'Renames that fell out, listed because they are the API surface anything downstream touches: STARTING_METAL→STARTING_IRON, METAL_CAP_BASE→IRON_CAP_BASE, `metalPerSecond()`→`ironPerSecond()`, MARKET_TRADE_METAL_COST→..._IRON_COST, WAVE_CLEAR_METAL_*→WAVE_CLEAR_SCRAP_*, DEFENDER_BONUS_METAL_*→..._SCRAP_*, CORPSE_METAL_*→CORPSE_SCRAP_*, `Corpse.metalValue`→`scrapValue`, `tradeGoldForMetal`/`tradeMetalForGold`→`tradeGoldForIron`/`tradeIronForGold`, and ORE_TYPES/ORE_LOOT_TABLE\'s `metal` key→`iron`. Mission rewards changed key from metal to iron; Supply Drop\'s from metal to scrap. The `metalYieldMult` AFFIX id is deliberately UNCHANGED — renaming affix ids would touch AFFIX_POOL plus every already-rolled item on every save, which is a migration, not a rename.',
+      'Also shipped: the ore→scrap conversion (§K1), the one bridge between the two economies and deliberately one-way. `convertOreToScrap(oreType, amount)` handles both sources transparently — iron is the bulk currency (`world.iron`) while every other ore is a discrete `Inventory.ore` stack — and refuses without charging when you are short, the same silent-no-op convention every other spend in world.js uses. Ratios per `ORE_SCRAP_RATIOS`: iron 1, tin 2, bronze 3, steel 4, shadow 6, platinum 10, diamonds 25. The two endpoints are the user\'s; the middle is interpolated first-pass. A balance test asserts the ladder is strictly increasing, so rarer ore always pays more scrap.',
+      'HUD: METAL became IRON, and a SCRAP stat was added that is HIDDEN in prep (where it is always 0 and unspendable) and unhidden during a run — the same conditional-stat pattern MODS/PARTS already use, chosen partly because the top bar is already too wide (18b). Verified live as well as by unit test: 12 browser checks covering labels, the show/hide behaviour, Fe-denominated build costs in the drawer, the wipe-on-run-end, the Market button text, and the conversion — plus the whole Phase 18 suite re-run at 51/51 to confirm the bottom bar reads the renamed pool correctly.',
       'STILL OPEN after the 2026-07-25 design sessions (six of the original eight got answered, plus MAX_WAVES): STRUCTURED WAVE SCALING, which is now the thing gating the MAX_WAVES bump; whether the gold-for-HP repair button survives or repoints at salvage as an in-run emergency heal; where the existing wave-clear gold+metal payout goes now that chests pay items; whether flee is allowed mid-wave or only between waves; how batteries cap idle time; and whether the prep currency gets a Storage-style cap. ANSWERED: XP-gate shape, the multi-wave session, what chests contain, and the salvage-into-prep contradiction (neither reading was right — in-run spends salvage for a temporary ×1.10, prep spends gold/manufactured parts to raise the permanent base, so salvage never leaves the run).'
     ],
     depends:'Nothing hard, but step 0 is reverting the v2.36 dev stash (`STARTING_GOLD`/`STARTING_METAL` at 10000 with 100k caps, both flagged REVERT in config.js) — economy work against a 10k stash is tuning against a fiction. Overlaps Phase 19 (both touch view/phase structure; sequence them together, not in parallel). Unblocks Phase 18b\'s promoted-stat decision.',
@@ -2622,17 +2627,23 @@ const STATS = {
       "date": "07-25",
       "cum": 19058,
       "subject": "0.1.66 - Phase 20 design pass 2: itemization + the multiplicative stat chain"
+    },
+    {
+      "hash": "6037481",
+      "date": "07-25",
+      "cum": 19268,
+      "subject": "0.1.67 - Phase 20: ore taxonomy + resource naming closed"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5952,
+      "value": 5976,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 6886,
+      "value": 6996,
       "tone": "special"
     },
     {
@@ -2642,12 +2653,12 @@ const STATS = {
     },
     {
       "label": "Tests",
-      "value": 3398,
+      "value": 3474,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 29.4,
+    "activeHours": 29.7,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5

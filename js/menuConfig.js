@@ -80,20 +80,20 @@ export function buildMenuConfig(view, world, commandCore) {
     // itself (radial-stub) instead of silently no-op'ing once armed and clicked
     // on the field — see the reactor confusion this same gap caused in Core view.
     const attackerLeaves = Object.entries(CONFIG.DAMAGE_TYPES).map(([type, def], i) => ({
-      id: type, digit: `${i + 1}`, label: def.label, color: def.color, cost: `${towerCostNum}m`,
+      id: type, digit: `${i + 1}`, label: def.label, color: def.color, cost: `${towerCostNum} Fe`,
       desc: describeAttacker(def),
-      locked: world.metal < towerCostNum,
-      reason: `Need ${towerCostNum}m metal (have ${Math.floor(world.metal)}m)`
+      locked: world.iron < towerCostNum,
+      reason: `Need ${towerCostNum} iron (have ${Math.floor(world.iron)})`
     }));
     const build = {
       id: 'build', icon: '+', label: 'Build',
       flyout: [
         ...attackerLeaves,
         {
-          id: 'scavenger', digit: '4', label: 'Scavenger', cost: `${scavengerCostNum}m`,
-          desc: 'Reels in corpses for metal',
-          locked: world.metal < scavengerCostNum,
-          reason: `Need ${scavengerCostNum}m metal (have ${Math.floor(world.metal)}m)`
+          id: 'scavenger', digit: '4', label: 'Scavenger', cost: `${scavengerCostNum} Fe`,
+          desc: 'Reels in corpses for scrap',
+          locked: world.iron < scavengerCostNum,
+          reason: `Need ${scavengerCostNum} iron (have ${Math.floor(world.iron)})`
         }
       ]
     };

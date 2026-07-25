@@ -74,11 +74,11 @@ describe('MissionTracker (Phase 8b)', () => {
     assert.equal(t.current().id, MISSIONS[0].id);
   });
 
-  test('every mission carries a well-formed reward (gold and/or metal, no other keys, all positive)', () => {
+  test('every mission carries a well-formed reward (gold and/or iron, no other keys, all positive)', () => {
     for (const m of MISSIONS) {
       assert.ok(m.reward, `${m.id} has a reward`);
       const keys = Object.keys(m.reward);
-      assert.ok(keys.length > 0 && keys.every(k => k === 'gold' || k === 'metal'), `${m.id}'s reward is only gold/metal`);
+      assert.ok(keys.length > 0 && keys.every(k => k === 'gold' || k === 'iron'), `${m.id}'s reward is only gold/iron`);
       for (const k of keys) assert.ok(m.reward[k] > 0, `${m.id}'s ${k} reward is positive`);
     }
   });

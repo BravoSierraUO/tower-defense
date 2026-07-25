@@ -87,37 +87,41 @@ describe('Phase 16: corpses', () => {
 
     assert.equal(world.corpses.length, 1);
     const c = world.corpses[0];
-    assert.equal(c.metalValue, Math.round(enemy.maxHealth * CONFIG.CORPSE_METAL_PER_ENEMY_HEALTH));
+    assert.equal(c.scrapValue, Math.round(enemy.maxHealth * CONFIG.CORPSE_SCRAP_PER_ENEMY_HEALTH));
     assert.equal(c.x, 300, 'dropped at the death position');
   });
 
   test('a corpse decays and is dropped once its life runs out, with no scavenger to collect it', () => {
-    const { world } = freshGame(0); // start with no metal so we can watch it stay put
+    const { world } = freshGame(0);
     world.scavengers.length = 0;    // strip the starter so nothing tractors
     world.corpses.push(new Corpse(9999, 9999, 50)); // far from anything
-    const metalBefore = world.metal;
+    const scrapBefore = world.scrap;
 
     world.updateSalvage(CONFIG.CORPSE_DECAY_SECONDS + 0.01);
     assert.equal(world.corpses.length, 0, 'expired corpse is filtered out');
-    assert.equal(world.metal, metalBefore, 'nothing salvaged it, so no metal gained');
+    assert.equal(world.scrap, scrapBefore, 'nothing salvaged it, so no scrap gained');
   });
 });
 
 describe('Phase 16: tractor salvage', () => {
-  test('a scavenger reels in a corpse within its tractorRadius and converts it to metal', () => {
+  test('a scavenger reels in a corpse within its tractorRadius and converts it to SCRAP', () => {
     const { world } = freshGame(0);
     world.scavengers.length = 0;
     const scav = world.placeStarterScavenger(100, 0); // free, inside ring
     // a corpse just outside collection range but well inside tractor reach
     const corpse = new Corpse(scav.x + 60, scav.y, 40);
     world.corpses.push(corpse);
-    const metalBefore = world.metal;
+    const scrapBefore = world.scrap;
+    const ironBefore = world.iron;
 
     // one big step: 60px at CORPSE_TRACTOR_SPEED closes the gap into collect range
     world.updateSalvage(1.0);
     assert.equal(corpse.pulledBy, scav, 'the covering scavenger claimed it');
     assert.equal(world.corpses.length, 0, 'collected and removed');
-    assert.equal(world.metal - metalBefore, 40, 'its full value was banked as metal');
+    // Phase 20: salvage is the definitional SCRAP source — run-only, and it must not
+    // touch the prep pool, or the run economy could fund permanent power.
+    assert.equal(world.scrap - scrapBefore, 40, 'its full value was banked as scrap');
+    assert.equal(world.iron, ironBefore, 'and no iron was minted');
   });
 
   test('a corpse outside every scavenger tractorRadius is never pulled', () => {
@@ -139,9 +143,11 @@ describe('Phase 16: tractor salvage', () => {
     const scav = world.placeStarterScavenger(100, 0);
     scav.equippedItem = { affixes: [{ stat: 'metalYieldMult', value: 0.5 }] }; // +50%
     world.corpses.push(new Corpse(scav.x + 60, scav.y, 40));
-    const metalBefore = world.metal;
+    const scrapBefore = world.scrap;
 
     world.updateSalvage(1.0);
-    assert.equal(world.metal - metalBefore, 60, '40 * 1.5 = 60');
+    // The affix keeps its `metalYieldMult` id — renaming affix ids would touch
+    // AFFIX_POOL plus every already-rolled item, so it's deliberately deferred.
+    assert.equal(world.scrap - scrapBefore, 60, '40 * 1.5 = 60');
   });
 });

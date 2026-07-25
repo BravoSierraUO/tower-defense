@@ -181,20 +181,20 @@ describe('balance: Phase 4c metal economy stays structurally sane', () => {
     }
   });
 
-  test('metalPerSecond() is never negative at any producer count or Command Core investment', () => {
+  test('ironPerSecond() is never negative at any producer count or Command Core investment', () => {
     const { world } = freshGame(100000);
-    assert.ok(world.metalPerSecond() >= 0, 'no producers');
+    assert.ok(world.ironPerSecond() >= 0, 'no producers');
     for (const [sx, sy] of [[60,60],[100,60],[140,60],[60,-60],[100,-60]]) world.placeScavenger(sx, sy); // Phase 16: 5 distinct in-ring cells
-    assert.ok(world.metalPerSecond() >= 0, 'several scavengers');
+    assert.ok(world.ironPerSecond() >= 0, 'several scavengers');
     const mine = world.buildRoom('mine', 0, 0);
     finishBuild(mine);
-    assert.ok(world.metalPerSecond() >= 0, 'plus an active mine');
+    assert.ok(world.ironPerSecond() >= 0, 'plus an active mine');
   });
 
   test('a day-one starter Scavenger Turret earns enough metal for a second Scavenger Turret within a reasonable time', () => {
     const { world } = freshGame(0);
     world.placeStarterScavenger(200, 200);
-    const secondsNeeded = CONFIG.SCAVENGER_COST / world.metalPerSecond();
+    const secondsNeeded = CONFIG.SCAVENGER_COST / world.ironPerSecond();
     assert.ok(secondsNeeded < 300,
       `the starter Scavenger Turret alone needs ${Math.round(secondsNeeded)}s to afford a second one — that's a long stall this early`);
   });
@@ -339,12 +339,28 @@ describe('balance: the ore taxonomy stays internally consistent', () => {
     }
   });
 
-  test("'metal' is a loot-table roll but never an Inventory.ore field", () => {
-    // The distinction Phase 20's spec turns on: the `metal` roll pays the bulk
-    // World.metal currency, it does not enter Inventory.ore. It becomes `iron` in
-    // the commit that splits that currency into iron (prep) and scrap (run-only);
-    // this pins the invariant until then so the two can't quietly merge.
-    assert.ok('metal' in CONFIG.ORE_LOOT_TABLE[0], 'metal is still the common roll');
-    assert.ok(!('metal' in new Inventory().ore), 'metal must not be an ore field');
+  test("'iron' is a loot-table roll but never an Inventory.ore field", () => {
+    // The distinction the two-pool split turns on: the `iron` roll pays the bulk
+    // World.iron currency, it does NOT enter Inventory.ore (which holds only the
+    // discrete craftable ores). Nothing may quietly merge the two.
+    assert.ok('iron' in CONFIG.ORE_LOOT_TABLE[0], 'iron is the common roll');
+    assert.ok(!('iron' in new Inventory().ore), 'iron must not be an ore field');
+  });
+
+  test('every ORE_SCRAP_RATIOS key is a real ore, and rarer ore pays more scrap', () => {
+    // Phase 20 §K1: the one-way ore -> scrap bridge. A ratio for a nonexistent ore
+    // is dead config; a ratio of 0 or less would silently make an ore unconvertible.
+    for (const [ore, ratio] of Object.entries(CONFIG.ORE_SCRAP_RATIOS)) {
+      assert.ok(CONFIG.ORE_TYPES[ore], `ORE_SCRAP_RATIOS has unknown ore '${ore}'`);
+      assert.ok(ratio > 0, `${ore} has a non-positive scrap ratio`);
+    }
+    // The two endpoints the user fixed by hand, plus monotonicity across the set.
+    assert.equal(CONFIG.ORE_SCRAP_RATIOS.iron, 1);
+    assert.equal(CONFIG.ORE_SCRAP_RATIOS.platinum, 10);
+    const order = ['iron', 'tin', 'bronze', 'steel', 'shadow', 'platinum', 'diamonds'];
+    for (let i = 1; i < order.length; i++) {
+      assert.ok(CONFIG.ORE_SCRAP_RATIOS[order[i]] > CONFIG.ORE_SCRAP_RATIOS[order[i - 1]],
+        `${order[i]} should pay more scrap than ${order[i - 1]}`);
+    }
   });
 });

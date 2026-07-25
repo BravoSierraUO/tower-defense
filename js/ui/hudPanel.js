@@ -10,7 +10,10 @@ export class HudPanel {
   constructor({ onRestart, onRepairBase, onOpenWaveMenu, onUseAbility } = {}) {
     this.scoreEl = document.getElementById('ui-score');
     this.goldEl = document.getElementById('ui-gold');
-    this.metalEl = document.getElementById('ui-metal');
+    this.ironEl = document.getElementById('ui-iron');
+    // Phase 20: the run-only scrap pool (see World's two-pool comment).
+    this.scrapEl = document.getElementById('ui-scrap');
+    this.scrapStat = document.getElementById('ui-scrap-stat');
     this.moduleChargesStat = document.getElementById('ui-module-charges-stat');
     this.moduleChargesEl = document.getElementById('ui-module-charges');
     this.productionPartsStat = document.getElementById('ui-production-parts-stat');
@@ -105,7 +108,12 @@ export class HudPanel {
 
     this.scoreEl.textContent = world.score;
     this.goldEl.textContent = `${Math.floor(world.gold)} / ${world.goldCap()}`;
-    this.metalEl.textContent = `${Math.floor(world.metal)} / ${world.metalCap()}`;
+    this.ironEl.textContent = `${Math.floor(world.iron)} / ${world.ironCap()}`;
+    // Shown only while a TD run is active: in prep scrap is always 0 and can't be
+    // spent, so a permanent 0 would be noise in a top bar that's already too wide
+    // (see 18b). Same conditional-stat pattern as MODS/PARTS below.
+    this.scrapStat.hidden = !world.tdRunActive;
+    if (!this.scrapStat.hidden) this.scrapEl.textContent = `${Math.floor(world.scrap)}`;
     this.moduleChargesStat.hidden = world.moduleCharges <= 0;
     this.moduleChargesEl.textContent = world.moduleCharges;
     this.productionPartsStat.hidden = world.productionParts <= 0;

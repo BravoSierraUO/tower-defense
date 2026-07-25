@@ -402,17 +402,23 @@
       "date": "07-25",
       "cum": 19058,
       "subject": "0.1.66 - Phase 20 design pass 2: itemization + the multiplicative stat chain"
+    },
+    {
+      "hash": "6037481",
+      "date": "07-25",
+      "cum": 19268,
+      "subject": "0.1.67 - Phase 20: ore taxonomy + resource naming closed"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5952,
+      "value": 5976,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 6886,
+      "value": 6996,
       "tone": "special"
     },
     {
@@ -422,12 +428,12 @@
     },
     {
       "label": "Tests",
-      "value": 3398,
+      "value": 3474,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 29.4,
+    "activeHours": 29.7,
     "sessionCount": 8,
     "activeDays": 7,
     "sessionGapHours": 5

@@ -33,8 +33,8 @@ export class Game {
       onBuySkill: id => this.profile.buySkill(id),
       onRestart: () => this.restart(),
       onRepairBase: () => this.world.repairBase(CONFIG.BASE_REPAIR_AMOUNT),
-      onMarketBuyMetal: () => this.world.tradeGoldForMetal(),
-      onMarketBuyGold: () => this.world.tradeMetalForGold(),
+      onMarketBuyIron: () => this.world.tradeGoldForIron(),
+      onMarketBuyGold: () => this.world.tradeIronForGold(),
       onOpenWaveMenu: () => { this.waveMenuOpen = !this.waveMenuOpen; },
       onSelectWave: (n, isReplay) => {
         const started = isReplay ? this.world.spawner.triggerReplay(n) : this.world.spawner.triggerWave();
@@ -443,7 +443,7 @@ export class Game {
         view: this.view
       })) {
         if (m.reward?.gold) this.world.addGold(m.reward.gold);
-        if (m.reward?.metal) this.world.addMetal(m.reward.metal);
+        if (m.reward?.iron) this.world.addIron(m.reward.iron);
       }
 
       // Phase 8a: a base wipe no longer ends the run — Spawner.finalizeWave() heals it back

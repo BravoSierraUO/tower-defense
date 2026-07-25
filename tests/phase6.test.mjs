@@ -90,13 +90,15 @@ describe('Phase 6: ability effects', () => {
     assert.ok(world.gold > 0, 'the normal per-kill gold payout still fired');
   });
 
-  test('Supply Drop grants flat gold + metal, capped at the pool ceilings', () => {
+  test('Supply Drop grants flat gold + scrap', () => {
     const { world, commandCore } = freshGame(0);
     unlockComms(commandCore);
     const def = CONFIG.ABILITIES.find(a => a.id === 'supplyDrop');
     world.useAbility('supplyDrop');
     assert.equal(world.gold, Math.min(def.gold, world.goldCap()));
-    assert.equal(world.metal, Math.min(def.metal, world.metalCap()));
+    // Phase 20: Supply Drop's material half pays SCRAP (it fires during combat), and
+    // scrap is uncapped because it's wiped at run end — no pool ceiling to clamp to.
+    assert.equal(world.scrap, def.scrap);
   });
 
   test('Drone Repair heals every Tower/Scavenger by healPct of missing health, never past maxHealth', () => {

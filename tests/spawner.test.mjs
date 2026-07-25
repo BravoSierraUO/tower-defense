@@ -68,9 +68,13 @@ describe('Spawner: idle wave loop (Phase 8a)', () => {
     spawner.update(0.016, world);
 
     const expectedGold = Math.round((CONFIG.WAVE_CLEAR_BONUS_BASE + 0 * CONFIG.WAVE_CLEAR_BONUS_GROWTH) * world.rewardMultiplier());
-    const expectedMetal = Math.round(CONFIG.WAVE_CLEAR_METAL_BASE + 0 * CONFIG.WAVE_CLEAR_METAL_GROWTH);
+    const expectedScrap = Math.round(CONFIG.WAVE_CLEAR_SCRAP_BASE + 0 * CONFIG.WAVE_CLEAR_SCRAP_GROWTH);
     assert.equal(world.gold, expectedGold);
-    assert.equal(world.metal, expectedMetal);
+    // Phase 20: a wave payout is earned DURING a run, so it pays SCRAP, not the prep
+    // pool. Interim routing — once chests pay items this either becomes a scrap bonus
+    // alongside them or is replaced outright.
+    assert.equal(world.scrap, expectedScrap);
+    assert.equal(world.iron, 0, 'a wave clear must not mint prep currency');
     assert.equal(world.moduleCharges, CONFIG.WAVE_CLEAR_MODULE_CHARGE);
     assert.equal(world.productionParts, CONFIG.WAVE_CLEAR_PRODUCTION_PARTS);
     assert.equal(spawner.wavesCleared, 1);
@@ -91,9 +95,10 @@ describe('Spawner: idle wave loop (Phase 8a)', () => {
 
     const silver = CONFIG.WIPE_CHEST_TIERS.find(t => t.id === 'silver');
     const expectedGold = Math.round(CONFIG.WAVE_CLEAR_BONUS_BASE * silver.mult * world.rewardMultiplier());
-    const expectedMetal = Math.round(CONFIG.WAVE_CLEAR_METAL_BASE * silver.mult);
+    const expectedScrap = Math.round(CONFIG.WAVE_CLEAR_SCRAP_BASE * silver.mult);
     assert.equal(world.gold, expectedGold);
-    assert.equal(world.metal, expectedMetal);
+    assert.equal(world.scrap, expectedScrap);
+    assert.equal(world.iron, 0, 'a wipe payout must not mint prep currency either');
     assert.equal(world.moduleCharges, 0, 'no salvage tokens on a wipe, only on a full clear');
     assert.equal(world.productionParts, 0);
     assert.equal(spawner.lastChestTier, 'silver');

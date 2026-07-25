@@ -86,7 +86,7 @@ export const CONFIG = {
   // user's own framing was "we get some metal and money," so this is the game's first
   // per-kill metal payout, distinct from wave-clear metal.
   DEFENDER_BONUS_GOLD_MULT: 0.5,
-  DEFENDER_BONUS_METAL_PER_ENEMY_HEALTH: 0.2,
+  DEFENDER_BONUS_SCRAP_PER_ENEMY_HEALTH: 0.2,
 
   BASE_X: 0,
   BASE_Y: 0,
@@ -156,7 +156,7 @@ export const CONFIG = {
     },
     // Phase 4c: reframed from a flat gold-reward booster into the AI Cycle
     // Budget engine — cyclesPerMin is AI bandwidth, split across active metal
-    // producers (Scavenger Turret, Mine) by World.metalPerSecond().
+    // producers (Scavenger Turret, Mine) by World.ironPerSecond().
     aiCore: {
       label: 'AI Core', color: '#62D0FF', output: 'cyclesPerMin',
       tiers: [{ cyclesPerMin: 2 }, { cyclesPerMin: 4 }, { cyclesPerMin: 8 }]
@@ -265,7 +265,7 @@ export const CONFIG = {
   // Market: manual gold<->metal trading, same shape as Dock's gold->research
   // trade above (two directions instead of one).
   MARKET_TRADE_GOLD_COST: 40,
-  MARKET_TRADE_METAL_COST: 40,
+  MARKET_TRADE_IRON_COST: 40,
   MARKET_TRADE_BASE_RATIO: 0.5, // output per unit spent at marketBonus = 0
 
   // Phase 2b: Skeleton Economy. Command Core output now has a real effect —
@@ -289,8 +289,8 @@ export const CONFIG = {
   // Spawner.waveValueKilled / Spawner.waveValueTotal — raw enemy.maxHealth sums, deliberately
   // never passed through rewardMultiplier()/combo/prestige, so a future "+XP%"-style upgrade
   // only inflates payout, never the completion percentage itself.
-  WAVE_CLEAR_METAL_BASE: 15,
-  WAVE_CLEAR_METAL_GROWTH: 3,
+  WAVE_CLEAR_SCRAP_BASE: 15,
+  WAVE_CLEAR_SCRAP_GROWTH: 3,
   WAVE_CLEAR_MODULE_CHARGE: 1,     // free module install (see World.installModuleAt)
   WAVE_CLEAR_PRODUCTION_PARTS: 1,  // free build-timer rush (see World.rushBuildRoom)
   WIPE_CHEST_TIERS: [
@@ -330,16 +330,16 @@ export const CONFIG = {
   // metal funds everything on the exterior world grid (Tower AND Scavenger
   // Turret, migrated off gold this phase). Scavenger Turret is a passive
   // exterior placeable that mines metal through the AI Cycle Budget scheduler
-  // (World.metalPerSecond()) rather than a flat rate — see aiCore/mine above.
-  // STARTING_METAL covers exactly one Tower (TOWER_COST below): at 0 it took
+  // (World.ironPerSecond()) rather than a flat rate — see aiCore/mine above.
+  // STARTING_IRON covers exactly one Tower (TOWER_COST below): at 0 it took
   // ~4.5 min of starter-Scavenger accrual before the very first action was
   // affordable — invisible to the player as anything but a silently-broken
   // click, and directly blocked Phase 8b's "Place a Tower" tutorial mission.
   // TESTING (v2.36): dev stash + raised cap, same as STARTING_GOLD above. REVERT before
-  // real balance (was 40 / 300) — note the metal cap must stay >= STARTING_METAL or the
+  // real balance (was 40 / 300) — note the iron cap must stay >= STARTING_IRON or the
   // idle mining tick clamps the stash straight back down.
-  STARTING_METAL: 10000,
-  METAL_CAP_BASE: 100000,
+  STARTING_IRON: 10000,
+  IRON_CAP_BASE: 100000,
   BASE_CYCLES_PER_MIN: 3, // always-on AI bandwidth floor, even with zero AI Core built — keeps
                           // the starter Scavenger Turret "already producing" true from minute one
   SCAVENGER_COST: 25,
@@ -368,7 +368,7 @@ export const CONFIG = {
   // reaches it in time — positioning matters (a future drone could ferry distant ones
   // in; unbuilt). Pulled corpses are converted on contact, scaled by the collecting
   // Scavenger's own metalYieldMult item affix, so scavenger loadout matters here too.
-  CORPSE_METAL_PER_ENEMY_HEALTH: 0.2, // a basic 50-hp enemy -> 10 metal, same scale as the aggro defender bonus
+  CORPSE_SCRAP_PER_ENEMY_HEALTH: 0.2, // a basic 50-hp enemy -> 10 metal, same scale as the aggro defender bonus
   CORPSE_DECAY_SECONDS: 6,            // uncollected corpses fade after this
   CORPSE_TRACTOR_SPEED: 220,          // px/s a corpse is reeled in — > ENEMY_SPEED (100) so it actually catches up
   CORPSE_COLLECT_DISTANCE: 18,        // reel-in distance at which a corpse converts to metal
@@ -394,13 +394,13 @@ export const CONFIG = {
   // components, and NONE of it is spendable during a TD run (that's scrap — see
   // docs/economy-redesign.md).
   //
-  // `metal` stays keyed as-is for now on purpose. It's the bulk-currency roll that
-  // pays World.metal rather than entering Inventory.ore, and it becomes `iron` in
-  // the same commit that splits World.metal into iron (prep) and scrap (run-only) —
-  // renaming it here first would mean touching ~half of the 386 metal references
-  // twice, since many of them are headed for scrap, not iron.
+  // `iron` is the bulk-currency roll: it pays World.iron rather than entering
+  // Inventory.ore, which is why it's in this table but not an ore field. Renamed
+  // from `metal` in the same commit that split World.metal into iron (prep) and
+  // scrap (run-only) — doing it here first would have meant touching half the
+  // call sites twice, since many were headed for scrap rather than iron.
   ORE_TYPES: {
-    metal:    { label: 'Metal',    color: '#8FA6B8' },
+    iron:     { label: 'Iron',     color: '#8FA6B8' },
     tin:      { label: 'Tin',      color: '#C9D6DF' },
     bronze:   { label: 'Bronze',   color: '#C98F5B' },
     steel:    { label: 'Steel',    color: '#7E93A8' },
@@ -417,14 +417,21 @@ export const CONFIG = {
   // sums to 100 per tier, and better tiers still shift weight toward the rare end.
   // First-pass numbers, not tuned — the standing caveat this whole file carries.
   ORE_LOOT_TABLE: [
-    { metal: 80, tin: 9,  bronze: 4,   steel: 1.5, shadow: 0.5, platinum: 4.99, diamonds: 0.01 },
-    { metal: 72, tin: 11, bronze: 5.5, steel: 2.5, shadow: 1,   platinum: 7.97, diamonds: 0.03 },
-    { metal: 65, tin: 13, bronze: 7,   steel: 3.5, shadow: 1.5, platinum: 9.95, diamonds: 0.05 }
+    { iron: 80, tin: 9,  bronze: 4,   steel: 1.5, shadow: 0.5, platinum: 4.99, diamonds: 0.01 },
+    { iron: 72, tin: 11, bronze: 5.5, steel: 2.5, shadow: 1,   platinum: 7.97, diamonds: 0.03 },
+    { iron: 65, tin: 13, bronze: 7,   steel: 3.5, shadow: 1.5, platinum: 9.95, diamonds: 0.05 }
   ],
   // Combat's own table — deliberately excludes plain Metal (wreck salvage
   // reads as a distinct, richer reward than background mining, not a copy of
   // it) and is checked once per kill, not blended into the continuous rate above.
   ENEMY_ORE_DROP_TABLE: { tin: 34, bronze: 20, steel: 12, shadow: 4, platinum: 27, diamonds: 3 },
+  // Phase 20 (spec §K1): ore -> scrap conversion, the only bridge between the two
+  // economies and deliberately one-way — scrap can never become ore, so the run
+  // economy can't feed the persistent one. Rarer metal yields more scrap per unit,
+  // which makes the conversion a real decision: platinum spent on scrap is platinum
+  // not spent on a prismatic coil. The two endpoints (iron 1, platinum 10) are the
+  // user's; the middle is interpolated and is a first-pass, not a tuned curve.
+  ORE_SCRAP_RATIOS: { iron: 1, tin: 2, bronze: 3, steel: 4, shadow: 6, platinum: 10, diamonds: 25 },
   ENEMY_ORE_DROP_CHANCE: 0.12,       // per kill
   ENEMY_COMPONENT_DROP_CHANCE: 0.03, // per kill — skips straight to a rolled component, no recipe cost
 
@@ -553,7 +560,7 @@ export const CONFIG = {
   ABILITIES: [
     { id: 'emp', label: 'EMP Burst', icon: '⚡', cooldown: 45, slowMult: 0.35, duration: 4 },
     { id: 'orbitalLaser', label: 'Orbital Laser', icon: '🛰️', cooldown: 60, damage: 45 },
-    { id: 'supplyDrop', label: 'Supply Drop', icon: '📦', cooldown: 50, gold: 80, metal: 40 },
+    { id: 'supplyDrop', label: 'Supply Drop', icon: '📦', cooldown: 50, gold: 80, scrap: 40 },
     { id: 'droneRepair', label: 'Drone Repair', icon: '🔧', cooldown: 40, healPct: 0.5 },
     { id: 'satelliteRecall', label: 'Satellite Recall', icon: '📡', cooldown: 35 }
   ]

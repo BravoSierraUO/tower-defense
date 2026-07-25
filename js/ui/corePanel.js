@@ -6,7 +6,7 @@
 import { CONFIG } from '../config.js';
 
 export class CorePanel {
-  constructor({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onMarketBuyIron, onMarketBuyGold } = {}) {
     this.el = document.getElementById('core-panel');
     this.corePower = document.getElementById('core-power');
     this.coreCompute = document.getElementById('core-compute');
@@ -31,12 +31,12 @@ export class CorePanel {
     this.dockTradeBtn.textContent = `Trade ${CONFIG.DOCK_TRADE_GOLD_COST} Gold → Research`;
     this.dockTradeBtn.addEventListener('click', () => onDockTrade?.());
 
-    this.marketBuyMetalBtn = document.getElementById('market-buy-metal-btn');
-    this.marketBuyMetalBtn.textContent = `Trade ${CONFIG.MARKET_TRADE_GOLD_COST} Gold → Metal`;
-    this.marketBuyMetalBtn.addEventListener('click', () => onMarketBuyMetal?.());
+    this.marketBuyIronBtn = document.getElementById('market-buy-iron-btn');
+    this.marketBuyIronBtn.textContent = `Trade ${CONFIG.MARKET_TRADE_GOLD_COST} Gold → Iron`;
+    this.marketBuyIronBtn.addEventListener('click', () => onMarketBuyIron?.());
 
     this.marketBuyGoldBtn = document.getElementById('market-buy-gold-btn');
-    this.marketBuyGoldBtn.textContent = `Trade ${CONFIG.MARKET_TRADE_METAL_COST} Metal → Gold`;
+    this.marketBuyGoldBtn.textContent = `Trade ${CONFIG.MARKET_TRADE_IRON_COST} Iron → Gold`;
     this.marketBuyGoldBtn.addEventListener('click', () => onMarketBuyGold?.());
   }
 
@@ -48,7 +48,7 @@ export class CorePanel {
     this.coreResearch.textContent = `${Math.floor(commandCore.research)} (+${totals.researchRate.toFixed(1)}/s)`;
     this.coreTowerCost.textContent = `${world.towerCost()}m`;
     this.coreScavengerCost.textContent = `${world.scavengerCost()}m`;
-    this.coreMetalRate.textContent = `${world.metalPerSecond().toFixed(1)}/s`;
+    this.coreMetalRate.textContent = `${world.ironPerSecond().toFixed(1)}/s`;
     this.corePowerDraw.textContent = `${world.powerConsumption()} / ${world.powerSupply()}`;
 
     for (const node of CONFIG.TECH_TREE) {
@@ -64,11 +64,11 @@ export class CorePanel {
     if (dockBuilt) this.dockTradeBtn.disabled = world.gold < CONFIG.DOCK_TRADE_GOLD_COST;
 
     const marketBuilt = commandCore.isBuilt('market');
-    this.marketBuyMetalBtn.hidden = !marketBuilt;
+    this.marketBuyIronBtn.hidden = !marketBuilt;
     this.marketBuyGoldBtn.hidden = !marketBuilt;
     if (marketBuilt) {
-      this.marketBuyMetalBtn.disabled = world.gold < CONFIG.MARKET_TRADE_GOLD_COST;
-      this.marketBuyGoldBtn.disabled = world.metal < CONFIG.MARKET_TRADE_METAL_COST;
+      this.marketBuyIronBtn.disabled = world.gold < CONFIG.MARKET_TRADE_GOLD_COST;
+      this.marketBuyGoldBtn.disabled = world.iron < CONFIG.MARKET_TRADE_IRON_COST;
     }
   }
 }

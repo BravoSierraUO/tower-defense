@@ -28,15 +28,15 @@ import { Sound } from './sound.js';
 // exposes an update() that's only called while that panel's tab is active.
 export class UI {
   // callbacks: { onUnlockTech(id), onDockTrade(), onPrestige(), onBuySkill(id),
-  // onRestart(), onRepairBase(), onMarketBuyMetal(), onMarketBuyGold(), onToggleAbout(),
+  // onRestart(), onRepairBase(), onMarketBuyIron(), onMarketBuyGold(), onToggleAbout(),
   // onToggleCore(), onReportBug(), onMenuAction(id), onOpenWaveMenu(), onSelectWave(n, isReplay),
   // onOpenMissionMenu(), onTrackMission(id), onOpenInventoryMenu(), onRefine(id), onCraft(id),
   // onCloseUpgradeModal(), onUpgradeSelected(), onEquipItem(id), onUnequipItem(), onCloseMenuModal(),
   // onUseAbility(id), onZoom(factor), onCancelArmed() } —
   // UI only translates DOM clicks into these; it never mutates gameplay state directly (Game/World/Profile do).
-  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyMetal, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onCloseUpgradeModal, onUpgradeSelected, onEquipItem, onUnequipItem, onMenuAction, onCloseMenuModal, onUseAbility, onZoom, onCancelArmed } = {}) {
+  constructor({ onUnlockTech, onDockTrade, onPrestige, onBuySkill, onRestart, onRepairBase, onMarketBuyIron, onMarketBuyGold, onToggleAbout, onToggleCore, onToggleProfile, onToggleSettings, onResetProgress, onReportBug, onOpenWaveMenu, onSelectWave, onOpenMissionMenu, onTrackMission, onOpenInventoryMenu, onRefine, onCraft, onCloseUpgradeModal, onUpgradeSelected, onEquipItem, onUnequipItem, onMenuAction, onCloseMenuModal, onUseAbility, onZoom, onCancelArmed } = {}) {
     this.hud = new HudPanel({ onRestart, onRepairBase, onOpenWaveMenu, onUseAbility });
-    this.core = new CorePanel({ onUnlockTech, onDockTrade, onMarketBuyMetal, onMarketBuyGold });
+    this.core = new CorePanel({ onUnlockTech, onDockTrade, onMarketBuyIron, onMarketBuyGold });
     this.field = new FieldPanel();
     this.profile = new ProfilePanel({ onPrestige, onBuySkill });
     this.about = new AboutPanel({ onToggleAbout });

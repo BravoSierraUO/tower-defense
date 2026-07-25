@@ -7,10 +7,10 @@ import { CONFIG } from './config.js';
 // collect logic (it's the thing that knows about scavengers), same split Enemy/combat
 // already use.
 export class Corpse {
-  constructor(x, y, metalValue) {
+  constructor(x, y, scrapValue) {
     this.x = x;
     this.y = y;
-    this.metalValue = metalValue;
+    this.scrapValue = scrapValue; // Phase 20: salvage pays SCRAP (run-only), not the old shared metal pool
     this.life = CONFIG.CORPSE_DECAY_SECONDS; // seconds until it fades unsalvaged
     this.collected = false;                  // World flips this the frame a Scavenger reels it in
     this.pulledBy = null;                    // the Scavenger currently tractoring it (renderer draws the beam); null = drifting/decaying

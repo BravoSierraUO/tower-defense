@@ -44,8 +44,16 @@
             <div class="hud-divider"></div>
 
             <div class="hud-stat">
-                <div class="hud-label">METAL</div>
-                <div id="ui-metal" class="hud-value">0 / 0</div>
+                <div class="hud-label">IRON</div>
+                <div id="ui-iron" class="hud-value">0 / 0</div>
+            </div>
+
+            <!-- Phase 20: scrap is the run-only currency — hidden in prep (when it's
+                 always 0 and unspendable) and unhidden during a TD run, the same
+                 conditional-stat pattern MODS/PARTS already use. -->
+            <div class="hud-stat" id="ui-scrap-stat" hidden>
+                <div class="hud-label">SCRAP</div>
+                <div id="ui-scrap" class="hud-value">0</div>
             </div>
 
             <div class="hud-stat" id="ui-module-charges-stat" hidden>
@@ -278,7 +286,7 @@
 
         <button id="dock-trade-btn" class="dock-trade-btn" hidden></button>
 
-        <button id="market-buy-metal-btn" class="dock-trade-btn" hidden></button>
+        <button id="market-buy-iron-btn" class="dock-trade-btn" hidden></button>
 
         <button id="market-buy-gold-btn" class="dock-trade-btn" hidden></button>
 

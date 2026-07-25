@@ -46,8 +46,8 @@ export class WavePanel {
   // kept as a preview only, never itself paid out.
   rewardPreview(n, world) {
     const gold = Math.round((CONFIG.WAVE_CLEAR_BONUS_BASE + (n - 1) * CONFIG.WAVE_CLEAR_BONUS_GROWTH) * world.rewardMultiplier());
-    const metal = Math.round(CONFIG.WAVE_CLEAR_METAL_BASE + (n - 1) * CONFIG.WAVE_CLEAR_METAL_GROWTH);
-    return `${gold}g · ${metal}m`;
+    const scrap = Math.round(CONFIG.WAVE_CLEAR_SCRAP_BASE + (n - 1) * CONFIG.WAVE_CLEAR_SCRAP_GROWTH);
+    return `${gold}g · ${scrap} scrap`;
   }
 
   update(spawner, world) {

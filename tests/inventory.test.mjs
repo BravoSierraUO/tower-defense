@@ -21,12 +21,12 @@ describe('inventory.js: weighted rolls', () => {
   test('rollOre(3) turns up every ore type over enough rolls, including the ultra-rare diamonds', () => {
     const seen = new Set();
     for (let i = 0; i < 20000; i++) seen.add(rollOre(3));
-    assert.deepEqual(seen, new Set(['metal', 'tin', 'bronze', 'steel', 'shadow', 'platinum', 'diamonds']));
+    assert.deepEqual(seen, new Set(['iron', 'tin', 'bronze', 'steel', 'shadow', 'platinum', 'diamonds']));
   });
 
-  test('rollDroppedOre() never returns metal — combat salvage is a distinct table from mining', () => {
+  test('rollDroppedOre() never returns iron — combat salvage is a distinct table from mining', () => {
     for (let i = 0; i < 500; i++) {
-      assert.notEqual(rollDroppedOre(), 'metal');
+      assert.notEqual(rollDroppedOre(), 'iron');
     }
   });
 
@@ -132,12 +132,12 @@ describe('World: Phase 11 skeleton wiring', () => {
     assert.ok(Math.abs(world.orePerSecond('bronze') - expected) < 1e-9);
   });
 
-  test('updateOreAccrual(dt) feeds Inventory.ore, never World.metal', () => {
+  test('updateOreAccrual(dt) feeds Inventory.ore, never World.iron', () => {
     const { world } = freshGame(100000);
     world.placeScavenger(100, 100); // Phase 16: inside the base ring
-    const metalBefore = world.metal;
+    const ironBefore = world.iron;
     world.updateOreAccrual(10);
-    assert.equal(world.metal, metalBefore, 'metal is untouched by ore accrual');
+    assert.equal(world.iron, ironBefore, 'iron is untouched by ore accrual');
     assert.ok(world.inventory.ore.bronze > 0, 'bronze accrued over 10 simulated seconds');
   });
 

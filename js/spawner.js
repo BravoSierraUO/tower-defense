@@ -86,12 +86,12 @@ export class Spawner {
   // found highest-first so a tie at a tier boundary rounds up.
   computeRewards(pct, world) {
     const baseGold = CONFIG.WAVE_CLEAR_BONUS_BASE + (this.waveNumber - 1) * CONFIG.WAVE_CLEAR_BONUS_GROWTH;
-    const baseMetal = CONFIG.WAVE_CLEAR_METAL_BASE + (this.waveNumber - 1) * CONFIG.WAVE_CLEAR_METAL_GROWTH;
+    const baseScrap = CONFIG.WAVE_CLEAR_SCRAP_BASE + (this.waveNumber - 1) * CONFIG.WAVE_CLEAR_SCRAP_GROWTH;
 
     if (pct >= 1) {
       return {
         gold: Math.round(baseGold * world.rewardMultiplier()),
-        metal: Math.round(baseMetal),
+        scrap: Math.round(baseScrap),
         moduleCharges: CONFIG.WAVE_CLEAR_MODULE_CHARGE,
         productionParts: CONFIG.WAVE_CLEAR_PRODUCTION_PARTS,
         chestTier: null
@@ -101,7 +101,7 @@ export class Spawner {
     const tier = [...CONFIG.WIPE_CHEST_TIERS].reverse().find(t => pct >= t.minPct) || CONFIG.WIPE_CHEST_TIERS[0];
     return {
       gold: Math.round(baseGold * tier.mult * world.rewardMultiplier()),
-      metal: Math.round(baseMetal * tier.mult),
+      scrap: Math.round(baseScrap * tier.mult),
       moduleCharges: 0,
       productionParts: 0,
       chestTier: tier.id
@@ -118,7 +118,11 @@ export class Spawner {
     const rewards = this.computeRewards(pct, world);
 
     world.addGold(rewards.gold);
-    world.addMetal(rewards.metal);
+    // Phase 20: a wave payout is earned DURING a run, so it pays scrap. Interim
+    // routing — once chests pay items (spec §J2) this either becomes a scrap bonus
+    // alongside them or is replaced by them outright. Flagged as the one open item
+    // in the eight-caller routing table.
+    world.addScrap(rewards.scrap);
     if (rewards.moduleCharges) world.addModuleCharges(rewards.moduleCharges);
     if (rewards.productionParts) world.addProductionParts(rewards.productionParts);
 

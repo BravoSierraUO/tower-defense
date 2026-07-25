@@ -16,7 +16,9 @@ export function freshGame(startingCurrency, profile = new Profile()) {
   const world = new World(commandCore, profile);
   if (startingCurrency !== undefined) {
     world.gold = startingCurrency;
-    world.metal = startingCurrency; // Phase 4c: fund both pools — most tests just need "enough"
+    world.iron = startingCurrency; // Phase 4c: fund both pools — most tests just need "enough"
+    // Phase 20: scrap is the run-only pool and starts empty on purpose — a test that
+    // needs it sets it explicitly, so nothing accidentally passes on prep currency.
   }
   return { commandCore, world, profile };
 }

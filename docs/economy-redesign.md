@@ -88,9 +88,14 @@ The central one. `world.metal` is fed by salvage (`world.js:350`,
 currency scavengers pull in during a wave is the currency you buy turrets with.
 The design needs these separate; today they are one field.
 
-`addMetal()` has **eight** callers, not seven — an earlier draft of this document
-said seven because it only grepped `world.js`. The eighth is in `spawner.js`.
-Correcting it here because an undercount is exactly what bites mid-refactor:
+`addMetal()` had **nine** callers. This document said seven, then eight, then nine —
+each correction found during the work, not by re-reading. The seven→eight miss was
+grepping only `world.js` (the eighth is in `spawner.js`); the eight→nine miss was
+worse, because it wasn't a count error but a **mislabelled site**: `world.js`'s
+`addMetal(def.metal)` is the **Supply Drop ability**, which this document called
+"mission rewards" — those actually live in `game.js`. The test suite caught it. An
+undercount is what bites mid-refactor; a mislabel routes real income to the wrong
+economy:
 
 | # | caller | what it is | routes to |
 |---|---|---|---|
@@ -101,12 +106,17 @@ Correcting it here because an undercount is exactly what bites mid-refactor:
 | 5 | `world.js:482` | tower sell refund | **prep** — user's call, and selling is prep-only anyway |
 | 6 | `world.js:534` | scavenger sell refund | **prep** — same |
 | 7 | `world.js:684` | Market trade (gold→metal) | **prep** — gold-side, a Core room |
-| 8 | `spawner.js:121` | wave-clear reward metal | **open** — see F6; may be replaced by chests entirely |
+| 8 | `spawner.js:121` | wave-clear reward metal | **scrap** — interim, see below |
+| 9 | `world.js` (`useAbility`) | **Supply Drop** ability payout | **scrap** — fires during combat |
 
-Seven of eight are settled. Only the wave-clear payout is open, and it's already
-F6. The sell-refund answer costs nothing in exploit terms **because selling is
-prep-only** (Section H) — there's no round-trip across the stage boundary to
-abuse.
+All nine are now routed. The wave-clear payout (8) is the one that isn't a settled
+design answer: it pays scrap because it's earned during a run, but once chests pay
+items (§J2) it either becomes a scrap bonus alongside them or is replaced outright.
+Flagged in the code, not just here.
+
+The sell-refund answer costs nothing in exploit terms **because selling is
+prep-only** (Section H) — there's no round-trip across the stage boundary to abuse.
+That's two features holding each other up, so both have tests.
 
 ### B2 — Neither currency persists · BLOCKER
 
@@ -638,7 +648,44 @@ alongside the existing `platinum`/`diamonds`.
 
 That last test pins the invariant K3 depends on.
 
-### K3 — Why `world.metal` was NOT renamed to `iron` in the same pass
+### K3 — Built 2026-07-25 (`0.1.68`): the split itself
+
+`world.metal` is gone. In its place:
+
+- **`world.iron`** — capped (`ironCap()`), fed by `addIron()`, spent by
+  `placeTower`/`placeScavenger`/`upgradeTower`/`upgradeScavenger` and the Market.
+- **`world.scrap`** — **uncapped** on purpose, fed by `addScrap()`, and set to 0 in
+  `endTdRun()`. That single line is what makes it run-only: no snapshot, no
+  unwinding, no path by which a long profitable run funds permanent power.
+
+Renames that fell out: `STARTING_METAL`→`STARTING_IRON`,
+`METAL_CAP_BASE`→`IRON_CAP_BASE`, `metalPerSecond()`→`ironPerSecond()`,
+`MARKET_TRADE_METAL_COST`→`..._IRON_COST`, `WAVE_CLEAR_METAL_*`→`WAVE_CLEAR_SCRAP_*`,
+`DEFENDER_BONUS_METAL_*`→`..._SCRAP_*`, `CORPSE_METAL_*`→`CORPSE_SCRAP_*`,
+`Corpse.metalValue`→`scrapValue`, `tradeGoldForMetal`/`tradeMetalForGold`→
+`tradeGoldForIron`/`tradeIronForGold`, and `ORE_TYPES`/`ORE_LOOT_TABLE`'s `metal`
+key → `iron`. Mission rewards changed key from `metal` to `iron`; Supply Drop's from
+`metal` to `scrap`.
+
+**18 new tests** (`tests/currencySplit.test.mjs`) all defending one invariant —
+*scrap can never become permanent power* — because a future reward routed to the
+wrong pool looks identical in play until the idle economy quietly inflates. Among
+them: scrap can't buy a turret however much you hold, a wave clear and a wipe both
+mint zero iron, a full salvage run produces exactly zero permanent currency, and a
+reflective check that **no reverse (scrap→ore) conversion exists** — so adding one
+later has to be justified against a failing test.
+
+HUD: `METAL` became `IRON`, and a `SCRAP` stat was added that is hidden in prep
+(where it's always 0 and unspendable) and unhidden during a run — the same
+conditional-stat pattern MODS/PARTS already use, chosen partly because the top bar
+is already too wide (18b).
+
+Verified live as well as by unit test: 12 browser checks covering the labels, the
+show/hide behaviour, `Fe`-denominated build costs, the wipe-on-run-end, and the
+conversion — plus the full Phase 18 suite re-run at 51/51 to confirm the bottom bar
+still reads the renamed pool correctly.
+
+### K4 — Why `world.metal` was not renamed in the *previous* pass
 
 `metal` appears **386 times** across `js/` and `tests/`, and roughly half of those
 call sites are headed for **scrap**, not iron — every in-run accrual, the wave
@@ -646,10 +693,14 @@ payout, the defender bonus. Renaming them all to `iron` first and then re-splitt
 half of them to `scrap` would touch the same lines twice and double the review
 surface for no benefit.
 
-So `metal` keeps its name until the commit that actually splits it, where each of
-the eight `addMetal()` callers (B1's table) is routed to `iron` or `scrap` exactly
-once. The ore taxonomy above was worth doing separately because it's purely
-idle-side: the split doesn't touch `Inventory.ore` at all.
+So `metal` kept its name until the commit that actually split it, where each caller
+(B1's table) was routed to `iron` or `scrap` exactly once. That turned out to be the
+right call for a second reason: routing them one-at-a-time is what surfaced the
+mislabelled Supply Drop site, which a blanket `metal`→`iron` rename would have
+silently sent to the wrong economy.
+
+The ore taxonomy was worth doing separately because it's purely idle-side — the
+split doesn't touch `Inventory.ore` at all.
 
 ---
 
@@ -677,7 +728,7 @@ Dependency-ordered, not by size.
 |---|---|---|
 | 0 | Revert the v2.36 dev stash | Everything below is meaningless against a 10k stash |
 | 1 | Answer F3 (resource name) and G2 (`MAX_WAVES`/`'won'`) | Both structural; guessing means rework. F2 is now answered — see Section G |
-| 2 | Audit `addMetal()`'s seven callers, split into two pools (B1) | The blocker. Pure engine work, fully unit-testable |
+| 2 | ~~Audit `addMetal()`'s callers, split into two pools (B1)~~ | **DONE 0.1.68** — nine callers, not seven; see §K3 |
 | 3 | Move the prep currency onto `Profile` (B2) | Needs the seam decision; touches the observation boundary |
 | 4 | Base health per-session + upgradeable max (D) | Small, self-contained, needs F4 answered |
 | 5 | Chest ladder → one-time unlocks on `Profile` (C) | Follows the achievements precedent; needs F5 |

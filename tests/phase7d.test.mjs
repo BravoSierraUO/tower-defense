@@ -118,11 +118,11 @@ describe('Phase 7d: combat resolution — aggro\'d enemies hit their turret, not
     enemy.reachedTarget = true;
     world.enemies.push(enemy);
 
-    const metalBefore = world.metal;
+    const ironBefore = world.iron;
     updateCombat(world, 0.016);
 
     assert.equal(world.towers.includes(tower), false);
-    assert.equal(world.metal, metalBefore, 'destruction pays no sell-style refund');
+    assert.equal(world.iron, ironBefore, 'destruction pays no sell-style refund');
   });
 
   test('the hasHitTarget guard prevents a second contact hit on the same enemy', () => {
@@ -159,8 +159,8 @@ describe('Phase 7d: defender\'s bonus reward', () => {
     aggroWorld.enemies.push(aggroedEnemy);
     aggroWorld.updateEnemies(0.016);
 
-    assert.equal(plainWorld.metal, 0, 'a normal kill pays no metal at all');
-    assert.equal(aggroWorld.metal, Math.round(aggroedEnemy.maxHealth * CONFIG.DEFENDER_BONUS_METAL_PER_ENEMY_HEALTH), 'aggro kill pays the defender metal bonus');
+    assert.equal(plainWorld.scrap, 0, 'a normal kill pays no scrap at all');
+    assert.equal(aggroWorld.scrap, Math.round(aggroedEnemy.maxHealth * CONFIG.DEFENDER_BONUS_SCRAP_PER_ENEMY_HEALTH), 'aggro kill pays the defender metal bonus');
 
     const expectedBonusGold = Math.round(aggroedEnemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * CONFIG.DEFENDER_BONUS_GOLD_MULT * aggroWorld.rewardMultiplier());
     assert.equal(aggroWorld.gold - plainWorld.gold, expectedBonusGold, 'aggro kill pays the same base gold plus the defender bonus on top');

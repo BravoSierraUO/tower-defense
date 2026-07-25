@@ -55,7 +55,7 @@ export class MissionPanel {
     if (!reward) return '';
     const parts = [];
     if (reward.gold) parts.push(`${reward.gold}g`);
-    if (reward.metal) parts.push(`${reward.metal}m`);
+    if (reward.iron) parts.push(`${reward.iron} iron`);
     return parts.join(' · ');
   }
 

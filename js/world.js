@@ -25,7 +25,19 @@ export class World {
     this.towersPlaced = 0;
     this.scavengersPlaced = 0; // Phase 16: player-placed only (starter excluded) — drives the tutorial mission
     this.gold = CONFIG.STARTING_GOLD;
-    this.metal = CONFIG.STARTING_METAL; // Phase 4c: funds Tower/Scavenger Turret cost, not gold
+    // Phase 20: what used to be the single `metal` pool is now TWO, split by stage
+    // (docs/economy-redesign.md §K). Nothing is called "metal" any more — there were
+    // four uses across three meanings.
+    //
+    //   iron  — Stage 1 / prep. Buys and upgrades turrets. Capped, accrues from idle
+    //           mining, survives a TD run.
+    //   scrap — Stage 2 / run-only. Earned from salvage and combat during a run and
+    //           WIPED when the run ends (endTdRun) — it can never fund permanent
+    //           power, which is the property the two-economy split exists to protect.
+    //
+    // Conversion runs one direction only: ore -> scrap (convertOreToScrap below).
+    this.iron = CONFIG.STARTING_IRON;
+    this.scrap = 0;
     // Phase 20 stage gate — see canModifyDefenses() below. false = Stage 1 (prep).
     this.tdRunActive = false;
     this.moduleCharges = 0;     // Phase 8a: wave-clear salvage — spends as a free module install
@@ -95,13 +107,56 @@ export class World {
     this.gold = Math.min(this.goldCap(), this.gold + amount);
   }
 
-  // Phase 4c: metal is a separate pool from gold — funds Tower/Scavenger cost only.
-  metalCap() {
-    return CONFIG.METAL_CAP_BASE;
+  // Phase 4c: iron is a separate pool from gold — funds Tower/Scavenger cost only.
+  ironCap() {
+    return CONFIG.IRON_CAP_BASE;
   }
 
-  addMetal(amount) {
-    this.metal = Math.min(this.metalCap(), this.metal + amount);
+  addIron(amount) {
+    this.iron = Math.min(this.ironCap(), this.iron + amount);
+  }
+
+  // Scrap is deliberately UNCAPPED. It's wiped every run end, so an accumulation
+  // ceiling would only ever punish a long successful run — the run itself is the
+  // cap. (Whether iron's cap should be Storage-upgradeable like gold's is still
+  // open — see the spec's open decisions.)
+  addScrap(amount) {
+    this.scrap += amount;
+  }
+
+  // Phase 20 (spec §K1): the ONE bridge between the two economies, and deliberately
+  // one-way. Ore is prep-side material; scrap is run-only currency. You can turn ore
+  // into scrap, never the reverse — so a long profitable run still can't feed the
+  // persistent economy, which is the property the whole split exists to protect.
+  //
+  // `iron` is the odd one out: it's the bulk currency (this.iron), while every other
+  // ore is a discrete Inventory.ore stack. Both are handled here so the caller doesn't
+  // have to know which is which.
+  //
+  // Rarer metal yields more scrap per unit (CONFIG.ORE_SCRAP_RATIOS), which makes this
+  // a real decision rather than a formality: platinum spent on scrap is platinum not
+  // spent on a prismatic coil. Returns the scrap produced, 0 if the conversion was
+  // refused — same "silent no-op if you can't afford it" convention as every other
+  // spend in this file.
+  oreScrapRatio(oreType) {
+    return CONFIG.ORE_SCRAP_RATIOS[oreType] || 0;
+  }
+
+  convertOreToScrap(oreType, amount = 1) {
+    const ratio = this.oreScrapRatio(oreType);
+    if (ratio <= 0 || amount <= 0) return 0;
+
+    if (oreType === 'iron') {
+      if (this.iron < amount) return 0;
+      this.iron -= amount;
+    } else {
+      if ((this.inventory.ore[oreType] ?? -1) < amount) return 0;
+      this.inventory.ore[oreType] -= amount;
+    }
+
+    const produced = amount * ratio;
+    this.addScrap(produced);
+    return produced;
   }
 
   // Phase 8a: wave-clear salvage tokens. No cap — these are small discrete counts,
@@ -135,7 +190,7 @@ export class World {
   // Total metal/sec the Cycle Budget scheduler is currently paying out —
   // exposed as its own method so the HUD can show live throughput, not just
   // World's internal accrual.
-  metalPerSecond() {
+  ironPerSecond() {
     const producers = this.activeMetalProducers();
     if (producers.length === 0) return 0;
     const share = this.cyclesPerSecond() / producers.length;
@@ -143,12 +198,12 @@ export class World {
   }
 
   updateCycleBudget(dt) {
-    this.addMetal(this.metalPerSecond() * dt);
+    this.addIron(this.ironPerSecond() * dt);
   }
 
   // Phase 11 skeleton: rare-ore mining is a bonus stream layered on top of the
   // metal accrual above, not carved out of it — reuses the same Cycle Budget
-  // share (cyclesPerSecond() split across active Scavengers) metalPerSecond()
+  // share (cyclesPerSecond() split across active Scavengers) ironPerSecond()
   // already uses, scaled by each Scavenger's own tier odds (CONFIG.ORE_LOOT_TABLE).
   // Scoped to Scavenger Turret only this pass — Mine stays metal-only, same
   // "one thing at a time" caution the rest of this system carries.
@@ -189,7 +244,7 @@ export class World {
   // refined -> component, on top of its original buildTimeReduction job)
   // rather than a dedicated Foundry room — both gated on Factory being built,
   // same "World checks the gating room, then delegates" shape tradeAtDock/
-  // tradeGoldForMetal already use for Dock/Market.
+  // tradeGoldForIron already use for Dock/Market.
   craftingRoom() {
     return this.commandCore.rooms.find(r => r.type === 'factory' && r.isActive()) || null;
   }
@@ -307,13 +362,14 @@ export class World {
         // normal per-kill payout, plus the game's first per-kill metal.
         if (enemy.attackTarget) {
           this.addGold(Math.round(enemy.maxHealth * CONFIG.GOLD_PER_ENEMY_HEALTH * CONFIG.DEFENDER_BONUS_GOLD_MULT * this.rewardMultiplier()));
-          this.addMetal(Math.round(enemy.maxHealth * CONFIG.DEFENDER_BONUS_METAL_PER_ENEMY_HEALTH));
+          // Phase 20: a combat kill reward, so it pays SCRAP — earned in the run, dies with it.
+          this.addScrap(Math.round(enemy.maxHealth * CONFIG.DEFENDER_BONUS_SCRAP_PER_ENEMY_HEALTH));
         }
         this.spawner.waveValueKilled += enemy.maxHealth; // Phase 8a: raw value, feeds finalizeWave()'s chest-tier %
         this.rollKillDrops(); // Phase 11 skeleton: tower-defensish material path
         // Phase 16: drop a salvageable corpse where it fell — a Scavenger's tractor
         // reels it in for metal (updateSalvage), or it decays if none reaches it.
-        this.corpses.push(new Corpse(enemy.x, enemy.y, Math.round(enemy.maxHealth * CONFIG.CORPSE_METAL_PER_ENEMY_HEALTH)));
+        this.corpses.push(new Corpse(enemy.x, enemy.y, Math.round(enemy.maxHealth * CONFIG.CORPSE_SCRAP_PER_ENEMY_HEALTH)));
       }
     }
     // Frame order is spawning -> combat (resolveBaseHits/resolveTurretHits) -> here. An
@@ -349,7 +405,10 @@ export class World {
       // scavenger on a big dt.
       const step = CONFIG.CORPSE_TRACTOR_SPEED * dt;
       if (step >= pullerDist - CONFIG.CORPSE_COLLECT_DISTANCE) {
-        this.addMetal(corpse.metalValue * affixMultiplier(puller.equippedItem, 'metalYieldMult'));
+        // Phase 20: the definitional scrap source — the tractor beam is in-run salvage.
+        // (The affix is still named metalYieldMult; renaming affix ids is cosmetic and
+        // would touch AFFIX_POOL plus every rolled item, so it's deliberately deferred.)
+        this.addScrap(corpse.scrapValue * affixMultiplier(puller.equippedItem, 'metalYieldMult'));
         corpse.collected = true;
       } else {
         corpse.x += ((puller.x - corpse.x) / pullerDist) * step;
@@ -395,7 +454,11 @@ export class World {
       for (const enemy of this.enemies) enemy.health = Math.max(0, enemy.health - def.damage);
     } else if (id === 'supplyDrop') {
       this.addGold(def.gold);
-      this.addMetal(def.metal);
+      // Phase 20: Supply Drop is an ORBITAL ABILITY fired during combat, so its
+      // material half pays SCRAP. (An earlier draft of the routing table mislabelled
+      // this line as mission rewards — those live in game.js and pay iron. The
+      // spec said eight producer sites; it is nine. Caught by the test suite.)
+      this.addScrap(def.scrap);
     } else if (id === 'droneRepair') {
       for (const unit of [...this.towers, ...this.scavengers]) {
         unit.health = Math.min(unit.maxHealth, unit.health + unit.maxHealth * def.healPct);
@@ -463,6 +526,10 @@ export class World {
 
   endTdRun() {
     this.tdRunActive = false;
+    // The single line that makes scrap run-only. No unwinding, no snapshot — the
+    // pool simply doesn't survive, which is why scrap can never fund permanent
+    // power however much of it a long run produces.
+    this.scrap = 0;
   }
 
   // Every build/sell path funnels through this one predicate rather than each
@@ -502,8 +569,8 @@ export class World {
 	if (this.exteriorOccupiedAt(snapped.x, snapped.y)) return null;
 
 	const cost = this.towerCost();
-	if (this.metal < cost) return null;
-	this.metal -= cost;
+	if (this.iron < cost) return null;
+	this.iron -= cost;
 
 	const tower = new Tower(snapped.x, snapped.y, cost, damageType);
 	this.towers.push(tower);
@@ -518,7 +585,9 @@ export class World {
     const idx = this.towers.findIndex(t => t.x === snapped.x && t.y === snapped.y);
     if (idx === -1) return false;
     const [tower] = this.towers.splice(idx, 1);
-    this.addMetal(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));
+    // Phase 20: refunds to IRON. Safe from laundering because selling is prep-only
+    // (canModifyDefenses) — there is no round-trip across the stage boundary.
+    this.addIron(Math.round(tower.cost * CONFIG.TOWER_SELL_REFUND_PCT));
     return true;
   }
 
@@ -557,8 +626,8 @@ export class World {
     if (this.exteriorOccupiedAt(snapped.x, snapped.y)) return null;
 
     const cost = this.scavengerCost();
-    if (this.metal < cost) return null;
-    this.metal -= cost;
+    if (this.iron < cost) return null;
+    this.iron -= cost;
 
     const scavenger = new ScavengerTurret(snapped.x, snapped.y, cost);
     this.scavengers.push(scavenger);
@@ -572,7 +641,7 @@ export class World {
     const idx = this.scavengers.findIndex(s => s.x === snapped.x && s.y === snapped.y);
     if (idx === -1) return false;
     const [scavenger] = this.scavengers.splice(idx, 1);
-    this.addMetal(Math.round(scavenger.cost * CONFIG.TOWER_SELL_REFUND_PCT));
+    this.addIron(Math.round(scavenger.cost * CONFIG.TOWER_SELL_REFUND_PCT)); // Phase 20: see sellTowerAt
     return true;
   }
 
@@ -588,8 +657,8 @@ export class World {
   upgradeScavenger(scavenger) {
     if (!scavenger || !scavenger.canUpgrade()) return false;
     const cost = this.scavengerUpgradeCost(scavenger);
-    if (this.metal < cost) return false;
-    this.metal -= cost;
+    if (this.iron < cost) return false;
+    this.iron -= cost;
     scavenger.upgrade();
     return true;
   }
@@ -602,8 +671,8 @@ export class World {
   upgradeTower(tower) {
     if (!tower || !tower.canUpgrade()) return false;
     const cost = this.towerUpgradeCost(tower);
-    if (this.metal < cost) return false;
-    this.metal -= cost;
+    if (this.iron < cost) return false;
+    this.iron -= cost;
     tower.upgrade();
     return true;
   }
@@ -716,22 +785,22 @@ export class World {
   }
 
   // Market: manual gold<->metal trading, both directions. Ratio improves with Market's tier.
-  tradeGoldForMetal() {
+  tradeGoldForIron() {
     const marketRoom = this.commandCore.rooms.find(r => r.type === 'market' && r.isActive());
     if (!marketRoom) return false;
     const cost = CONFIG.MARKET_TRADE_GOLD_COST;
     if (this.gold < cost) return false;
     this.gold -= cost;
-    this.addMetal(cost * (CONFIG.MARKET_TRADE_BASE_RATIO + marketRoom.stats.marketBonus));
+    this.addIron(cost * (CONFIG.MARKET_TRADE_BASE_RATIO + marketRoom.stats.marketBonus)); // Phase 20: gold-side room, prep-side payout
     return true;
   }
 
-  tradeMetalForGold() {
+  tradeIronForGold() {
     const marketRoom = this.commandCore.rooms.find(r => r.type === 'market' && r.isActive());
     if (!marketRoom) return false;
-    const cost = CONFIG.MARKET_TRADE_METAL_COST;
-    if (this.metal < cost) return false;
-    this.metal -= cost;
+    const cost = CONFIG.MARKET_TRADE_IRON_COST;
+    if (this.iron < cost) return false;
+    this.iron -= cost;
     this.addGold(cost * (CONFIG.MARKET_TRADE_BASE_RATIO + marketRoom.stats.marketBonus));
     return true;
   }

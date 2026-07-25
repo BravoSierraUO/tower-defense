@@ -92,10 +92,10 @@ describe('Phase 20 stage gate: building is prep-only', () => {
     // for a tower that never appeared is the worst version of this bug.
     const { world } = freshGame(100000);
     world.beginTdRun();
-    const metalBefore = world.metal;
+    const ironBefore = world.iron;
     world.placeTower(TOWER_SPOT.x, TOWER_SPOT.y, 'kinetic');
     world.placeScavenger(SCAV_SPOT.x, SCAV_SPOT.y);
-    assert.equal(world.metal, metalBefore, 'no metal spent on a refused build');
+    assert.equal(world.iron, ironBefore, 'no iron spent on a refused build');
   });
 
   test('a refused mid-run build does not bump towersPlaced', () => {
@@ -145,9 +145,9 @@ describe('Phase 20 stage gate: selling is prep-only', () => {
     const { world } = freshGame(100000);
     world.placeTower(TOWER_SPOT.x, TOWER_SPOT.y, 'kinetic');
     world.beginTdRun();
-    const metalBefore = world.metal;
+    const ironBefore = world.iron;
     world.sellTowerAt(TOWER_SPOT.x, TOWER_SPOT.y);
-    assert.equal(world.metal, metalBefore, 'no refund paid');
+    assert.equal(world.iron, ironBefore, 'no refund paid');
     assert.equal(world.towers.length, 1, 'and the turret is still there');
   });
 });
@@ -183,8 +183,8 @@ describe('Phase 20 stage gate: what it deliberately does NOT gate', () => {
     const { world } = freshGame(100000); // must afford the scavenger to have a producer at all
     assert.ok(world.placeScavenger(SCAV_SPOT.x, SCAV_SPOT.y), 'fixture: scavenger placed');
     world.beginTdRun();
-    const before = world.metal;
+    const before = world.iron;
     world.updateCycleBudget(1);
-    assert.ok(world.metal > before, 'idle/cycle-budget metal still accrues mid-run');
+    assert.ok(world.iron > before, 'idle/cycle-budget metal still accrues mid-run');
   });
 });

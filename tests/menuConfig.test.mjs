@@ -47,21 +47,22 @@ describe('menuConfig: shared shape', () => {
   test('does not mutate world or commandCore', () => {
     // It is called every time a menu opens, and in bar mode potentially per-frame.
     const { world, commandCore } = freshGame(500);
-    const before = { gold: world.gold, metal: world.metal, rooms: commandCore.rooms.length };
+    const before = { gold: world.gold, iron: world.iron, scrap: world.scrap, rooms: commandCore.rooms.length };
     buildMenuConfig('field', world, commandCore);
     buildMenuConfig('core', world, commandCore);
     assert.equal(world.gold, before.gold);
-    assert.equal(world.metal, before.metal);
+    assert.equal(world.iron, before.iron);
+    assert.equal(world.scrap, before.scrap);
     assert.equal(commandCore.rooms.length, before.rooms);
   });
 });
 
-describe('menuConfig: field view — metal affordability', () => {
+describe('menuConfig: field view — iron affordability', () => {
   test('rich player has all four field leaves unlocked', () => {
     const { world, commandCore } = freshGame(1000);
     const leaves = buildLeaves(buildMenuConfig('field', world, commandCore));
     assert.equal(leaves.length, 4); // 3 damage types + scavenger
-    assert.ok(leaves.every(l => !l.locked), 'nothing should be locked at 1000 metal');
+    assert.ok(leaves.every(l => !l.locked), 'nothing should be locked at 1000 iron');
   });
 
   test('the three attackers are the CONFIG.DAMAGE_TYPES keys, in declared order', () => {
@@ -90,7 +91,7 @@ describe('menuConfig: field view — metal affordability', () => {
     // SCAVENGER_COST 25 < TOWER_COST 40, so there is a band where exactly one is
     // affordable. This is the gate most likely to break silently on a cost change.
     const { world, commandCore } = freshGame(0);
-    world.metal = CONFIG.SCAVENGER_COST;
+    world.iron = CONFIG.SCAVENGER_COST;
     const cfg = buildMenuConfig('field', world, commandCore);
     assert.equal(flyoutLeaf(cfg, 'scavenger').locked, false);
     for (const type of Object.keys(CONFIG.DAMAGE_TYPES)) {
@@ -100,30 +101,32 @@ describe('menuConfig: field view — metal affordability', () => {
 
   test('affordability is inclusive at exactly the cost', () => {
     const { world, commandCore } = freshGame(0);
-    world.metal = world.towerCost();
+    world.iron = world.towerCost();
     const cfg = buildMenuConfig('field', world, commandCore);
     assert.equal(flyoutLeaf(cfg, Object.keys(CONFIG.DAMAGE_TYPES)[0]).locked, false);
   });
 
-  test('the unaffordable reason floors the displayed metal rather than showing a fraction', () => {
+  test('the unaffordable reason floors the displayed iron rather than showing a fraction', () => {
     const { world, commandCore } = freshGame(0);
-    world.metal = 10.7;
+    world.iron = 10.7;
     const cfg = buildMenuConfig('field', world, commandCore);
     const reason = flyoutLeaf(cfg, 'scavenger').reason;
-    assert.match(reason, /have 10m/);
+    assert.match(reason, /have 10\)/);
     assert.doesNotMatch(reason, /10\.7/);
   });
 
-  test('field costs are labelled metal, not gold', () => {
-    // The two currencies are not interchangeable — towers cost metal, rooms cost
-    // gold — and docs/mobile-audit.md E3 flags conflating them as the mockups'
-    // single worst assumption. Gold must not gate a field leaf.
+  test('field costs are labelled iron, and gold does not unlock them', () => {
+    // The currencies are not interchangeable — turrets cost iron, rooms cost gold —
+    // and docs/mobile-audit.md E3 flags conflating them as the mockups' single worst
+    // assumption. Nor does SCRAP unlock a build: it's run-only and prep is when you
+    // buy, which is the whole point of the two-pool split.
     const { world, commandCore } = freshGame(0);
     world.gold = 99999;
-    world.metal = 0;
+    world.scrap = 99999;
+    world.iron = 0;
     const cfg = buildMenuConfig('field', world, commandCore);
-    assert.ok(buildLeaves(cfg).every(l => l.cost.endsWith('m')));
-    assert.ok(buildLeaves(cfg).every(l => l.locked), 'gold must not unlock field builds');
+    assert.ok(buildLeaves(cfg).every(l => l.cost.endsWith('Fe')));
+    assert.ok(buildLeaves(cfg).every(l => l.locked), 'neither gold nor scrap unlocks a field build');
   });
 });
 
@@ -173,7 +176,7 @@ describe('menuConfig: core view — tech, build and gold gates', () => {
 
   test('metal does not unlock rooms', () => {
     const { world, commandCore } = freshGame(0);
-    world.metal = 99999;
+    world.iron = 99999;
     world.gold = 0;
     const leaf = flyoutLeaf(buildMenuConfig('core', world, commandCore), 'reactor');
     assert.equal(leaf.locked, true);

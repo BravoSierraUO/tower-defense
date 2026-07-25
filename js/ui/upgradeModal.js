@@ -38,9 +38,9 @@ export class UpgradeModal {
 
     if (entity.canUpgrade()) {
       const cost = isTower ? world.towerUpgradeCost(entity) : world.scavengerUpgradeCost(entity);
-      this.costLine.textContent = `Upgrade cost: ${cost}m (have ${Math.floor(world.metal)}m)`;
+      this.costLine.textContent = `Upgrade cost: ${cost} iron (have ${Math.floor(world.iron)})`;
       this.upgradeBtn.textContent = 'Upgrade';
-      this.upgradeBtn.disabled = world.metal < cost;
+      this.upgradeBtn.disabled = world.iron < cost;
     } else {
       this.costLine.textContent = 'Max tier reached.';
       this.upgradeBtn.textContent = 'MAX';
