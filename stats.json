@@ -378,34 +378,40 @@
       "date": "07-23",
       "cum": 14228,
       "subject": "Add CLAUDE.md agent-context file"
+    },
+    {
+      "hash": "421cdd4",
+      "date": "07-25",
+      "cum": 18140,
+      "subject": "v2.38 - Phase 18a bottom action bar + 18c foundations; base ring square -> circle"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5357,
+      "value": 5911,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3825,
+      "value": 6199,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2298,
+      "value": 2822,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 2748,
+      "value": 3208,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 28.5,
-    "sessionCount": 7,
-    "activeDays": 6,
+    "activeHours": 28.7,
+    "sessionCount": 8,
+    "activeDays": 7,
     "sessionGapHours": 5
   }
 }

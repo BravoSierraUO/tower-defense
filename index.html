@@ -17,7 +17,7 @@
     --info:#9aa8e8; --idle:#8a93a3; --special:#c79ae8;
     --phase-1:#4A90E2; --phase-2a:#2ECC71; --phase-2b:#F39C12; --phase-3:#9B59B6;
     --phase-4:#E74C3C; --phase-4b:#C0392B; --phase-4c:#C97B3C; --phase-4d:#D9A441; --phase-5:#8B9AB2;
-    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393; --phase-9:#5BC8FF; --phase-11:#E0A458; --phase-13:#FF8FA3; --phase-15:#6BCB77; --phase-16:#4FD1C5; --phase-17:#F3C969; --phase-18:#A78BFA; --phase-19:#FF9F5B;
+    --phase-6:#3FA7A0; --phase-7:#6C63FF; --phase-8:#E84393; --phase-9:#5BC8FF; --phase-11:#E0A458; --phase-13:#FF8FA3; --phase-15:#6BCB77; --phase-16:#4FD1C5; --phase-17:#F3C969; --phase-18:#A78BFA; --phase-19:#FF9F5B; --phase-20:#6EF2A3;
     --body:Inter,system-ui,"Segoe UI",sans-serif;
     --mono:ui-monospace,"Cascadia Code","JetBrains Mono",Menlo,Consolas,monospace;
     color-scheme:dark;
@@ -981,6 +981,24 @@ const ROADMAP = [
     ],
     depends:'Phase 18a (which surfaced it, and whose Base slot semantics this would simplify); overlaps heavily with 18c\'s B3 touch paths for rush/install-module',
     note:'Filed 2026-07-25 straight from the user\'s remark, deliberately without a chosen solution — their exact framing was "you may have a better solution when the time comes to update that piece", so committing to modal-vs-view here would be inventing a decision they explicitly left open. Recorded because this project\'s convention is that an idea raised and not built still gets a card rather than evaporating into a chat log. The honest counter-argument is included above as the last item: the cost is a rewrite of the Core\'s canvas interaction layer, and the benefit might be adequately served by simply letting the Core camera zoom, which is a much smaller change and was never tried.' },
+  { id:'p20', num:'20', title:'Two-Stage Economy — Idle Prep vs. Tower Defense', status:'BACKLOG · SPEC\'D · 0.1.x', color:'--phase-20',
+    desc:'The game splits into two STAGES with two separate economies — called stages, not phases, because \'Phase N\' already means a development phase in this repo. Stage 1 is idle/prep: you log back in, collect what accrued while away (battery-gated, batteries not in yet), and spend a NEW THIRD RESOURCE on turrets and turret upgrade pieces — it persists across sessions. Stage 2 starts when you press Wave 1: a separate economy where scavengers pull in salvage metal that is run-only and dies with the session. XP stays global across both. Gold is untouched and stays the Command Core room currency. Full spec, with every collision cited by file:line and the open decisions listed separately, in `docs/economy-redesign.md`. Designed with the user 2026-07-25; no code written.',
+    items:[
+      'WHY IT EXISTS: Phase 18b asked "which currency does the top HUD promote?" and the question turned out to be unanswerable — towers cost metal, rooms cost gold, and the two aren\'t cleanly scoped, so no arrangement of stat pills could be honest about them. Chasing that produced this. The split is store-vs-flow: prep currency survives so spending it is a decision you keep; salvage appears during a wave and dies with it, so spending it is tactical with no cross-session opportunity cost. Those reward different thinking, which is why merging them — what the code does today — makes neither read clearly.',
+      'BLOCKER 1: salvage metal and turret-purchase metal are literally the same variable. `world.metal` is fed by `updateSalvage()` (`world.js:350`) AND is what `placeTower()` spends. `addMetal()` (`world.js:101`) has seven callers — idle mining, defender bonus, salvage, mission rewards, two sell refunds, Market trade — and each has to be assigned to exactly one of the two new pools. They will not all go the same way. That audit is most of the work of this phase, and it is pure engine logic, fully unit-testable.',
+      'BLOCKER 2: neither currency persists. `world.gold`/`world.metal` are initialised in the World constructor (`world.js:27-28`) and `restart()` builds a fresh World, so both die on restart. The prep currency has to live on `Profile` — the only thing that survives. That is a structural move that pushes on the one-way-observation rule harder than anything so far: engine files don\'t know about Profile, and today `game.js` diff-watches counters and translates deltas into `profile.emit()` rather than threading Profile through World. A persistent currency World must SPEND needs that seam decided before code.',
+      'CHESTS INVERT on three axes, and this is a real design change rather than an extension. Today `chestTier` is non-null ONLY on a wipe (`spawner.js:101`) — a full clear pays `chestTier: null` and the full bundle; tier comes from how much you killed before the base fell (bronze 0%/silver 34%/gold 67%, `config.js:296`); multipliers scale payout DOWN (0.25/0.5/0.75) so a chest is always worse than clearing; and it repeats forever with no memory. Designed: awarded for COMPLETING a wave, tier by performance, and each tier is a ONE-TIME unlock — already have bronze on wave 1, clearing it at bronze again pays nothing. Lose and you get no chest at all; that is the punishment, and you return to idle mode to build and retry.',
+      'Two things already in the codebase that make this cheaper than it looks. The one-time-unlock machinery exists in the right shape: `achievements.js` is a sticky registry run through a fixpoint loop so one unlock can cascade into another the same tick, with `profile.js:181` persisting timestamps — the chest ladder is achievement-shaped, not reward-shaped, and should follow that precedent instead of inventing state. And completion percentage is already an honest skill signal: `config.js:289-291` carries a deliberate note that chest `minPct` is raw `enemy.maxHealth` sums NEVER passed through `rewardMultiplier()`/combo/prestige, exactly so a future "+XP%" upgrade inflates payout but never completion. That property is what makes "better prep → better chest" mean something. Keep it.',
+      'Wave replay needs an answer or it dies. `triggerReplay(n)` exists as explicitly reward-only farming and deliberately doesn\'t feed `wavesCleared` (`spawner.js:129-132`). Under one-time chests, replaying a wave whose tiers you already hold pays nothing, so replay loses its purpose. Clean resolution falls straight out of the model: replay still pays run-scoped salvage metal, chests stay one-time. Salvage is use-it-or-lose-it so farming it cannot inflate anything persistent.',
+      'BASE HEALTH becomes per-session: starts every TD session at 100%, regenerates back up when the session ends, and max HP becomes upgradeable via "base parts" bought in prep (not in yet). `base.js` already sets health = maxHealth = 100 in its constructor and a fresh Base is built with each World, so a fresh base already happens on restart — what is new is the reset being per SESSION and maxHealth coming from an upgradeable value. Knock-on: this largely retires the base-repair button (`world.repairBase`, `BASE_REPAIR_GOLD_PER_HP: 2` / `BASE_REPAIR_AMOUNT: 20`), since paying gold for 20 HP is pointless if HP resets free. Either it goes or it becomes an in-session emergency heal paid in salvage metal, which would give salvage a second sink.',
+      'XP GATES give player level its first real job, and the "no gates today" read is stronger than it sounds: NOTHING in the game is level-gated. A grep for level comparisons finds two hits, both in `achievements.js` (Reach Level 3, Reach Level 20) — rewards FOR leveling, not gates ON content. Level\'s only mechanical effect anywhere is `BASE_PASSIVE_INCOME_PER_LEVEL: 0.05` gold/sec. Designed shape is centred on the tutorial: finish tutorial mission 1 → enough XP for player level 2 → unlocks the next thing. Level 2 is exactly 40 CP (`LEVEL_CP_FACTOR * (n-1)^2`), and note missions currently pay `{ metal }`/`{ gold }` and NO CP (`missions.js:17-28`) — CP comes only from events `game.js` diff-watches — so missions granting CP is new wiring, and 40 CP against `CP_PER_TOWER_PLACED: 2` has to be a deliberate grant, not a side effect.',
+      'THE TD SESSION IS MULTI-WAVE (answered by the user 2026-07-25): wave after wave until you die, or flee/cancel. That settles more than it looks. Base health resets at SESSION start, not per wave — damage accumulating across waves IS the pressure that ends a long run. Salvage persists across waves within a session and dies at session end, so it compounds while you survive, which is what makes a mid-session emergency spend a real decision. And chests are per WAVE, BANKED as you go: clear waves 1-4, die on 5, you keep the four. So "lose and you get no chest" applies to the wave you died on, not the session — worth stating because the one-line version reads far harsher than the model actually is. Fleeing keeps what you banked; salvage always dies.',
+      'Two NEW problems the multi-wave answer creates. (1) Flee/cancel does not exist — a grep for flee/abandon/retreat finds nothing; the only exits today are the base dying and hitting MAX_WAVES. It needs a player-facing confirmed exit (`js/ui/confirmModal.js` is the right existing component) that banks chests, discards salvage, and returns to Stage 1 — plus a call on WHEN it is allowed, because unrestricted mid-wave flee is a get-out-of-death-free card: you would bail the instant a wave looked unwinnable and lose only the salvage you were losing anyway. Leaning between-waves-only. (2) `MAX_WAVES: 20` (`config.js:120`) directly contradicts "until you die" — `spawner.js:137` ends the run at wave 20 and sets `Game.state = \'won\'`. Either go endless (retiring the only win condition the game has — note Phase 8a already retired `\'lost\'`, so this would leave NO terminal state, a legitimate idle-game position but one to choose rather than drift into), keep 20 as a milestone that awards something and continues, or accept an implicit "or until wave 20". This is the item that blocks code, since it changes `finalizeWave()`\'s shape.',
+      'XP GATE SHAPE fixed, ladder deferred (user, 2026-07-25): the full list waits on the tutorial spec, correctly — "once the gameplay is more correct and we start working on tutorial side/spec the XP gates will be more clear", and a gate ladder designed before the thing it gates is guesswork. Two illustrative examples, neither built: "market exchange" buildable at level 5, "hero hangar upgrade" locked until level 25. That is enough to fix the mechanism — gates are level thresholds on buildable/upgradeable content, spread from early to long-tail — without inventing content.',
+      'STILL OPEN, in full in the spec: the resource\'s name (which is what unblocks 18b\'s promoted-stat question), the MAX_WAVES/win-state call above, whether the gold-for-HP repair button survives or repoints at salvage, what one-time chests actually contain now that a currency lump is the wrong shape for a one-time unlock, where the existing wave-clear gold+metal payout goes, whether flee is allowed mid-wave, how batteries cap idle time, and whether the prep currency gets a Storage-style cap.'
+    ],
+    depends:'Nothing hard, but step 0 is reverting the v2.36 dev stash (`STARTING_GOLD`/`STARTING_METAL` at 10000 with 100k caps, both flagged REVERT in config.js) — economy work against a 10k stash is tuning against a fiction. Overlaps Phase 19 (both touch view/phase structure; sequence them together, not in parallel). Unblocks Phase 18b\'s promoted-stat decision.',
+    note:'Designed with the user in conversation 2026-07-25, immediately after shipping v2.38; no code written. Filed with the same discipline `docs/mobile-audit.md` used for Phase 18 — settled design and open questions kept in separate sections, so the build session can tell which is which. Explicitly OUT of scope, by the user\'s own call: the Command Core room mechanic ("i think this room mechanic could be improved but outside the scope of this turn") — gold and rooms are untouched. Also out: rebalancing (every number in the spec is a current value being cited, not a proposed one; the difficulty curve has been waiting on a playtest pass since Phase 4c and this does not jump that queue). The riskiest work is splitting `addMetal()`\'s callers and moving a currency onto Profile — both in `world.js` (696 lines, the biggest file) — but both are also the most testable work in the phase, unlike the UI layer Phase 18 lived in.' },
 ];
 
 function renderRoadmap(){
@@ -2572,34 +2590,40 @@ const STATS = {
       "date": "07-23",
       "cum": 14228,
       "subject": "Add CLAUDE.md agent-context file"
+    },
+    {
+      "hash": "421cdd4",
+      "date": "07-25",
+      "cum": 18140,
+      "subject": "v2.38 - Phase 18a bottom action bar + 18c foundations; base ring square -> circle"
     }
   ],
   "categories": [
     {
       "label": "Engine (JS)",
-      "value": 5357,
+      "value": 5911,
       "tone": "sig"
     },
     {
       "label": "Docs & tooling",
-      "value": 3825,
+      "value": 6199,
       "tone": "special"
     },
     {
       "label": "Game shell (HTML/CSS)",
-      "value": 2298,
+      "value": 2822,
       "tone": "info"
     },
     {
       "label": "Tests",
-      "value": 2748,
+      "value": 3208,
       "tone": "ok"
     }
   ],
   "velocity": {
-    "activeHours": 28.5,
-    "sessionCount": 7,
-    "activeDays": 6,
+    "activeHours": 28.7,
+    "sessionCount": 8,
+    "activeDays": 7,
     "sessionGapHours": 5
   }
 };
