@@ -7,3 +7,8 @@ git add stats.json index.html README.md
 
 # Advisory only (see the script's own comment) — never blocks the commit.
 node scripts/check-roadmap-sync.mjs
+
+# Advisory here, enforcing in CI (.github/workflows/ci.yml). A dead code_ref should stop
+# a branch, not a local commit — the ref usually dies mid-refactor and blocking the commit
+# that is fixing it is exactly backwards.
+node scripts/check-flow-refs.mjs || true

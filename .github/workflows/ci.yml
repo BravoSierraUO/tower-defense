@@ -1,0 +1,32 @@
+# The repo's first CI. Both jobs need zero dependencies — tests/ imports nothing but
+# node:test and its own helpers, and check-flow-refs reads the repo off disk — so there
+# is deliberately no install step. Nothing here should ever take longer than the push.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm test
+
+  flow-refs:
+    # The WhatHow page claims every step points at real code. This is the only thing
+    # that checks whether that is still true. Errors (a missing file, a malformed
+    # graph) fail the branch; symbol warnings are printed but do not, because
+    # `code_ref` is prose and the symbol check is a heuristic. See the script header.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/check-flow-refs.mjs
